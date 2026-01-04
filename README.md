@@ -1,42 +1,35 @@
 # Automated Trading Journal 📈
 
-A comprehensive trading journal system that automatically fetches trades, analyzes performance, and provides actionable insights for cryptocurrency traders.
+## 📊 Project Progress: Day 8 Complete ✅
 
-## 📊 Current Progress
+### 🎯 Current Status
+**Day 8: Enhanced Trade Entry & Details Modal** - COMPLETE 🚀
 
-### Day 1-7: ✅ COMPLETED
-| Day | Feature | Status | File |
-|-----|---------|--------|------|
-| 1 | Manual Journal with JSON | ✅ Complete | `day1_manual_journal.py` |
-| 2 | SQLite Database CRUD | ✅ Complete | `day2_sqlite_journal.py` |
-| 3 | Pandas Analysis & Charts | ✅ Complete | `day3_pandas_analysis.py` |
-| 4 | Bybit API Integration | ✅ Complete | `day4_test.py` |
-| 5 | Database Integration | ✅ Complete | `day5_final_working.py` |
-| 6 | Streamlit Dashboard | ✅ Complete | `day6_basic_dashboard.py` |
-| 7 | Calendar View & Database Enhancement | ✅ Complete | `day7_simple_calendar.py` |
+### ✅ Day 8 Features Implemented:
+1. **Trade Details Modal Interface**
+   - Interactive modal/popup for viewing/editing trades
+   - Rich text editor with markdown support
+   - Emotional state tracking (10 states)
+   - Trade setup classification (10 setups)
 
----
+2. **Screenshot Management System**
+   - Drag & drop filename entry
+   - Multiple screenshot support
+   - Image preview in modal
+   - File organization system
 
-## ✨ Day 7: Calendar View & Database Enhancement [COMPLETE]
+3. **Key Levels Integration**
+   - Multi-select dropdown for key levels
+   - Strength rating display (1-5 stars)
+   - Trade-key level relationship management
 
-### 📅 Calendar View Features:
-✅ **Monthly Calendar Grid** - Visual profit/loss tracking by day  
-✅ **Color Coding** - Green for profit days, red for loss days  
-✅ **Interactive Navigation** - Select any month/year for analysis  
-✅ **Daily Trade Details** - Click to expand daily trades  
-✅ **Month Statistics** - P&L, win rate, trading days summary  
+4. **Database Enhancements**
+   - Added pnl_percent column
+   - Added notes column
+   - Fixed NULL values migration
+   - Trade-key levels junction table
 
-### 🗄️ Database Enhancement:
-✅ **Key Levels System** - Track support/resistance levels  
-✅ **Default Levels** - 5+ pre-configured technical levels  
-✅ **Strength Ratings** - 1-5 star system for level importance  
-✅ **Junction Table** - Link trades to key levels  
-✅ **Migration Script** - Easy database setup  
-
-### 📁 Files Created:
-- `day7_simple_calendar.py` - Terminal-based calendar application
-- `database/key_levels_db.py` - Database migration and setup
-- Multiple verification scripts for quality assurance
+### 📁 Project Structure (Updated)
 
 ### 🚀 How to Run Day 7:
 ```bash
