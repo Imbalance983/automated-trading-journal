@@ -33,24 +33,16 @@
 - Total volume: ,070.90
 - Ready for Day 6 dashboard
 
-## Next: Day 6 - Streamlit Dashboard
-Building web dashboard to visualize trades
+### Day 6: Streamlit Dashboard [COMPLETE]
+**File:** day6_basic_dashboard.py
 
-## Project Structure
-automated-trading-journal/
-??? database/trade_db.py
-??? utils/bybit_client.py
-??? utils/data_fetcher.py
-??? data/day5_success.db
-??? README.md
+**Features:**
+- ✅ **Metrics Display**: Total P&L, Win Rate, Avg Win/Loss, Profit Factor
+- ✅ **Filterable Trade Table**: Filter by symbol, type, status, P&L range
+- ✅ **P&L Charts**: Cumulative P&L, trade distribution, symbol performance
+- ✅ **Interactive Interface**: Sidebar filters, color-coded tables, tabs
+- ✅ **Sample Data**: 5 sample trades with realistic crypto symbols
 
-## Setup
-1. git clone https://github.com/Imbalance983/automated-trading-journal
-2. pip install -r requirements.txt
-3. Add API keys to .env file
-4. python day5_final_working.py
-
-## Security
-Never commit .env file with API keys.
-
-GitHub: https://github.com/Imbalance983/automated-trading-journal
+**How to Run:**
+```bash
+streamlit run day6_basic_dashboard.py
