@@ -1,0 +1,9 @@
+﻿📅 TONIGHT'S PREP FOR DAY 6:
+
+Make 5-10 more test trades on testnet.bybit.com:
+1. Try different symbols: ETHUSDT, SOLUSDT
+2. Mix Buy and Sell orders
+3. Vary sizes: 0.001 to 0.01 BTC
+4. Close some positions to generate P&L
+
+This will give us more data for tomorrow's dashboard!
