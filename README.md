@@ -1,48 +1,44 @@
-# Automated Trading Journal
+# Automated Trading Journal 📈
 
-## Progress
+A comprehensive trading journal system that automatically fetches trades, analyzes performance, and provides actionable insights for cryptocurrency traders.
 
-### Day 1: Manual Journal
-- File: day1_manual_journal.py
-- Trade class with JSON save/load
+## 📊 Current Progress
 
-### Day 2: SQLite Database
-- File: day2_sqlite_journal.py
-- SQLite CRUD operations
+### Day 1-7: ✅ COMPLETED
+| Day | Feature | Status | File |
+|-----|---------|--------|------|
+| 1 | Manual Journal with JSON | ✅ Complete | `day1_manual_journal.py` |
+| 2 | SQLite Database CRUD | ✅ Complete | `day2_sqlite_journal.py` |
+| 3 | Pandas Analysis & Charts | ✅ Complete | `day3_pandas_analysis.py` |
+| 4 | Bybit API Integration | ✅ Complete | `day4_test.py` |
+| 5 | Database Integration | ✅ Complete | `day5_final_working.py` |
+| 6 | Streamlit Dashboard | ✅ Complete | `day6_basic_dashboard.py` |
+| 7 | Calendar View & Database Enhancement | ✅ Complete | `day7_simple_calendar.py` |
 
-### Day 3: Pandas Analysis
-- File: day3_pandas_analysis.py
-- Data analysis and charts
+---
 
-### Day 4: Bybit API
-- File: day4_test.py
-- Bybit Testnet API connection
-- Security: .env excluded
+## ✨ Day 7: Calendar View & Database Enhancement [COMPLETE]
 
-### Day 5: Database Integration [COMPLETE]
-**Files created:**
-- database/trade_db.py
-- utils/bybit_client.py
-- utils/data_fetcher.py
-- day5_final_working.py
+### 📅 Calendar View Features:
+✅ **Monthly Calendar Grid** - Visual profit/loss tracking by day  
+✅ **Color Coding** - Green for profit days, red for loss days  
+✅ **Interactive Navigation** - Select any month/year for analysis  
+✅ **Daily Trade Details** - Click to expand daily trades  
+✅ **Month Statistics** - P&L, win rate, trading days summary  
 
-**Accomplished:**
-- Connected Bybit API to SQLite database
-- Automatic trade fetching and saving
-- 10+ trades saved to database
-- Total volume: ,070.90
-- Ready for Day 6 dashboard
+### 🗄️ Database Enhancement:
+✅ **Key Levels System** - Track support/resistance levels  
+✅ **Default Levels** - 5+ pre-configured technical levels  
+✅ **Strength Ratings** - 1-5 star system for level importance  
+✅ **Junction Table** - Link trades to key levels  
+✅ **Migration Script** - Easy database setup  
 
-### Day 6: Streamlit Dashboard [COMPLETE]
-**File:** day6_basic_dashboard.py
+### 📁 Files Created:
+- `day7_simple_calendar.py` - Terminal-based calendar application
+- `database/key_levels_db.py` - Database migration and setup
+- Multiple verification scripts for quality assurance
 
-**Features:**
-- ✅ **Metrics Display**: Total P&L, Win Rate, Avg Win/Loss, Profit Factor
-- ✅ **Filterable Trade Table**: Filter by symbol, type, status, P&L range
-- ✅ **P&L Charts**: Cumulative P&L, trade distribution, symbol performance
-- ✅ **Interactive Interface**: Sidebar filters, color-coded tables, tabs
-- ✅ **Sample Data**: 5 sample trades with realistic crypto symbols
-
-**How to Run:**
+### 🚀 How to Run Day 7:
 ```bash
+python3 day7_simple_calendar.py
 streamlit run day6_basic_dashboard.py
