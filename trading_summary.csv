@@ -1,0 +1,25 @@
+CATEGORY,METRIC,VALUE
+Overall,Total Trades,12
+Overall,Winning Trades,11
+Overall,Win Rate,91.7%
+Overall,Total P&L,$1555.00
+
+SETUP CLASSIFICATION,TRADE COUNT,AVG P&L
+Breakout,1,$250.00
+Position Trade,1,$-125.00
+Pullback,1,$60.00
+Range Bound,1,$140.00
+Reversal,1,$30.00
+Scalping,1,$210.00
+Swing Trade,1,$80.00
+Trend Following,1,$200.00
+
+EMOTIONAL STATE,TRADE COUNT,AVG P&L
+Calm,1,$200.00
+Confident,1,$250.00
+Disciplined,1,$-125.00
+Excited,1,$30.00
+Fearful,1,$140.00
+Impulsive,1,$80.00
+Nervous,1,$60.00
+Patient,1,$210.00
