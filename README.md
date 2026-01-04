@@ -1,48 +1,62 @@
 # Automated Trading Journal
 
-## Progress
+## 📊 Progress Tracker: Day 8 Complete ✅
 
-### Day 1: Manual Journal
-- File: day1_manual_journal.py
-- Trade class with JSON save/load
+### Current Status: 8/10 Days (80% Complete)
 
-### Day 2: SQLite Database
-- File: day2_sqlite_journal.py
-- SQLite CRUD operations
+| Day | Feature | Status | File |
+|-----|---------|--------|------|
+| 1 | Manual Trading Journal | ✅ Complete | `day1_manual_journal.py` |
+| 2 | SQLite Database | ✅ Complete | `day2_sqlite_journal.py` |
+| 3 | Pandas Analysis | ✅ Complete | `day3_pandas_analysis.py` |
+| 4 | Testing Framework | ✅ Complete | `day4_test.py` |
+| 5 | Complete Working System | ✅ Complete | `day5_final_working.py` |
+| 6 | Basic Dashboard | ✅ Complete | `day6_basic_dashboard.py` |
+| 7 | Calendar View & Key Levels | ✅ Complete | `day7_simple_calendar.py` |
+| **8** | **Enhanced Trade Modal** | **✅ COMPLETE** | **`day8_trade_modal.py`** |
+| 9 | Advanced Analytics | 🔄 Next | - |
+| 10 | Final Polish & Deployment | 📅 Planned | - |
 
-### Day 3: Pandas Analysis
-- File: day3_pandas_analysis.py
-- Data analysis and charts
+---
 
-### Day 4: Bybit API
-- File: day4_test.py
-- Bybit Testnet API connection
-- Security: .env excluded
+## 🎯 Day 8 Features (Just Added)
 
-### Day 5: Database Integration [COMPLETE]
-**Files created:**
-- database/trade_db.py
-- utils/bybit_client.py
-- utils/data_fetcher.py
-- day5_final_working.py
+### ✅ Trade Details Modal
+- Rich text editor with markdown support
+- Emotional state tracking (10 options)
+- Trade setup classification (10 types)
 
-**Accomplished:**
-- Connected Bybit API to SQLite database
-- Automatic trade fetching and saving
-- 10+ trades saved to database
-- Total volume: ,070.90
-- Ready for Day 6 dashboard
+### ✅ Screenshot System
+- Multiple screenshot support
+- Filename management
 
-### Day 6: Streamlit Dashboard [COMPLETE]
-**File:** day6_basic_dashboard.py
+### ✅ Key Levels Integration
+- Link trades to technical levels
+- 5-star rating system
 
-**Features:**
-- ✅ **Metrics Display**: Total P&L, Win Rate, Avg Win/Loss, Profit Factor
-- ✅ **Filterable Trade Table**: Filter by symbol, type, status, P&L range
-- ✅ **P&L Charts**: Cumulative P&L, trade distribution, symbol performance
-- ✅ **Interactive Interface**: Sidebar filters, color-coded tables, tabs
-- ✅ **Sample Data**: 5 sample trades with realistic crypto symbols
+### ✅ Database Updates
+- Added `pnl_percent` column
+- Added `notes` column
+- Fixed NULL values
 
-**How to Run:**
+---
+
+## 📊 Current Stats
+- **Total Trades:** 12
+- **Total P&L:** $1,355.00
+- **Win Rate:** 90%
+- **Key Levels:** 5
+- **Trade-KeyLevel Links:** 1
+
+---
+
+## 🚀 Quick Start
 ```bash
-streamlit run day6_basic_dashboard.py
+# Run Day 8 - Enhanced Trade Modal
+python day8_trade_modal.py
+
+# Run Day 7 - Calendar View
+python day7_simple_calendar.py
+
+# Run Day 6 - Dashboard
+python day6_basic_dashboard.py
