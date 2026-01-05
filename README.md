@@ -1,202 +1,246 @@
-# 🚀 Automated Trading Journal
+📊 Professional Trading Journal
+A modern, web-based trading journal for serious traders. Track your trades, analyze performance, and improve your strategy with beautiful visualizations and powerful analytics.
 
-A **complete trading journal system** built in Python over 10 days. Track trades, analyze performance, manage key levels, and generate reports - all in one terminal application.
+https://img.shields.io/badge/version-1.0.0-green https://img.shields.io/badge/python-3.8+-blue https://img.shields.io/badge/flask-2.3.3-lightgrey https://img.shields.io/badge/license-MIT-orange
 
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
-![Status](https://img.shields.io/badge/Status-Production%20Ready-green)
-![License](https://img.shields.io/badge/License-MIT-lightgrey)
+✨ Features
+📅 Calendar View
+Visualize trading days with color-coded P&L (Green = Profit, Red = Loss)
 
-## 📋 Features
+Click any day to view trades for that specific day
 
-### ✅ **Core Trading Journal**
-- Add, view, and manage trades
-- Track entry/exit prices, quantities, P&L
-- Record emotional state and setup classification
-- SQLite database for persistent storage
+Monthly/weekly performance overview
 
-### 📊 **Performance Dashboard**
-- Real-time win rate calculation
-- Total P&L tracking
-- Average win/loss statistics
-- Recent trades overview
+📈 Advanced Statistics
+Key Levels Analysis: Track Support/Resistance performance
 
-### 🎯 **Key Levels System**
-- Create and manage support/resistance levels
-- Star-based strength rating (1-5 stars)
-- Track key level effectiveness
-- Calendar view of upcoming tests
+Confirmation Metrics: Analyze which confirmation methods work best
 
-### 📈 **Advanced Analytics**
-- Win rate by setup type
-- P&L by emotional state
-- Key level success rates
-- Advanced metrics (Sharpe ratio, profit factor, expectancy)
-- CSV export functionality
+Model Performance: Evaluate different trading models
 
-## 🏗️ Project Structure
-automated-trading-journal-main/
-├── main.py # 🎯 MAIN APPLICATION
-├── trading_journal.db # Database (trades + key levels)
-├── day1_manual_journal.py # Day 1: Basic journal
-├── day2_sqlite_journal.py # Day 2: Database integration
-├── day3_pandas_analysis.py # Day 3: Data analysis
-├── day4_test.py # Day 4: Testing framework
-├── day5_final_working.py # Day 5: Core trading system
-├── day6_basic_dashboard.py # Day 6: Dashboard
-├── day7_simple_calendar.py # Day 7: Key levels & calendar
-├── day8_trade_modal.py # Day 8: Enhanced trade modal
-├── day9_analytics.py # Day 9: Advanced analytics
-├── database/ # Database operations
-├── utils/ # Utility functions
-└── README.md # This file
+Filter by: Asset (BTC/ETH/SOL) and Trade Type
 
+Period Filters: Day/Week/Month/All time views
 
-## 🚀 Quick Start
+💼 Trade Management
+Add, edit, delete trades with full details
 
-### 1. Installation
-```bash
-# Clone the repository
-git clone <your-repo-url>
-cd automated-trading-journal-main
+Capture screenshots with automatic URL management
 
-# Install dependencies
-pip install pandas
+Detailed notes and analysis for each trade
 
-python main.py
+Categorize trades by Key Level, Confirmation, and Model
 
-==================================================
-🚀 AUTOMATED TRADING JOURNAL
-==================================================
+🔄 Bybit Integration
+Auto-sync trades directly from Bybit exchange
 
-MAIN MENU:
-1. 📝 View Trades
-2. ➕ Add Trade
-3. 📊 View Dashboard
-4. 🎯 View Key Levels
-5. 📈 Advanced Analytics
-6. 🚪 Exit
-==================================================
+Support for both mainnet and testnet
 
-Enter choice (1-6):
+Secure API key management
 
-📖 User Guide
-Adding a Trade
-Select option 2 from main menu
+Real-time trade synchronization
 
-Enter trade details:
+🎨 Professional UI
+Dark theme optimized for traders
 
-Symbol (e.g., BTC-USD)
+Responsive design works on all devices
 
-Entry and exit prices
+Intuitive drag-and-drop calendar
+
+Real-time statistics updates
+
+🚀 Quick Start
+Prerequisites
+Python 3.8 or higher
+
+Git
+
+Installation
+Clone the repository
+
+bash
+git clone https://github.com/Imbalance983/automated-trading-journal.git
+cd automated-trading-journal
+Install dependencies
+
+bash
+pip install -r requirements.txt
+Run the application
+
+bash
+python app.py
+Open in browser
+
+text
+http://127.0.0.1:5000
+📁 Project Structure
+text
+automated-trading-journal/
+├── app.py                 # Main Flask application
+├── requirements.txt       # Python dependencies
+├── README.md             # This documentation
+├── .gitignore            # Git ignore rules
+├── templates/
+│   └── single_page.html  # Complete web interface
+├── static/               # CSS, JavaScript, images
+│   ├── css/
+│   ├── js/
+│   └── images/
+└── trading_journal.db    # SQLite database (auto-created)
+🛠️ Usage Guide
+Adding Trades Manually
+Click the "➕ Add Trade" button
+
+Fill in trade details:
+
+Asset (BTC, ETH, SOL)
+
+Side (Long/Short)
+
+Entry/Exit prices
 
 Quantity
 
-Optional: Setup type and emotional state
+Date and Time
 
-System automatically calculates P&L and outcome
+Add analysis:
 
-Viewing Performance
-Option 1: View all trades in clean table format
+Key Level (Support/Resistance)
 
-Option 3: Dashboard with win rate, total P&L, averages
+Confirmation method
 
-Option 5: Advanced analytics with detailed breakdowns
+Trading model
 
-Managing Key Levels
-Select option 4 from main menu
+Optional: Add screenshot URL and notes
 
-Choose "Add new key level"
+Click "Save Trade"
 
-Enter:
+Using Bybit Integration
+Get API keys from Bybit
 
-Key level name (e.g., "Daily Pivot", ".618")
+Go to "Bybit Sync" section
 
-Optional symbol association
+Enter API Key and Secret
 
-Strength rating (1-5 stars)
+Select network (Mainnet/Testnet)
 
-ANALYTICS
-==================================================
+Click "Save Credentials"
 
-📊 PERFORMANCE:
-   Total Trades: 12
-   Win Rate: 91.7%
-   Total P&L: $21,855.00
-   Average Win: $1,998.18
-   Average Loss: $-125.00
+Click "Sync Trades" to import automatically
 
-🏆 BEST & WORST TRADES:
-   Best:
-     BTCUSDT: $+20,000.00
-     BTCUSDT: $+500.00
-     BTCUSD: $+420.00
+Analyzing Performance
+Calendar: Click any day to see daily trades
 
-Key Metrics Calculated
-Win Rate: Percentage of profitable trades
+Statistics: Filter by period (Day/Week/Month/All)
 
-Profit Factor: Gross profit / gross loss
+Key Levels: See which S/R levels are most profitable
 
-Sharpe Ratio: Risk-adjusted returns
+Confirmations: Track which confirmation methods work best
 
-Maximum Drawdown: Largest peak-to-trough decline
+Models: Analyze performance of different trading strategies
 
-System Expectancy: Average profit per trade
+🔧 Configuration
+Environment Variables
+Create a .env file (optional):
 
-📈 Roadmap
-Current Features (MVP Complete ✅)
-Basic trade journal
+env
+FLASK_SECRET_KEY=your_secret_key_here
+DEBUG=False
+Database
+The SQLite database is auto-created on first run. To reset:
 
-Performance dashboard
+bash
+# Delete the database file
+rm trading_journal.db
+# Restart the app to create fresh database
+python app.py
+📊 Features in Detail
+Calendar System
+Color-coded days based on daily P&L
 
-Key levels management
+Click to view detailed trades
 
-Advanced analytics
+Monthly navigation
 
-CSV export
+Profit/loss summary for each day
 
-Unified main application
+Trade Analysis
+Win rate calculation
 
-Future Enhancements
-Web-based interface
+Average profit/loss per trade
 
-PDF report generation
+Best/worst performing assets
 
-Email notifications
+Risk-reward ratios
 
-Multi-user support
+Category Management
+Customize Key Levels (Support/Resistance types)
 
-Advanced chart integration
+Add/remove Confirmation methods
 
-API for broker integration
+Manage Trading Models
+
+Real-time category performance tracking
+
+Data Export
+Export trades to CSV
+
+Print-friendly views
+
+Screenshot gallery
+
+🔐 Security Notes
+API keys are stored locally only
+
+No data is sent to external servers
+
+Database is local to your machine
+
+HTTPS recommended for production use
 
 🤝 Contributing
+Contributions are welcome! Please follow these steps:
+
 Fork the repository
 
-Create a feature branch
+Create a feature branch (git checkout -b feature/AmazingFeature)
 
-Commit your changes
+Commit your changes (git commit -m 'Add some AmazingFeature')
 
-Push to the branch
+Push to the branch (git push origin feature/AmazingFeature)
 
 Open a Pull Request
 
-📄 License
-MIT License - see LICENSE file for details
+📝 License
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+⚠️ Disclaimer
+This is a trading journal tool, not financial advice.
+
+Past performance does not guarantee future results
+
+Trading carries risk of loss
+
+Always do your own research
+
+Never trade with money you cannot afford to lose
 
 🙏 Acknowledgments
-Built over 10 days as a complete project
+Built with Flask
 
-Designed for traders by traders
+UI with Bootstrap
 
-Focus on simplicity and usability
+Icons from Font Awesome
 
-All data stored locally for privacy
+Charts with Chart.js
+
+Trading integration with Bybit API
 
 📞 Support
-For issues or questions:
+For issues, questions, or feature requests:
 
-Check existing issues on GitHub
+Check the Issues page
 
-Create a new issue with details
+Create a new issue if needed
 
-Include error messages and steps to reproduce
+Happy Trading! 📈💼
