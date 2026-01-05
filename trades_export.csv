@@ -1,3 +1,0 @@
-id,trade_id,symbol,side,qty,entry_price,exit_price,pnl,pnl_percent,fees,entry_time,exit_time,duration_minutes,strategy,timeframe,tags,notes,imported_from,import_hash,created_at
-13,MULTI_TEST_2_205509680583,BTCUSDT,Buy,0.03,45200.0,45300.0,3.0,0.22123893805309736,0.0,2026-01-04 17:55:09.680589,2026-01-04 18:55:09.680591,60.0,Test,,,,manual,,2026-01-04 20:55:09
-10,DIRECT_TEST_205314921158,ETHUSDT,Sell,1.0,2410.0,2400.0,-10.0,,,2026-01-02 20:53:14.921197,2026-01-02 19:53:14.921203,,,,,,manual,HASH_205314921206,2026-01-04 20:53:14

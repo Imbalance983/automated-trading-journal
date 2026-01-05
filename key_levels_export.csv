@@ -1,8 +1,0 @@
-id,level_name,normalized_name,value,category,strength,instrument,timeframe,notes,created_at
-7,Monthly High,monthly high,48000.0,Support/Resistance,3,BTCUSDT,,,2026-01-04 20:44:47
-3,.382,.382,47000.0,Fibonacci,3,BTCUSDT,,,2026-01-04 20:44:46
-4,.500,.500,46000.0,Fibonacci,3,BTCUSDT,,,2026-01-04 20:44:46
-6,VWAP,vwap,45200.0,Volume,3,BTCUSDT,,,2026-01-04 20:44:46
-1,Pivot,pivot,34000.0,daily,3,all,,,2026-01-04 20:43:03
-8,.618,.618,2420.0,Fibonacci,3,ETHUSDT,,,2026-01-04 20:47:07
-9,Daily Pivot,daily pivot,2400.0,Pivot,3,ETHUSDT,,,2026-01-04 20:47:07

@@ -1,0 +1,1845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradeZilla Pro - Complete Trading Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ===== VARIABLES ===== */
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #0f172a;
+            --dark-light: #1e293b;
+            --card: #1e293b;
+            --border: #334155;
+            --text: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --hover: rgba(59, 130, 246, 0.1);
+            --grid-gap: 20px;
+            --radius: 12px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* ===== RESET & BASE ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: var(--dark);
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ===== LAYOUT ===== */
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: var(--dark-light);
+            border-right: 1px solid var(--border);
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .main-content {
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: var(--grid-gap);
+        }
+
+        /* ===== HEADER ===== */
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-title i {
+            color: var(--primary);
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--dark-light);
+            border-color: var(--primary);
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-icon:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* ===== STATS CARDS ===== */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--grid-gap);
+            margin-bottom: var(--grid-gap);
+        }
+
+        .stat-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 24px;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+
+        .stat-card.clicked {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, var(--card) 0%, rgba(59, 130, 246, 0.1) 100%);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .stat-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .stat-icon {
+            font-size: 20px;
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .stat-change {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .positive { color: var(--success); }
+        .negative { color: var(--danger); }
+        .neutral { color: var(--text-secondary); }
+
+        /* ===== WIDGETS ===== */
+        .widgets-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--grid-gap);
+            margin-bottom: var(--grid-gap);
+        }
+
+        .widget {
+            background: var(--card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .widget-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .widget-title {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .widget-content {
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        /* ===== TABLES ===== */
+        .table-container {
+            background: var(--card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-title {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: rgba(30, 41, 59, 0.5);
+        }
+
+        th {
+            padding: 16px;
+            text-align: left;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border);
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+
+        th:hover {
+            background: var(--hover);
+        }
+
+        th.sortable::after {
+            content: "↕";
+            margin-left: 8px;
+            opacity: 0.5;
+        }
+
+        th.sorted-asc::after {
+            content: "↑";
+            opacity: 1;
+            color: var(--primary);
+        }
+
+        th.sorted-desc::after {
+            content: "↓";
+            opacity: 1;
+            color: var(--primary);
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+
+        tr {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        tr:hover {
+            background: var(--hover);
+        }
+
+        tr.selected {
+            background: rgba(59, 130, 246, 0.15);
+            border-left: 3px solid var(--primary);
+        }
+
+        /* ===== BADGES ===== */
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .badge-primary {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--primary);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .badge-instrument {
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            color: white;
+            font-weight: 700;
+        }
+
+        /* ===== CALENDAR ===== */
+        .calendar-widget {
+            background: var(--card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            padding: 20px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 8px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            padding: 8px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            padding: 4px;
+        }
+
+        .calendar-day:hover {
+            background: var(--hover);
+            transform: scale(1.05);
+        }
+
+        .calendar-day.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .calendar-day.has-trades::after {
+            content: "";
+            position: absolute;
+            bottom: 4px;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--primary);
+        }
+
+        .calendar-day.profit {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .calendar-day.loss {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .day-number {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .day-pnl {
+            font-size: 10px;
+            margin-top: 2px;
+            font-weight: 600;
+        }
+
+        /* ===== KEY LEVELS ===== */
+        .key-levels-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .key-level-item {
+            background: var(--dark-light);
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .key-level-item:hover {
+            border-color: var(--primary);
+            background: var(--hover);
+        }
+
+        .key-level-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .key-level-name {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .key-level-price {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .key-level-stats {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .key-level-hitrate {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .key-level-strength {
+            display: flex;
+            gap: 2px;
+        }
+
+        .strength-star {
+            color: var(--warning);
+            font-size: 12px;
+        }
+
+        /* ===== MODALS ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            cursor: pointer;
+            font-size: 20px;
+            color: var(--text-secondary);
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: var(--danger);
+        }
+
+        .modal-content {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            padding: 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* ===== FORMS ===== */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            background: var(--dark-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 12px;
+            background: var(--dark-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            background: var(--dark-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+            min-height: 120px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        /* ===== NOTES EDITOR ===== */
+        .notes-editor {
+            background: var(--dark-light);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .notes-toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .notes-content {
+            min-height: 200px;
+            outline: none;
+            padding: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .notes-content:empty::before {
+            content: "Click to add notes...";
+            color: var(--text-secondary);
+        }
+
+        /* ===== LOADING STATES ===== */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, var(--border) 25%, var(--dark-light) 50%, var(--border) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 4px;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* ===== UTILITIES ===== */
+        .hidden { display: none !important; }
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-2 { gap: 8px; }
+        .gap-4 { gap: 16px; }
+        .text-sm { font-size: 14px; }
+        .text-xs { font-size: 12px; }
+        .font-semibold { font-weight: 600; }
+        .text-center { text-align: center; }
+        .w-full { width: 100%; }
+        .h-full { height: 100%; }
+        .cursor-pointer { cursor: pointer; }
+        .select-none { user-select: none; }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1200px) {
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .widgets-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+            
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .top-header {
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                TradeZilla Pro
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-title">Dashboard</div>
+                <div class="nav-item active" data-view="overview">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Overview</span>
+                </div>
+                <div class="nav-item" data-view="trades">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span>All Trades</span>
+                </div>
+                <div class="nav-item" data-view="analytics">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Analytics</span>
+                </div>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-title">Analysis</div>
+                <div class="nav-item" data-view="keylevels">
+                    <i class="fas fa-layer-group"></i>
+                    <span>Key Levels</span>
+                </div>
+                <div class="nav-item" data-view="calendar">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Calendar View</span>
+                </div>
+                <div class="nav-item" data-view="instruments">
+                    <i class="fas fa-coins"></i>
+                    <span>By Instrument</span>
+                </div>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-title">Tools</div>
+                <div class="nav-item" id="btn-add-trade">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Add Trade</span>
+                </div>
+                <div class="nav-item" id="btn-add-keylevel">
+                    <i class="fas fa-plus-square"></i>
+                    <span>Add Key Level</span>
+                </div>
+                <div class="nav-item" id="btn-export">
+                    <i class="fas fa-file-export"></i>
+                    <span>Export Data</span>
+                </div>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-title">Quick Filters</div>
+                <div class="nav-item" data-filter="instrument" data-value="BTC/USD">
+                    <i class="fab fa-bitcoin"></i>
+                    <span>BTC/USD Only</span>
+                </div>
+                <div class="nav-item" data-filter="instrument" data-value="ETH/USD">
+                    <i class="fab fa-ethereum"></i>
+                    <span>ETH/USD Only</span>
+                </div>
+                <div class="nav-item" data-filter="direction" data-value="LONG">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>Long Trades</span>
+                </div>
+                <div class="nav-item" data-filter="direction" data-value="SHORT">
+                    <i class="fas fa-arrow-down"></i>
+                    <span>Short Trades</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <!-- HEADER -->
+            <div class="top-header">
+                <div class="page-title">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard Overview</span>
+                </div>
+                <div class="quick-actions">
+                    <button class="btn btn-secondary" id="btn-refresh">
+                        <i class="fas fa-sync-alt"></i>
+                        Refresh
+                    </button>
+                    <button class="btn btn-primary" id="btn-quick-trade">
+                        <i class="fas fa-bolt"></i>
+                        Quick Trade
+                    </button>
+                </div>
+            </div>
+
+            <!-- STATS CARDS -->
+            <div class="stats-container" id="stats-container">
+                <!-- Will be populated by JavaScript -->
+                <div class="stat-card" data-stat="total_pnl">
+                    <div class="stat-header">
+                        <div class="stat-title">Total P&L</div>
+                        <div class="stat-icon">💰</div>
+                    </div>
+                    <div class="stat-value positive">$0.00</div>
+                    <div class="stat-change positive">+0.0%</div>
+                </div>
+                
+                <div class="stat-card" data-stat="win_rate">
+                    <div class="stat-header">
+                        <div class="stat-title">Win Rate</div>
+                        <div class="stat-icon">📈</div>
+                    </div>
+                    <div class="stat-value">0%</div>
+                    <div class="stat-change">0W / 0L</div>
+                </div>
+                
+                <div class="stat-card" data-stat="total_trades">
+                    <div class="stat-header">
+                        <div class="stat-title">Total Trades</div>
+                        <div class="stat-icon">📊</div>
+                    </div>
+                    <div class="stat-value">0</div>
+                    <div class="stat-change">Today: 0</div>
+                </div>
+                
+                <div class="stat-card" data-stat="avg_trade">
+                    <div class="stat-header">
+                        <div class="stat-title">Avg Trade</div>
+                        <div class="stat-icon">⚖️</div>
+                    </div>
+                    <div class="stat-value">$0.00</div>
+                    <div class="stat-change">Best: $0.00</div>
+                </div>
+            </div>
+
+            <!-- WIDGETS GRID -->
+            <div class="widgets-grid">
+                <!-- RECENT TRADES WIDGET -->
+                <div class="widget">
+                    <div class="widget-header">
+                        <div class="widget-title">
+                            <i class="fas fa-history"></i>
+                            Recent Trades
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="btn-icon" id="btn-view-all-trades">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                            <button class="btn-icon" id="btn-filter-trades">
+                                <i class="fas fa-filter"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="widget-content">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th class="sortable" data-sort="instrument">Instrument</th>
+                                    <th class="sortable" data-sort="direction">Side</th>
+                                    <th class="sortable" data-sort="entry_price">Entry</th>
+                                    <th class="sortable" data-sort="exit_price">Exit</th>
+                                    <th class="sortable" data-sort="pnl">P&L</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-trades-body">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- KEY LEVELS WIDGET -->
+                <div class="widget">
+                    <div class="widget-header">
+                        <div class="widget-title">
+                            <i class="fas fa-layer-group"></i>
+                            Key Levels Monitor
+                        </div>
+                        <button class="btn-icon" id="btn-view-keylevels">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                    <div class="widget-content">
+                        <div class="key-levels-container" id="key-levels-container">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CALENDAR WIDGET -->
+                <div class="widget">
+                    <div class="widget-header">
+                        <div class="widget-title">
+                            <i class="fas fa-calendar-alt"></i>
+                            Monthly Calendar
+                        </div>
+                        <div class="calendar-nav">
+                            <button class="btn-icon" id="btn-calendar-prev">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <span id="current-month">January 2024</span>
+                            <button class="btn-icon" id="btn-calendar-next">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="widget-content">
+                        <div class="calendar-grid" id="calendar-grid">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INSTRUMENTS WIDGET -->
+                <div class="widget">
+                    <div class="widget-header">
+                        <div class="widget-title">
+                            <i class="fas fa-coins"></i>
+                            By Instrument
+                        </div>
+                        <button class="btn-icon" id="btn-view-instruments">
+                            <i class="fas fa-chart-bar"></i>
+                        </button>
+                    </div>
+                    <div class="widget-content">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Instrument</th>
+                                    <th>Trades</th>
+                                    <th>P&L</th>
+                                    <th>Win Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody id="instruments-body">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ANALYTICS SECTION -->
+            <div class="widget" id="analytics-widget">
+                <div class="widget-header">
+                    <div class="widget-title">
+                        <i class="fas fa-chart-pie"></i>
+                        Analytics Dashboard
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="btn btn-secondary btn-sm" data-analytics="keylevel">
+                            By Key Level
+                        </button>
+                        <button class="btn btn-secondary btn-sm" data-analytics="instrument">
+                            By Instrument
+                        </button>
+                        <button class="btn btn-secondary btn-sm" data-analytics="time">
+                            By Time
+                        </button>
+                    </div>
+                </div>
+                <div class="widget-content">
+                    <div id="analytics-content">
+                        <!-- Analytics charts/tables will go here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <!-- Trade Detail Modal -->
+    <div class="modal-overlay" id="trade-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Trade Details</div>
+                <div class="modal-close" id="close-trade-modal">
+                    <i class="fas fa-times"></i>
+                </div>
+            </div>
+            <div class="modal-content">
+                <div class="form-group">
+                    <label class="form-label">Instrument</label>
+                    <input type="text" class="form-input" id="trade-instrument" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Direction</label>
+                    <input type="text" class="form-input" id="trade-direction" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Entry Price</label>
+                    <input type="text" class="form-input" id="trade-entry" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Exit Price</label>
+                    <input type="text" class="form-input" id="trade-exit" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">P&L</label>
+                    <input type="text" class="form-input" id="trade-pnl" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Key Level</label>
+                    <input type="text" class="form-input" id="trade-keylevel" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <div class="notes-editor">
+                        <div class="notes-toolbar">
+                            <button class="btn-icon" id="btn-edit-notes">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-icon" id="btn-save-notes" style="display: none;">
+                                <i class="fas fa-save"></i>
+                            </button>
+                        </div>
+                        <div class="notes-content" id="trade-notes" contenteditable="false">
+                            Loading notes...
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btn-close-modal">Close</button>
+                <button class="btn btn-danger" id="btn-delete-trade">Delete Trade</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Trade Modal -->
+    <div class="modal-overlay" id="quicktrade-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Quick Trade Entry</div>
+                <div class="modal-close" id="close-quicktrade-modal">
+                    <i class="fas fa-times"></i>
+                </div>
+            </div>
+            <div class="modal-content">
+                <!-- Form for quick trade entry -->
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Global state
+        let currentView = 'overview';
+        let currentTradeId = null;
+        let currentMonth = new Date().getMonth() + 1;
+        let currentYear = new Date().getFullYear();
+        let dashboardData = null;
+
+        // DOM Elements
+        const elements = {
+            statsContainer: document.getElementById('stats-container'),
+            recentTradesBody: document.getElementById('recent-trades-body'),
+            keyLevelsContainer: document.getElementById('key-levels-container'),
+            calendarGrid: document.getElementById('calendar-grid'),
+            currentMonth: document.getElementById('current-month'),
+            instrumentsBody: document.getElementById('instruments-body'),
+            analyticsContent: document.getElementById('analytics-content'),
+            tradeModal: document.getElementById('trade-modal'),
+            quickTradeModal: document.getElementById('quicktrade-modal')
+        };
+
+        // ============ INITIALIZATION ============
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 TradeZilla Pro Dashboard Initializing...');
+            
+            // Load initial data
+            loadDashboardData();
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Set up auto-refresh (every 30 seconds)
+            setInterval(loadDashboardData, 30000);
+            
+            // Initialize calendar
+            loadCalendarData(currentYear, currentMonth);
+            
+            console.log('✅ Dashboard initialized');
+        });
+
+        // ============ DATA LOADING ============
+        async function loadDashboardData() {
+            try {
+                console.log('🔄 Loading dashboard data...');
+                
+                const response = await fetch('/api/dashboard-stats');
+                if (!response.ok) throw new Error(`API error: ${response.status}`);
+                
+                dashboardData = await response.json();
+                console.log('✅ Dashboard data loaded:', dashboardData);
+                
+                // Update all dashboard components
+                updateStatsCards();
+                updateRecentTrades();
+                updateKeyLevels();
+                updateInstruments();
+                updateAnalytics('keylevel'); // Default to key level analytics
+                
+            } catch (error) {
+                console.error('❌ Error loading dashboard:', error);
+                showNotification('Error loading dashboard data', 'danger');
+            }
+        }
+
+        async function loadCalendarData(year, month) {
+            try {
+                const response = await fetch(`/api/analytics/calendar/${year}/${month}`);
+                if (!response.ok) throw new Error(`Calendar API error: ${response.status}`);
+                
+                const calendarData = await response.json();
+                updateCalendar(calendarData);
+                
+            } catch (error) {
+                console.error('❌ Error loading calendar:', error);
+            }
+        }
+
+        // ============ UI UPDATES ============
+        function updateStatsCards() {
+            if (!dashboardData) return;
+            
+            const { overall, daily, weekly, monthly } = dashboardData;
+            
+            // Total P&L
+            const pnlCard = elements.statsContainer.querySelector('[data-stat="total_pnl"]');
+            if (pnlCard) {
+                const pnlValue = pnlCard.querySelector('.stat-value');
+                const pnlChange = pnlCard.querySelector('.stat-change');
+                
+                pnlValue.textContent = formatCurrency(overall.total_pnl || 0);
+                pnlValue.className = `stat-value ${(overall.total_pnl || 0) >= 0 ? 'positive' : 'negative'}`;
+                
+                // Calculate daily change if we have yesterday's data
+                pnlChange.textContent = `${(overall.total_pnl || 0) >= 0 ? '+' : ''}${formatCurrency(overall.total_pnl || 0)}`;
+                pnlChange.className = `stat-change ${(overall.total_pnl || 0) >= 0 ? 'positive' : 'negative'}`;
+            }
+            
+            // Win Rate
+            const winRateCard = elements.statsContainer.querySelector('[data-stat="win_rate"]');
+            if (winRateCard) {
+                const winRateValue = winRateCard.querySelector('.stat-value');
+                const winRateChange = winRateCard.querySelector('.stat-change');
+                
+                const winRate = dashboardData.win_rate || 0;
+                winRateValue.textContent = `${winRate.toFixed(1)}%`;
+                winRateChange.textContent = `${overall.wins || 0}W / ${overall.losses || 0}L`;
+            }
+            
+            // Total Trades
+            const tradesCard = elements.statsContainer.querySelector('[data-stat="total_trades"]');
+            if (tradesCard) {
+                const tradesValue = tradesCard.querySelector('.stat-value');
+                const tradesChange = tradesCard.querySelector('.stat-change');
+                
+                tradesValue.textContent = overall.total_trades || 0;
+                tradesChange.textContent = `Today: ${daily.trades || 0}`;
+            }
+            
+            // Avg Trade
+            const avgCard = elements.statsContainer.querySelector('[data-stat="avg_trade"]');
+            if (avgCard) {
+                const avgValue = avgCard.querySelector('.stat-value');
+                const avgChange = avgCard.querySelector('.stat-change');
+                
+                avgValue.textContent = formatCurrency(overall.avg_pnl || 0);
+                avgChange.textContent = `Best: ${formatCurrency(overall.best_trade || 0)}`;
+            }
+        }
+
+        function updateRecentTrades() {
+            if (!dashboardData || !dashboardData.recent_trades) return;
+            
+            const tbody = elements.recentTradesBody;
+            tbody.innerHTML = '';
+            
+            dashboardData.recent_trades.forEach(trade => {
+                const row = document.createElement('tr');
+                row.dataset.tradeId = trade.id;
+                row.className = 'cursor-pointer';
+                row.onclick = () => showTradeModal(trade.id);
+                
+                row.innerHTML = `
+                    <td>
+                        <span class="badge badge-instrument">${trade.instrument}</span>
+                    </td>
+                    <td>
+                        <span class="badge ${trade.direction === 'LONG' ? 'badge-success' : 'badge-danger'}">
+                            ${trade.direction}
+                        </span>
+                    </td>
+                    <td>${formatCurrency(trade.entry_price)}</td>
+                    <td>${formatCurrency(trade.exit_price)}</td>
+                    <td class="${trade.pnl >= 0 ? 'positive' : 'negative'} font-semibold">
+                        ${formatCurrency(trade.pnl)}
+                    </td>
+                    <td>
+                        <div class="flex gap-2">
+                            <button class="btn-icon" onclick="event.stopPropagation(); showTradeModal(${trade.id})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-icon" onclick="event.stopPropagation(); editTrade(${trade.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateKeyLevels() {
+            if (!dashboardData || !dashboardData.key_levels) return;
+            
+            const container = elements.keyLevelsContainer;
+            container.innerHTML = '';
+            
+            dashboardData.key_levels.forEach(level => {
+                const levelElement = document.createElement('div');
+                levelElement.className = 'key-level-item';
+                levelElement.onclick = () => showKeyLevelAnalytics(level.id);
+                
+                // Create strength stars
+                let stars = '';
+                for (let i = 0; i < 5; i++) {
+                    stars += `<i class="fas fa-star strength-star ${i < (level.strength || 3) ? '' : 'text-secondary'}"></i>`;
+                }
+                
+                levelElement.innerHTML = `
+                    <div class="key-level-info">
+                        <div class="key-level-name">${level.instrument} - ${level.level_name}</div>
+                        <div class="key-level-price">${formatCurrency(level.level_price)}</div>
+                        <div class="key-level-strength">${stars}</div>
+                    </div>
+                    <div class="key-level-stats">
+                        <div class="key-level-hitrate">${level.hit_count || 0} hits</div>
+                        <div class="${(level.win_rate || 0) >= 50 ? 'positive' : 'negative'}">
+                            ${(level.win_rate || 0).toFixed(0)}% win rate
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(levelElement);
+            });
+        }
+
+        function updateInstruments() {
+            if (!dashboardData || !dashboardData.instruments) return;
+            
+            const tbody = elements.instrumentsBody;
+            tbody.innerHTML = '';
+            
+            dashboardData.instruments.forEach(instrument => {
+                const winRate = instrument.trades > 0 ? 
+                    (instrument.wins / instrument.trades * 100) : 0;
+                
+                const row = document.createElement('tr');
+                row.onclick = () => showInstrumentAnalytics(instrument.instrument);
+                
+                row.innerHTML = `
+                    <td>
+                        <span class="badge badge-instrument">${instrument.instrument}</span>
+                    </td>
+                    <td>${instrument.trades}</td>
+                    <td class="${instrument.total_pnl >= 0 ? 'positive' : 'negative'}">
+                        ${formatCurrency(instrument.total_pnl)}
+                    </td>
+                    <td>
+                        <span class="${winRate >= 50 ? 'positive' : 'negative'}">
+                            ${winRate.toFixed(1)}%
+                        </span>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateCalendar(calendarData) {
+            const grid = elements.calendarGrid;
+            grid.innerHTML = '';
+            
+            // Update month title
+            elements.currentMonth.textContent = `${calendarData.month_name} ${calendarData.year}`;
+            
+            // Day headers
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            days.forEach(day => {
+                const header = document.createElement('div');
+                header.className = 'calendar-day-header';
+                header.textContent = day;
+                grid.appendChild(header);
+            });
+            
+            // Get first day of month (0 = Sunday, 1 = Monday, etc.)
+            const firstDay = new Date(calendarData.year, calendarData.month - 1, 1).getDay();
+            
+            // Empty cells for days before the first day of month
+            for (let i = 0; i < firstDay; i++) {
+                const empty = document.createElement('div');
+                empty.className = 'calendar-day';
+                grid.appendChild(empty);
+            }
+            
+            // Days of the month
+            for (let day = 1; day <= calendarData.days_in_month; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                
+                const dayData = calendarData.data[day];
+                if (dayData) {
+                    dayElement.classList.add(dayData.pnl >= 0 ? 'profit' : 'loss');
+                    dayElement.classList.add('has-trades');
+                    dayElement.title = `${dayData.trades} trades, P&L: ${formatCurrency(dayData.pnl)}`;
+                    
+                    dayElement.innerHTML = `
+                        <div class="day-number">${day}</div>
+                        <div class="day-pnl ${dayData.pnl >= 0 ? 'positive' : 'negative'}">
+                            ${formatCurrency(dayData.pnl)}
+                        </div>
+                    `;
+                    
+                    dayElement.onclick = () => showDayTrades(calendarData.year, calendarData.month, day);
+                } else {
+                    dayElement.innerHTML = `<div class="day-number">${day}</div>`;
+                }
+                
+                grid.appendChild(dayElement);
+            }
+        }
+
+        async function updateAnalytics(type) {
+            try {
+                let endpoint = '';
+                let title = '';
+                
+                switch (type) {
+                    case 'keylevel':
+                        endpoint = '/api/analytics/win-rate-by-keylevel';
+                        title = 'Win Rate by Key Level';
+                        break;
+                    case 'instrument':
+                        endpoint = '/api/analytics/win-rate-by-instrument';
+                        title = 'Win Rate by Instrument';
+                        break;
+                    default:
+                        return;
+                }
+                
+                const response = await fetch(endpoint);
+                if (!response.ok) throw new Error(`Analytics API error: ${response.status}`);
+                
+                const data = await response.json();
+                renderAnalyticsTable(type, data, title);
+                
+            } catch (error) {
+                console.error('❌ Error loading analytics:', error);
+                elements.analyticsContent.innerHTML = `
+                    <div class="text-center text-secondary">
+                        Error loading analytics: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function renderAnalyticsTable(type, data, title) {
+            const content = elements.analyticsContent;
+            
+            if (!data || data.length === 0) {
+                content.innerHTML = `<div class="text-center text-secondary">No analytics data available</div>`;
+                return;
+            }
+            
+            let html = `
+                <div class="widget-header">
+                    <div class="widget-title">${title}</div>
+                </div>
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th>${type === 'keylevel' ? 'Key Level' : 'Instrument'}</th>
+                            <th>Total Trades</th>
+                            <th>Wins</th>
+                            <th>Losses</th>
+                            <th>Win Rate</th>
+                            <th>Total P&L</th>
+                            <th>Avg P&L</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            data.forEach(item => {
+                html += `
+                    <tr class="cursor-pointer" onclick="show${type === 'keylevel' ? 'KeyLevel' : 'Instrument'}Analytics('${item[type === 'keylevel' ? 'key_level' : 'instrument']}')">
+                        <td>
+                            <span class="badge badge-primary">
+                                ${item[type === 'keylevel' ? 'key_level' : 'instrument']}
+                            </span>
+                        </td>
+                        <td>${item.total_trades}</td>
+                        <td class="positive">${item.wins}</td>
+                        <td class="negative">${item.losses}</td>
+                        <td>
+                            <span class="${item.win_rate >= 50 ? 'positive' : 'negative'}">
+                                ${item.win_rate.toFixed(1)}%
+                            </span>
+                        </td>
+                        <td class="${item.total_pnl >= 0 ? 'positive' : 'negative'}">
+                            ${formatCurrency(item.total_pnl)}
+                        </td>
+                        <td class="${item.avg_pnl >= 0 ? 'positive' : 'negative'}">
+                            ${formatCurrency(item.avg_pnl)}
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `</tbody></table>`;
+            content.innerHTML = html;
+        }
+
+        // ============ MODAL FUNCTIONS ============
+        async function showTradeModal(tradeId) {
+            try {
+                const response = await fetch(`/api/trade/${tradeId}`);
+                if (!response.ok) throw new Error(`Trade API error: ${response.status}`);
+                
+                const trade = await response.json();
+                currentTradeId = tradeId;
+                
+                // Populate modal fields
+                document.getElementById('trade-instrument').value = trade.instrument;
+                document.getElementById('trade-direction').value = trade.direction;
+                document.getElementById('trade-entry').value = formatCurrency(trade.entry_price);
+                document.getElementById('trade-exit').value = formatCurrency(trade.exit_price);
+                document.getElementById('trade-pnl').value = formatCurrency(trade.pnl);
+                document.getElementById('trade-keylevel').value = trade.key_level || 'N/A';
+                document.getElementById('trade-notes').textContent = trade.notes || 'No notes';
+                
+                // Show modal
+                elements.tradeModal.classList.add('active');
+                
+            } catch (error) {
+                console.error('❌ Error loading trade:', error);
+                showNotification('Error loading trade details', 'danger');
+            }
+        }
+
+        async function saveTradeNotes() {
+            if (!currentTradeId) return;
+            
+            try {
+                const notes = document.getElementById('trade-notes').textContent;
+                
+                const response = await fetch(`/api/trade/${currentTradeId}/notes`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ notes })
+                });
+                
+                if (!response.ok) throw new Error('Failed to save notes');
+                
+                showNotification('Notes saved successfully', 'success');
+                
+                // Update notes display
+                document.getElementById('trade-notes').contentEditable = 'false';
+                document.getElementById('btn-edit-notes').style.display = 'block';
+                document.getElementById('btn-save-notes').style.display = 'none';
+                
+            } catch (error) {
+                console.error('❌ Error saving notes:', error);
+                showNotification('Error saving notes', 'danger');
+            }
+        }
+
+        function editTradeNotes() {
+            document.getElementById('trade-notes').contentEditable = 'true';
+            document.getElementById('trade-notes').focus();
+            document.getElementById('btn-edit-notes').style.display = 'none';
+            document.getElementById('btn-save-notes').style.display = 'block';
+        }
+
+        async function deleteTrade() {
+            if (!currentTradeId || !confirm('Are you sure you want to delete this trade?')) return;
+            
+            try {
+                // You would need to add this endpoint to your backend
+                const response = await fetch(`/api/trade/${currentTradeId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) throw new Error('Failed to delete trade');
+                
+                showNotification('Trade deleted successfully', 'success');
+                closeTradeModal();
+                loadDashboardData(); // Refresh data
+                
+            } catch (error) {
+                console.error('❌ Error deleting trade:', error);
+                showNotification('Error deleting trade', 'danger');
+            }
+        }
+
+        function closeTradeModal() {
+            elements.tradeModal.classList.remove('active');
+            currentTradeId = null;
+        }
+
+        // ============ ANALYTICS FUNCTIONS ============
+        function showKeyLevelAnalytics(keyLevel) {
+            // Navigate to analytics view with key level filter
+            switchView('analytics');
+            // You would implement filtering by key level
+            showNotification(`Showing analytics for: ${keyLevel}`, 'info');
+        }
+
+        function showInstrumentAnalytics(instrument) {
+            // Navigate to analytics view with instrument filter
+            switchView('analytics');
+            // You would implement filtering by instrument
+            showNotification(`Showing analytics for: ${instrument}`, 'info');
+        }
+
+        function showDayTrades(year, month, day) {
+            const date = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+            showNotification(`Showing trades for: ${date}`, 'info');
+            // You would implement date filtering
+        }
+
+        // ============ VIEW MANAGEMENT ============
+        function switchView(viewName) {
+            // Update navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.view === viewName) {
+                    item.classList.add('active');
+                }
+            });
+            
+            // Update page title
+            const titleMap = {
+                overview: 'Dashboard Overview',
+                trades: 'All Trades',
+                analytics: 'Analytics',
+                keylevels: 'Key Levels',
+                calendar: 'Calendar View',
+                instruments: 'By Instrument'
+            };
+            
+            document.querySelector('.page-title span').textContent = titleMap[viewName] || 'Dashboard';
+            currentView = viewName;
+            
+            // Show/hide relevant sections
+            // You would implement this based on your layout
+        }
+
+        // ============ UTILITY FUNCTIONS ============
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 24px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 600;
+                z-index: 10000;
+                animation: slideIn 0.3s ease-out;
+                background: ${type === 'success' ? '#10b981' : type === 'danger' ? '#ef4444' : '#3b82f6'};
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        function setupEventListeners() {
+            // Refresh button
+            document.getElementById('btn-refresh').onclick = loadDashboardData;
+            
+            // Quick trade button
+            document.getElementById('btn-quick-trade').onclick = () => {
+                elements.quickTradeModal.classList.add('active');
+            };
+            
+            // Modal close buttons
+            document.getElementById('close-trade-modal').onclick = closeTradeModal;
+            document.getElementById('btn-close-modal').onclick = closeTradeModal;
+            document.getElementById('close-quicktrade-modal').onclick = () => {
+                elements.quickTradeModal.classList.remove('active');
+            };
+            
+            // Notes buttons
+            document.getElementById('btn-edit-notes').onclick = editTradeNotes;
+            document.getElementById('btn-save-notes').onclick = saveTradeNotes;
+            
+            // Delete trade button
+            document.getElementById('btn-delete-trade').onclick = deleteTrade;
+            
+            // Calendar navigation
+            document.getElementById('btn-calendar-prev').onclick = () => {
+                if (currentMonth === 1) {
+                    currentMonth = 12;
+                    currentYear--;
+                } else {
+                    currentMonth--;
+                }
+                loadCalendarData(currentYear, currentMonth);
+            };
+            
+            document.getElementById('btn-calendar-next').onclick = () => {
+                if (currentMonth === 12) {
+                    currentMonth = 1;
+                    currentYear++;
+                } else {
+                    currentMonth++;
+                }
+                loadCalendarData(currentYear, currentMonth);
+            };
+            
+            // Analytics buttons
+            document.querySelectorAll('[data-analytics]').forEach(btn => {
+                btn.onclick = () => updateAnalytics(btn.dataset.analytics);
+            });
+            
+            // Navigation items
+            document.querySelectorAll('.nav-item[data-view]').forEach(item => {
+                item.onclick = () => switchView(item.dataset.view);
+            });
+            
+            // Quick filter items
+            document.querySelectorAll('.nav-item[data-filter]').forEach(item => {
+                item.onclick = () => {
+                    const filter = item.dataset.filter;
+                    const value = item.dataset.value;
+                    showNotification(`Filtering by ${filter}: ${value}`, 'info');
+                    // Implement filtering logic
+                };
+            });
+            
+            // Add trade button
+            document.getElementById('btn-add-trade').onclick = () => {
+                showNotification('Add trade feature coming soon!', 'info');
+            };
+            
+            // Add key level button
+            document.getElementById('btn-add-keylevel').onclick = () => {
+                showNotification('Add key level feature coming soon!', 'info');
+            };
+            
+            // Export button
+            document.getElementById('btn-export').onclick = () => {
+                showNotification('Export feature coming soon!', 'info');
+            };
+            
+            // View all trades button
+            document.getElementById('btn-view-all-trades').onclick = () => {
+                switchView('trades');
+            };
+            
+            // View key levels button
+            document.getElementById('btn-view-keylevels').onclick = () => {
+                switchView('keylevels');
+            };
+            
+            // View instruments button
+            document.getElementById('btn-view-instruments').onclick = () => {
+                switchView('instruments');
+            };
+            
+            // Close modals on overlay click
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('active');
+                    }
+                };
+            });
+            
+            // Escape key to close modals
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                        modal.classList.remove('active');
+                    });
+                }
+            });
+        }
+
+        // ============ GLOBAL FUNCTIONS ============
+        // Make functions available globally for onclick attributes
+        window.showTradeModal = showTradeModal;
+        window.editTrade = (tradeId) => {
+            showTradeModal(tradeId);
+            setTimeout(editTradeNotes, 100);
+        };
+        window.showKeyLevelAnalytics = showKeyLevelAnalytics;
+        window.showInstrumentAnalytics = showInstrumentAnalytics;
+    </script>
+
+    <!-- Add CSS animations -->
+    <style>
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+        
+        .notification {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</body>
+</html>

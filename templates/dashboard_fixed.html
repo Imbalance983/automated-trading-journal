@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradeZilla Pro - Complete Trading Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ===== VARIABLES ===== */
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #0f172a;
+            --dark-light: #1e293b;
+            --card: #1e293b;
+            --border: #334155;
+            --text: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --hover: rgba(59, 130, 246, 0.1);
+            --grid-gap: 20px;
+            --radius: 12px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* ===== RESET & BASE ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: var(--dark);
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ===== LAYOUT ===== */
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: var(--dark-light);
+            border-right: 1px solid var(--border);
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .main-content {
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: var(--grid-gap);
+        }
+
+        /* ===== SIDEBAR ===== */
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .logo i { font-size: 28px; }
+
+        .nav-section {
+            margin-bottom: 32px;
+        }
+
+        .nav-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+        }
+
+        .nav-item:hover {
+            background: var(--hover);
+            color: var(--text);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-item i { width: 20px; }
+
+        /* ===== HEADER ===== */
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-title i {
+            color: var(--primary);
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--dark-light);
+            border-color: var(--primary);
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-icon:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* ===== STATS CARDS ===== */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--grid-gap);
+            margin-bottom: var(--grid-gap);
+        }
+
+        .stat-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 24px;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .stat-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .stat-icon {
+            font-size: 20px;
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .stat-change {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .positive { color: var(--success); }
+        .negative { color: var(--danger); }
+        .neutral { color: var(--text-secondary); }
+
+        /* ===== WIDGETS ===== */
+        .widgets-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--grid-gap);
+            margin-bottom: var(--grid-gap);
+        }
+
+        .widget {
+            background: var(--card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .widget-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .widget-title {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .widget-content {
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        /* ===== TABLES ===== */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: rgba(30, 41, 59, 0.5);
+        }
+
+        th {
+            padding: 16px;
+            text-align: left;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+
+        tr {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        tr:hover {
+            background: var(--hover);
+        }
+
+        /* ===== BADGES ===== */
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .badge-primary {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--primary);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .badge-instrument {
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            color: white;
+            font-weight: 700;
+        }
+
+        /* ===== CALENDAR ===== */
+        .calendar-container {
+            background: var(--card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            padding: 20px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .calendar-month {
+            font-size: 18px;
+            font-weight: 600;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            padding: 8px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            padding: 4px;
+            border: 2px solid transparent;
+        }
+
+        .calendar-day:hover {
+            background: var(--hover);
+            transform: scale(1.05);
+            border-color: var(--primary);
+        }
+
+        .calendar-day.has-trades {
+            border: 2px solid var(--primary);
+        }
+
+        .calendar-day.profit {
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .calendar-day.loss {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .day-number {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .day-stats {
+            font-size: 10px;
+            margin-top: 2px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1px;
+        }
+
+        .day-pnl {
+            font-weight: 600;
+        }
+
+        /* ===== KEY LEVELS ===== */
+        .key-levels-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .key-level-item {
+            background: var(--dark-light);
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .key-level-item:hover {
+            border-color: var(--primary);
+            background: var(--hover);
+        }
+
+        .key-level-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .key-level-name {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .key-level-details {
+            font-size: 14px;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 12px;
+        }
+
+        .key-level-stats {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .key-level-hitrate {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .key-level-strength {
+            display: flex;
+            gap: 2px;
+        }
+
+        .strength-star {
+            color: var(--warning);
+            font-size: 12px;
+        }
+
+        /* ===== MODALS ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            cursor: pointer;
+            font-size: 20px;
+            color: var(--text-secondary);
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: var(--danger);
+        }
+
+        .modal-content {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            padding: 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* ===== FORMS ===== */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            background: var(--dark-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* ===== UTILITIES ===== */
+        .hidden { display: none !important; }
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-2 { gap: 8px; }
+        .gap-4 { gap: 16px; }
+        .text-sm { font-size: 14px; }
+        .text-xs { font-size: 12px; }
+        .font-semibold { font-weight: 600; }
+        .text-center { text-align: center; }
+        .w-full { width: 100%; }
+        .h-full { height: 100%; }
+        .cursor-pointer { cursor: pointer; }
+
+        /* ===== LOADING ===== */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1200px) {
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .widgets-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+            
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .top-header {
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="logo" onclick="loadDashboard()">
+                <i class="fas fa-chart-line"></i>
+                TradeZilla Pro
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-title">Dashboard</div>
+                <div class="nav-item active" onclick="showDashboard()">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Overview</span>
+                </div>
+                <div class="nav-item" onclick="showAllTrades()">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span>All Trades</span>
+                </div>
+                <div class="nav-item" onclick="showAnalytics('keylevel')">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Analytics</span>
+                </div>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-title">Analysis</div>
+                <div class="nav-item" onclick="showKeyLevels()">
+                    <i class="fas fa-layer-group"></i>
+                    <span>Key Levels</span>
+                </div>
+                <div class="nav-item" onclick="showCalendar()">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Calendar View</span>
+                </div>
+                <div class="nav-item" onclick="showInstruments()">
+                    <i class="fas fa-coins"></i>
+                    <span>By Instrument</span>
+                </div>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-title">Quick Actions</div>
+                <div class="nav-item" onclick="addNewTrade()">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Add Trade</span>
+                </div>
+                <div class="nav-item" onclick="addNewKeyLevel()">
+                    <i class="fas fa-plus-square"></i>
+                    <span>Add Key Level</span>
+                </div>
+                <div class="nav-item" onclick="exportData()">
+                    <i class="fas fa-file-export"></i>
+                    <span>Export Data</span>
+                </div>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-title">Quick Filters</div>
+                <div class="nav-item" onclick="filterByInstrument('BTC/USD')">
+                    <i class="fab fa-bitcoin"></i>
+                    <span>BTC/USD Only</span>
+                </div>
+                <div class="nav-item" onclick="filterByInstrument('ETH/USD')">
+                    <i class="fab fa-ethereum"></i>
+                    <span>ETH/USD Only</span>
+                </div>
+                <div class="nav-item" onclick="filterByDirection('LONG')">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>Long Trades</span>
+                </div>
+                <div class="nav-item" onclick="filterByDirection('SHORT')">
+                    <i class="fas fa-arrow-down"></i>
+                    <span>Short Trades</span>
+                </div>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-title">System</div>
+                <div class="nav-item" onclick="refreshDashboard()">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>Refresh Data</span>
+                </div>
+                <div class="nav-item" onclick="showHealth()">
+                    <i class="fas fa-heartbeat"></i>
+                    <span>System Health</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <!-- HEADER -->
+            <div class="top-header">
+                <div class="page-title">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span id="page-title">Dashboard Overview</span>
+                </div>
+                <div class="quick-actions">
+                    <button class="btn btn-secondary" onclick="refreshDashboard()">
+                        <i class="fas fa-sync-alt"></i>
+                        Refresh
+                    </button>
+                    <button class="btn btn-primary" onclick="addNewTrade()">
+                        <i class="fas fa-bolt"></i>
+                        Quick Trade
+                    </button>
+                </div>
+            </div>
+
+            <!-- STATS CARDS -->
+            <div class="stats-container" id="stats-container">
+                <div class="stat-card" onclick="showAllTrades()">
+                    <div class="stat-header">
+                        <div class="stat-title">Total P&L</div>
+                        <div class="stat-icon">💰</div>
+                    </div>
+                    <div class="stat-value positive" id="total-pnl">$0.00</div>
+                    <div class="stat-change positive" id="pnl-change">+0.0%</div>
+                </div>
+                
+                <div class="stat-card" onclick="showAnalytics('keylevel')">
+                    <div class="stat-header">
+                        <div class="stat-title">Win Rate</div>
+                        <div class="stat-icon">📈</div>
+                    </div>
+                    <div class="stat-value" id="win-rate">0%</div>
+                    <div class="stat-change" id="win-loss">0W / 0L</div>
+                </div>
+                
+                <div class="stat-card" onclick="showAllTrades()">
+                    <div class="stat-header">
+                        <div class="stat-title">Total Trades</div>
+                        <div class="stat-icon">📊</div>
+                    </div>
+                    <div class="stat-value" id="total-trades">0</div>
+                    <div class="stat-change" id="today-trades">Today: 0</div>
+                </div>
+                
+                <div class="stat-card" onclick="showAnalytics('instrument')">
+                    <div class="stat-header">
+                        <div class="stat-title">Avg Trade</div>
+                        <div class="stat-icon">⚖️</div>
+                    </div>
+                    <div class="stat-value" id="avg-trade">$0.00</div>
+                    <div class="stat-change" id="best-trade">Best: $0.00</div>
+                </div>
+            </div>
+
+            <!-- WIDGETS GRID -->
+            <div class="widgets-grid" id="widgets-grid">
+                <!-- RECENT TRADES WIDGET -->
+                <div class="widget">
+                    <div class="widget-header">
+                        <div class="widget-title">
+                            <i class="fas fa-history"></i>
+                            Recent Trades
+                        </div>
+                        <button class="btn-icon" onclick="showAllTrades()">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                    <div class="widget-content">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Instrument</th>
+                                    <th>Side</th>
+                                    <th>Entry</th>
+                                    <th>Exit</th>
+                                    <th>P&L</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-trades-body">
+                                <tr><td colspan="6" class="text-center">Loading trades...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- KEY LEVELS WIDGET -->
+                <div class="widget">
+                    <div class="widget-header">
+                        <div class="widget-title">
+                            <i class="fas fa-layer-group"></i>
+                            Key Levels Monitor
+                        </div>
+                        <button class="btn-icon" onclick="showKeyLevels()">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                    <div class="widget-content">
+                        <div class="key-levels-container" id="key-levels-container">
+                            <div class="text-center">Loading key levels...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CALENDAR WIDGET -->
+                <div class="widget">
+                    <div class="widget-header">
+                        <div class="widget-title">
+                            <i class="fas fa-calendar-alt"></i>
+                            Monthly Calendar
+                        </div>
+                        <div class="calendar-nav">
+                            <button class="btn-icon" onclick="prevMonth()">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <div class="calendar-month" id="current-month">January 2024</div>
+                            <button class="btn-icon" onclick="nextMonth()">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="widget-content">
+                        <div class="calendar-grid" id="calendar-grid">
+                            <!-- Calendar will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INSTRUMENTS WIDGET -->
+                <div class="widget">
+                    <div class="widget-header">
+                        <div class="widget-title">
+                            <i class="fas fa-coins"></i>
+                            By Instrument
+                        </div>
+                        <button class="btn-icon" onclick="showInstruments()">
+                            <i class="fas fa-chart-bar"></i>
+                        </button>
+                    </div>
+                    <div class="widget-content">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Instrument</th>
+                                    <th>Trades</th>
+                                    <th>P&L</th>
+                                    <th>Win Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody id="instruments-body">
+                                <tr><td colspan="4" class="text-center">Loading instruments...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ANALYTICS SECTION -->
+            <div class="widget" id="analytics-widget" style="display: none;">
+                <div class="widget-header">
+                    <div class="widget-title">
+                        <i class="fas fa-chart-pie"></i>
+                        <span id="analytics-title">Analytics Dashboard</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="btn btn-secondary btn-sm" onclick="showAnalytics('keylevel')">
+                            By Key Level
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="showAnalytics('instrument')">
+                            By Instrument
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="showAnalytics('daily')">
+                            Daily Performance
+                        </button>
+                    </div>
+                </div>
+                <div class="widget-content">
+                    <div id="analytics-content">
+                        <!-- Analytics will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TRADE DETAIL MODAL -->
+    <div class="modal-overlay" id="trade-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Trade Details</div>
+                <div class="modal-close" onclick="closeModal('trade-modal')">
+                    <i class="fas fa-times"></i>
+                </div>
+            </div>
+            <div class="modal-content">
+                <div class="form-group">
+                    <label class="form-label">Instrument</label>
+                    <input type="text" class="form-input" id="modal-instrument" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Direction</label>
+                    <input type="text" class="form-input" id="modal-direction" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Entry Price</label>
+                    <input type="text" class="form-input" id="modal-entry" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Exit Price</label>
+                    <input type="text" class="form-input" id="modal-exit" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">P&L</label>
+                    <input type="text" class="form-input" id="modal-pnl" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Key Level</label>
+                    <input type="text" class="form-input" id="modal-keylevel" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-input" id="modal-notes" rows="4" readonly></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('trade-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Global state
+        let currentView = 'dashboard';
+        let currentMonth = new Date().getMonth() + 1;
+        let currentYear = new Date().getFullYear();
+        let dashboardData = null;
+
+        // ============ INITIALIZATION ============
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 TradeZilla Pro Dashboard Initializing...');
+            
+            // Load initial data
+            loadDashboardData();
+            loadCalendarData(currentYear, currentMonth);
+            
+            // Set up auto-refresh (every 30 seconds)
+            setInterval(loadDashboardData, 30000);
+            
+            console.log('✅ Dashboard initialized');
+        });
+
+        // ============ DATA LOADING ============
+        async function loadDashboardData() {
+            try {
+                console.log('🔄 Loading dashboard data...');
+                showLoading();
+                
+                const response = await fetch('/api/dashboard-stats');
+                if (!response.ok) throw new Error(`API error: ${response.status}`);
+                
+                dashboardData = await response.json();
+                console.log('✅ Dashboard data loaded:', dashboardData);
+                
+                updateDashboard();
+                hideLoading();
+                
+            } catch (error) {
+                console.error('❌ Error loading dashboard:', error);
+                showNotification('Error loading dashboard data: ' + error.message, 'danger');
+                hideLoading();
+            }
+        }
+
+        async function loadCalendarData(year, month) {
+            try {
+                const response = await fetch(`/api/analytics/calendar/${year}/${month}`);
+                if (!response.ok) throw new Error(`Calendar API error: ${response.status}`);
+                
+                const calendarData = await response.json();
+                updateCalendar(calendarData);
+                
+            } catch (error) {
+                console.error('❌ Error loading calendar:', error);
+            }
+        }
+
+        // ============ UI UPDATES ============
+        function updateDashboard() {
+            if (!dashboardData) return;
+            
+            updateStatsCards();
+            updateRecentTrades();
+            updateKeyLevels();
+            updateInstruments();
+        }
+
+        function updateStatsCards() {
+            const { overall, daily, win_rate } = dashboardData;
+            
+            // Total P&L
+            document.getElementById('total-pnl').textContent = formatCurrency(overall.total_pnl || 0);
+            document.getElementById('total-pnl').className = `stat-value ${(overall.total_pnl || 0) >= 0 ? 'positive' : 'negative'}`;
+            document.getElementById('pnl-change').textContent = `${(overall.total_pnl || 0) >= 0 ? '+' : ''}${formatCurrency(overall.total_pnl || 0)}`;
+            document.getElementById('pnl-change').className = `stat-change ${(overall.total_pnl || 0) >= 0 ? 'positive' : 'negative'}`;
+            
+            // Win Rate
+            document.getElementById('win-rate').textContent = `${win_rate.toFixed(1)}%`;
+            document.getElementById('win-loss').textContent = `${overall.wins || 0}W / ${overall.losses || 0}L`;
+            
+            // Total Trades
+            document.getElementById('total-trades').textContent = overall.total_trades || 0;
+            document.getElementById('today-trades').textContent = `Today: ${daily.trades || 0}`;
+            
+            // Avg Trade
+            document.getElementById('avg-trade').textContent = formatCurrency(overall.avg_pnl || 0);
+            document.getElementById('best-trade').textContent = `Best: ${formatCurrency(overall.best_trade || 0)}`;
+        }
+
+        function updateRecentTrades() {
+            if (!dashboardData.recent_trades) return;
+            
+            const tbody = document.getElementById('recent-trades-body');
+            tbody.innerHTML = '';
+            
+            dashboardData.recent_trades.forEach(trade => {
+                const row = document.createElement('tr');
+                row.onclick = () => showTradeDetails(trade.id);
+                
+                row.innerHTML = `
+                    <td>
+                        <span class="badge badge-instrument">${trade.instrument}</span>
+                    </td>
+                    <td>
+                        <span class="badge ${trade.direction === 'LONG' ? 'badge-success' : 'badge-danger'}">
+                            ${trade.direction}
+                        </span>
+                    </td>
+                    <td>${formatCurrency(trade.entry_price)}</td>
+                    <td>${formatCurrency(trade.exit_price)}</td>
+                    <td class="${trade.pnl >= 0 ? 'positive' : 'negative'} font-semibold">
+                        ${formatCurrency(trade.pnl)}
+                    </td>
+                    <td>
+                        <button class="btn-icon" onclick="event.stopPropagation(); showTradeDetails(${trade.id})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateKeyLevels() {
+            if (!dashboardData.key_levels) return;
+            
+            const container = document.getElementById('key-levels-container');
+            container.innerHTML = '';
+            
+            dashboardData.key_levels.slice(0, 5).forEach(level => {
+                const levelElement = document.createElement('div');
+                levelElement.className = 'key-level-item';
+                levelElement.onclick = () => showKeyLevelAnalytics(level.level_name);
+                
+                // Create strength stars
+                let stars = '';
+                for (let i = 0; i < 5; i++) {
+                    stars += `<i class="fas fa-star strength-star ${i < (level.strength || 3) ? '' : 'text-secondary'}"></i>`;
+                }
+                
+                const winRate = level.calculated_win_rate || level.win_rate || 0;
+                
+                levelElement.innerHTML = `
+                    <div class="key-level-info">
+                        <div class="key-level-name">${level.instrument} - ${level.level_name}</div>
+                        <div class="key-level-details">
+                            <span>${formatCurrency(level.level_price)}</span>
+                            <span class="badge ${level.level_type === 'SUPPORT' ? 'badge-success' : 'badge-danger'}">
+                                ${level.level_type}
+                            </span>
+                        </div>
+                        <div class="key-level-strength">${stars}</div>
+                    </div>
+                    <div class="key-level-stats">
+                        <div class="key-level-hitrate">${level.hit_count || 0} hits</div>
+                        <div class="${winRate >= 50 ? 'positive' : 'negative'} font-semibold">
+                            ${winRate.toFixed(0)}% win rate
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(levelElement);
+            });
+        }
+
+        function updateInstruments() {
+            if (!dashboardData.instruments) return;
+            
+            const tbody = document.getElementById('instruments-body');
+            tbody.innerHTML = '';
+            
+            dashboardData.instruments.forEach(instrument => {
+                const winRate = instrument.trades > 0 ? 
+                    (instrument.wins / instrument.trades * 100) : 0;
+                
+                const row = document.createElement('tr');
+                row.onclick = () => showInstrumentAnalytics(instrument.instrument);
+                
+                row.innerHTML = `
+                    <td>
+                        <span class="badge badge-instrument">${instrument.instrument}</span>
+                    </td>
+                    <td>${instrument.trades}</td>
+                    <td class="${instrument.total_pnl >= 0 ? 'positive' : 'negative'}">
+                        ${formatCurrency(instrument.total_pnl)}
+                    </td>
+                    <td>
+                        <span class="${winRate >= 50 ? 'positive' : 'negative'}">
+                            ${winRate.toFixed(1)}%
+                        </span>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateCalendar(calendarData) {
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+            
+            // Update month title
+            document.getElementById('current-month').textContent = 
+                `${calendarData.month_name} ${calendarData.year}`;
+            
+            // Day headers
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            days.forEach(day => {
+                const header = document.createElement('div');
+                header.className = 'calendar-day-header';
+                header.textContent = day;
+                grid.appendChild(header);
+            });
+            
+            // Empty cells for days before the first day of month
+            for (let i = 0; i < calendarData.first_weekday; i++) {
+                const empty = document.createElement('div');
+                empty.className = 'calendar-day';
+                grid.appendChild(empty);
+            }
+            
+            // Days of the month
+            for (let day = 1; day <= calendarData.days_in_month; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                
+                const dayData = calendarData.data[day];
+                if (dayData) {
+                    dayElement.classList.add(dayData.pnl >= 0 ? 'profit' : 'loss');
+                    dayElement.classList.add('has-trades');
+                    dayElement.title = `${dayData.trades} trades, P&L: ${formatCurrency(dayData.pnl)}`;
+                    
+                    dayElement.innerHTML = `
+                        <div class="day-number">${day}</div>
+                        <div class="day-stats">
+                            <div class="day-pnl ${dayData.pnl >= 0 ? 'positive' : 'negative'}">
+                                ${formatCurrency(dayData.pnl)}
+                            </div>
+                            <div class="text-xs">${dayData.trades} trade${dayData.trades !== 1 ? 's' : ''}</div>
+                        </div>
+                    `;
+                    
+                    dayElement.onclick = () => showDayTrades(calendarData.year, calendarData.month, day);
+                } else {
+                    dayElement.innerHTML = `<div class="day-number">${day}</div>`;
+                }
+                
+                grid.appendChild(dayElement);
+            }
+        }
+
+        // ============ VIEW MANAGEMENT ============
+        function showDashboard() {
+            currentView = 'dashboard';
+            updateNav('dashboard');
+            document.getElementById('page-title').textContent = 'Dashboard Overview';
+            document.getElementById('widgets-grid').style.display = 'grid';
+            document.getElementById('analytics-widget').style.display = 'none';
+        }
+
+        function showAllTrades() {
+            currentView = 'trades';
+            updateNav('trades');
+            document.getElementById('page-title').textContent = 'All Trades';
+            document.getElementById('widgets-grid').style.display = 'none';
+            document.getElementById('analytics-widget').style.display = 'block';
+            document.getElementById('analytics-title').textContent = 'All Trades';
+            loadAllTrades();
+        }
+
+        function showAnalytics(type) {
+            currentView = 'analytics';
+            updateNav('analytics');
+            document.getElementById('page-title').textContent = 'Analytics Dashboard';
+            document.getElementById('widgets-grid').style.display = 'none';
+            document.getElementById('analytics-widget').style.display = 'block';
+            loadAnalytics(type);
+        }
+
+        function showKeyLevels() {
+            currentView = 'keylevels';
+            updateNav('keylevels');
+            document.getElementById('page-title').textContent = 'Key Levels';
+            document.getElementById('widgets-grid').style.display = 'none';
+            document.getElementById('analytics-widget').style.display = 'block';
+            loadKeyLevelsAnalytics();
+        }
+
+        function showCalendar() {
+            currentView = 'calendar';
+            updateNav('calendar');
+            document.getElementById('page-title').textContent = 'Calendar View';
+            document.getElementById('widgets-grid').style.display = 'none';
+            document.getElementById('analytics-widget').style.display = 'block';
+            document.getElementById('analytics-title').textContent = 'Calendar View';
+            document.getElementById('analytics-content').innerHTML = `
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <div class="calendar-nav">
+                            <button class="btn-icon" onclick="prevMonth()">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <div class="calendar-month" id="full-calendar-month">January 2024</div>
+                            <button class="btn-icon" onclick="nextMonth()">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="calendar-grid" id="full-calendar-grid">
+                        <!-- Full calendar will be loaded here -->
+                    </div>
+                </div>
+            `;
+            loadFullCalendarData(currentYear, currentMonth);
+        }
+
+        function showInstruments() {
+            currentView = 'instruments';
+            updateNav('instruments');
+            document.getElementById('page-title').textContent = 'By Instrument';
+            document.getElementById('widgets-grid').style.display = 'none';
+            document.getElementById('analytics-widget').style.display = 'block';
+            loadInstrumentsAnalytics();
+        }
+
+        function updateNav(view) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            // Find and activate the correct nav item
+            const navItem = document.querySelector(`.nav-item[onclick*="${view}"]`);
+            if (navItem) navItem.classList.add('active');
+        }
+
+        // ============ ANALYTICS LOADING ============
+        async function loadAnalytics(type) {
+            try {
+                let endpoint, title;
+                
+                switch(type) {
+                    case 'keylevel':
+                        endpoint = '/api/analytics/win-rate-by-keylevel';
+                        title = 'Win Rate by Key Level';
+                        break;
+                    case 'instrument':
+                        endpoint = '/api/analytics/win-rate-by-instrument';
+                        title = 'Win Rate by Instrument';
+                        break;
+                    case 'daily':
+                        endpoint = '/api/analytics/daily-performance';
+                        title = 'Daily Performance (Last 30 Days)';
+                        break;
+                    default:
+                        return;
+                }
+                
+                document.getElementById('analytics-title').textContent = title;
+                
+                const response = await fetch(endpoint);
+                if (!response.ok) throw new Error(`Analytics API error: ${response.status}`);
+                
+                const data = await response.json();
+                renderAnalyticsTable(type, data, title);
+                
+            } catch (error) {
+                console.error('❌ Error loading analytics:', error);
+                document.getElementById('analytics-content').innerHTML = `
+                    <div class="text-center text-secondary">
+                        Error loading analytics: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function renderAnalyticsTable(type, data, title) {
+            const content = document.getElementById('analytics-content');
+            
+            if (!data || data.length === 0) {
+                content.innerHTML = `<div class="text-center text-secondary">No analytics data available</div>`;
+                return;
+            }
+            
+            let html = `
+                <div class="widget-header">
+                    <div class="widget-title">${title}</div>
+                </div>
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th>${type === 'keylevel' ? 'Key Level' : type === 'instrument' ? 'Instrument' : 'Date'}</th>
+                            <th>Total Trades</th>
+                            <th>Wins</th>
+                            <th>Losses</th>
+                            <th>Win Rate</th>
+                            <th>Total P&L</th>
+                            <th>Avg P&L</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            data.forEach(item => {
+                const key = type === 'keylevel' ? item.key_level : 
+                           type === 'instrument' ? item.instrument : item.date;
+                
+                html += `
+                    <tr class="cursor-pointer" onclick="${type === 'keylevel' ? `showKeyLevelAnalytics('${item.key_level}')` : 
+                                                        type === 'instrument' ? `showInstrumentAnalytics('${item.instrument}')` : 
+                                                        `showDayTradesFromString('${item.date}')`}">
+                        <td>
+                            <span class="badge badge-primary">
+                                ${key}
+                            </span>
+                        </td>
+                        <td>${item.total_trades}</td>
+                        <td class="positive">${item.wins}</td>
+                        <td class="negative">${item.losses}</td>
+                        <td>
+                            <span class="${item.win_rate >= 50 ? 'positive' : 'negative'}">
+                                ${item.win_rate.toFixed(1)}%
+                            </span>
+                        </td>
+                        <td class="${item.total_pnl >= 0 ? 'positive' : 'negative'}">
+                            ${formatCurrency(item.total_pnl)}
+                        </td>
+                        <td class="${item.avg_pnl >= 0 ? 'positive' : 'negative'}">
+                            ${formatCurrency(item.avg_pnl)}
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `</tbody></table>`;
+            content.innerHTML = html;
+        }
+
+        // ============ MODAL FUNCTIONS ============
+        async function showTradeDetails(tradeId) {
+            try {
+                const response = await fetch(`/api/trade/${tradeId}`);
+                if (!response.ok) throw new Error(`Trade API error: ${response.status}`);
+                
+                const trade = await response.json();
+                
+                // Populate modal fields
+                document.getElementById('modal-instrument').value = trade.instrument;
+                document.getElementById('modal-direction').value = trade.direction;
+                document.getElementById('modal-entry').value = formatCurrency(trade.entry_price);
+                document.getElementById('modal-exit').value = formatCurrency(trade.exit_price);
+                document.getElementById('modal-pnl').value = formatCurrency(trade.pnl);
+                document.getElementById('modal-keylevel').value = trade.key_level || 'N/A';
+                document.getElementById('modal-notes').value = trade.notes || 'No notes';
+                
+                // Show modal
+                document.getElementById('trade-modal').classList.add('active');
+                
+            } catch (error) {
+                console.error('❌ Error loading trade:', error);
+                showNotification('Error loading trade details', 'danger');
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // ============ CALENDAR NAVIGATION ============
+        function prevMonth() {
+            if (currentMonth === 1) {
+                currentMonth = 12;
+                currentYear--;
+            } else {
+                currentMonth--;
+            }
+            
+            if (currentView === 'calendar') {
+                loadFullCalendarData(currentYear, currentMonth);
+            } else {
+                loadCalendarData(currentYear, currentMonth);
+            }
+        }
+
+        function nextMonth() {
+            if (currentMonth === 12) {
+                currentMonth = 1;
+                currentYear++;
+            } else {
+                currentMonth++;
+            }
+            
+            if (currentView === 'calendar') {
+                loadFullCalendarData(currentYear, currentMonth);
+            } else {
+                loadCalendarData(currentYear, currentMonth);
+            }
+        }
+
+        async function loadFullCalendarData(year, month) {
+            try {
+                const response = await fetch(`/api/analytics/calendar/${year}/${month}`);
+                if (!response.ok) throw new Error(`Calendar API error: ${response.status}`);
+                
+                const calendarData = await response.json();
+                updateFullCalendar(calendarData);
+                
+            } catch (error) {
+                console.error('❌ Error loading full calendar:', error);
+            }
+        }
+
+        function updateFullCalendar(calendarData) {
+            const grid = document.getElementById('full-calendar-grid');
+            if (!grid) return;
+            
+            grid.innerHTML = '';
+            
+            // Update month title
+            document.getElementById('full-calendar-month').textContent = 
+                `${calendarData.month_name} ${calendarData.year}`;
+            
+            // Day headers
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            days.forEach(day => {
+                const header = document.createElement('div');
+                header.className = 'calendar-day-header';
+                header.textContent = day;
+                grid.appendChild(header);
+            });
+            
+            // Empty cells for days before the first day of month
+            for (let i = 0; i < calendarData.first_weekday; i++) {
+                const empty = document.createElement('div');
+                empty.className = 'calendar-day';
+                grid.appendChild(empty);
+            }
+            
+            // Days of the month
+            for (let day = 1; day <= calendarData.days_in_month; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                
+                const dayData = calendarData.data[day];
+                if (dayData) {
+                    dayElement.classList.add(dayData.pnl >= 0 ? 'profit' : 'loss');
+                    dayElement.classList.add('has-trades');
+                    dayElement.title = `${dayData.trades} trades, P&L: ${formatCurrency(dayData.pnl)}`;
+                    
+                    dayElement.innerHTML = `
+                        <div class="day-number">${day}</div>
+                        <div class="day-stats">
+                            <div class="day-pnl ${dayData.pnl >= 0 ? 'positive' : 'negative'}">
+                                ${formatCurrency(dayData.pnl)}
+                            </div>
+                            <div class="text-xs">${dayData.trades} trade${dayData.trades !== 1 ? 's' : ''}</div>
+                        </div>
+                    `;
+                    
+                    dayElement.onclick = () => showDayTrades(calendarData.year, calendarData.month, day);
+                } else {
+                    dayElement.innerHTML = `<div class="day-number">${day}</div>`;
+                }
+                
+                grid.appendChild(dayElement);
+            }
+        }
+
+        // ============ UTILITY FUNCTIONS ============
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 24px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 600;
+                z-index: 10000;
+                animation: slideIn 0.3s ease-out;
+                background: ${type === 'success' ? '#10b981' : 
+                            type === 'danger' ? '#ef4444' : 
+                            type === 'warning' ? '#f59e0b' : '#3b82f6'};
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        function showLoading() {
+            // Add loading indicator to stats cards
+            document.querySelectorAll('.stat-value').forEach(el => {
+                el.innerHTML = '<span class="loading"></span>';
+            });
+        }
+
+        function hideLoading() {
+            // Loading is hidden by data updates
+        }
+
+        function refreshDashboard() {
+            loadDashboardData();
+            loadCalendarData(currentYear, currentMonth);
+            showNotification('Dashboard refreshed', 'success');
+        }
+
+        // ============ PLACEHOLDER FUNCTIONS ============
+        function addNewTrade() {
+            showNotification('Add Trade feature coming soon!', 'info');
+        }
+
+        function addNewKeyLevel() {
+            showNotification('Add Key Level feature coming soon!', 'info');
+        }
+
+        function exportData() {
+            window.open('/api/export/trades', '_blank');
+            showNotification('Exporting trades data...', 'success');
+        }
+
+        function filterByInstrument(instrument) {
+            showNotification(`Filtering by instrument: ${instrument}`, 'info');
+            // Implement filtering logic
+        }
+
+        function filterByDirection(direction) {
+            showNotification(`Filtering by direction: ${direction}`, 'info');
+            // Implement filtering logic
+        }
+
+        function showHealth() {
+            fetch('/api/health')
+                .then(res => res.json())
+                .then(data => {
+                    showNotification(`System status: ${data.status}`, 'success');
+                })
+                .catch(err => {
+                    showNotification('Health check failed', 'danger');
+                });
+        }
+
+        function showKeyLevelAnalytics(keyLevel) {
+            showNotification(`Showing analytics for key level: ${keyLevel}`, 'info');
+            showAnalytics('keylevel');
+        }
+
+        function showInstrumentAnalytics(instrument) {
+            showNotification(`Showing analytics for instrument: ${instrument}`, 'info');
+            showAnalytics('instrument');
+        }
+
+        function showDayTrades(year, month, day) {
+            const date = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+            showNotification(`Showing trades for: ${date}`, 'info');
+            // Implement date filtering
+        }
+
+        function showDayTradesFromString(dateStr) {
+            showNotification(`Showing trades for: ${dateStr}`, 'info');
+            // Implement date filtering
+        }
+
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

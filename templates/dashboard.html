@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Journal - Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                <h1>TRADING JOURNAL</h1>
+            </div>
+            <div class="header-actions">
+                <span class="last-update">Last update: <span id="lastUpdateTime">Just now</span></span>
+                <button class="btn-refresh" onclick="refreshData()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        </header>
+
+        <!-- Account Summary -->
+        <div class="account-summary">
+            <div class="account-card">
+                <div class="account-label">Account Balance</div>
+                <div class="account-value">{{ account_balance }}</div>
+            </div>
+            <div class="account-card">
+                <div class="account-label">Account Equity</div>
+                <div class="account-value">{{ account_equity }}</div>
+            </div>
+            <div class="account-card">
+                <div class="account-label">Best Trade</div>
+                <div class="account-value" style="color: #00ff00;">
+                    {{ best_trade.pnl }} ({{ best_trade.percent }})
+                </div>
+                <div class="account-symbol">{{ best_trade.symbol }}</div>
+            </div>
+            <div class="account-card">
+                <div class="account-label">Worst Trade</div>
+                <div class="account-value" style="color: #ff0000;">
+                    {{ worst_trade.pnl }} ({{ worst_trade.percent }})
+                </div>
+                <div class="account-symbol">{{ worst_trade.symbol }}</div>
+            </div>
+        </div>
+
+        <!-- Metrics Section with DEBUG -->
+        <div class="section-title">
+            <i class="fas fa-tachometer-alt"></i>
+            <h2>Performance Metrics</h2>
+        </div>
+        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Profit Factor</div>
+                <div class="metric-value">{{ metrics.profit_factor }}</div>
+                <div class="metric-debug">P: ${{ metrics.total_profit }} | L: ${{ metrics.total_loss }}</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Expectancy</div>
+                <div class="metric-value">${{ metrics.expectancy }}</div>
+                <div class="metric-debug">Avg Win: ${{ metrics.avg_win }} | Avg Loss: ${{ metrics.avg_loss }}</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Win Rate</div>
+                <div class="metric-value">{{ metrics.win_rate }}%</div>
+                <div class="metric-debug">W: {{ metrics.winning_trades }} | L: {{ metrics.losing_trades }}</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Risk:Reward</div>
+                <div class="metric-value">{{ metrics.risk_reward }}:1</div>
+                <div class="metric-debug">Max DD: ${{ metrics.max_drawdown }}</div>
+            </div>
+        </div>
+
+        <!-- Debug Panel -->
+        <div class="debug-panel">
+            <h4><i class="fas fa-bug"></i> DEBUG INFO</h4>
+            <div class="debug-grid">
+                <div>Total Trades: <strong>{{ metrics.total_trades }}</strong></div>
+                <div>Winning: <strong style="color: #00ff00;">{{ metrics.winning_trades }}</strong></div>
+                <div>Losing: <strong style="color: #ff0000;">{{ metrics.losing_trades }}</strong></div>
+                <div>Total Profit: <strong style="color: #00ff00;">${{ metrics.total_profit }}</strong></div>
+                <div>Total Loss: <strong style="color: #ff0000;">${{ metrics.total_loss }}</strong></div>
+                <div>Largest Win: <strong style="color: #00ff00;">${{ metrics.largest_win }}</strong></div>
+                <div>Largest Loss: <strong style="color: #ff0000;">${{ metrics.largest_loss }}</strong></div>
+                <div>Avg Win: <strong>${{ metrics.avg_win }}</strong></div>
+                <div>Avg Loss: <strong>${{ metrics.avg_loss }}</strong></div>
+            </div>
+        </div>
+
+        <!-- Streak Info -->
+        {% if current_streak > 0 %}
+        <div class="streak-info">
+            <div class="streak-badge {{ 'win-streak' if is_win_streak else 'loss-streak' }}">
+                <i class="fas fa-fire"></i>
+                {{ current_streak }} {{ 'Win' if is_win_streak else 'Loss' }} Streak
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Column: Recent Trades -->
+            <div class="column">
+                <div class="section-title">
+                    <i class="fas fa-exchange-alt"></i>
+                    <h2>Recent Trades</h2>
+                </div>
+                <div class="card">
+                    <table class="trades-table">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Side</th>
+                                <th>Entry</th>
+                                <th>Exit</th>
+                                <th>P&L</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trade in recent_trades %}
+                            <tr class="{{ trade.pnl_class }}" onclick="showTradeDetails({{ trade.id }})">
+                                <td>{{ trade.symbol }}</td>
+                                <td class="side-{{ trade.side|lower }}">{{ trade.side }}</td>
+                                <td>{{ trade.entry_price }}</td>
+                                <td>{{ trade.exit_price }}</td>
+                                <td class="pnl-{{ trade.pnl_class }}">{{ trade.pnl }}</td>
+                                <td>{{ trade.entry_time }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Right Column: Calendar -->
+            <div class="column">
+                <div class="section-title">
+                    <i class="fas fa-calendar-alt"></i>
+                    <h2>Trading Calendar - {{ calendar_data.month_name }} {{ calendar_data.year }}</h2>
+                </div>
+                <div class="card">
+                    <div class="calendar" id="calendar">
+                        <!-- Calendar will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Open Positions -->
+        {% if open_positions %}
+        <div class="section-title">
+            <i class="fas fa-bullseye"></i>
+            <h2>Open Positions</h2>
+        </div>
+        <div class="card">
+            <table class="positions-table">
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Side</th>
+                        <th>Entry Price</th>
+                        <th>Quantity</th>
+                        <th>P&L</th>
+                        <th>Entry Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for position in open_positions %}
+                    <tr>
+                        <td>{{ position.symbol }}</td>
+                        <td class="side-{{ position.side|lower }}">{{ position.side }}</td>
+                        <td>{{ position.entry_price }}</td>
+                        <td>{{ position.quantity }}</td>
+                        <td>{{ position.pnl }}</td>
+                        <td>{{ position.entry_time }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- Navigation -->
+        <div class="navigation">
+            <a href="/" class="nav-btn active">
+                <i class="fas fa-home"></i> Dashboard
+            </a>
+            <a href="/calendar" class="nav-btn">
+                <i class="fas fa-calendar"></i> Calendar View
+            </a>
+            <a href="/key-levels" class="nav-btn">
+                <i class="fas fa-mountain"></i> Key Levels
+            </a>
+        </div>
+    </div>
+
+    <!-- Trade Details Modal -->
+    <div id="tradeModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div id="modalContent">
+                <!-- Content loaded by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Day Trades Modal -->
+    <div id="dayModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeDayModal()">&times;</span>
+            <h3 id="dayModalTitle">Trades for </h3>
+            <div id="dayModalContent">
+                <!-- Content loaded by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Calendar generation
+        function generateCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            const year = {{ calendar_data.year }};
+            const month = {{ calendar_data.month }};
+            const dailySummaries = {{ calendar_data.daily_summaries|tojson }};
+            
+            const firstDay = new Date(year, month - 1, 1);
+            const lastDay = new Date(year, month, 0);
+            const daysInMonth = lastDay.getDate();
+            
+            // Get today's date
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            
+            // Create calendar header
+            let calendarHTML = `
+                <div class="calendar-header">
+                    <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                </div>
+                <div class="calendar-days">
+            `;
+            
+            // Add empty cells for days before the first day of month
+            const firstDayOfWeek = firstDay.getDay();
+            const startOffset = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+            
+            for (let i = 0; i < startOffset; i++) {
+                calendarHTML += `<div class="calendar-day empty"></div>`;
+            }
+            
+            // Add days of month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+                const summary = dailySummaries[dateStr];
+                const isToday = dateStr === todayStr;
+                
+                let dayClass = 'calendar-day';
+                if (isToday) dayClass += ' today';
+                if (summary && summary.trade_count > 0) dayClass += ' has-trades';
+                
+                let dayHTML = `<div class="${dayClass}" data-date="${dateStr}" onclick="showDayTrades('${dateStr}')">`;
+                dayHTML += `<div class="day-number">${day}</div>`;
+                
+                if (summary && summary.trade_count > 0) {
+                    const pnlClass = summary.total_pnl >= 0 ? 'positive' : 'negative';
+                    dayHTML += `
+                        <div class="day-stats">
+                            <div class="trade-count">${summary.trade_count} trades</div>
+                            <div class="day-pnl ${pnlClass}">${summary.total_pnl >= 0 ? '+' : ''}$${Math.abs(summary.total_pnl)}</div>
+                            <div class="day-winrate">${summary.win_rate}% WR</div>
+                        </div>
+                    `;
+                } else {
+                    dayHTML += `<div class="day-stats no-trades">No trades</div>`;
+                }
+                
+                dayHTML += `</div>`;
+                calendarHTML += dayHTML;
+            }
+            
+            calendarHTML += `</div>`;
+            calendarEl.innerHTML = calendarHTML;
+        }
+        
+        // Show trades for a specific day
+        function showDayTrades(date) {
+            fetch(`/api/day-trades?date=${date}`)
+                .then(response => response.json())
+                .then(data => {
+                    const modal = document.getElementById('dayModal');
+                    const title = document.getElementById('dayModalTitle');
+                    const content = document.getElementById('dayModalContent');
+                    
+                    title.textContent = `Trades for ${date}`;
+                    
+                    let html = '';
+                    if (data.summary) {
+                        html += `
+                            <div class="day-summary">
+                                <div class="summary-stats">
+                                    <div class="stat">
+                                        <span class="stat-label">Total P&L:</span>
+                                        <span class="stat-value ${data.summary.total_pnl >= 0 ? 'positive' : 'negative'}">
+                                            ${data.summary.total_pnl >= 0 ? '+' : ''}$${data.summary.total_pnl}
+                                        </span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-label">Win Rate:</span>
+                                        <span class="stat-value">${data.summary.win_rate}%</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-label">Trades:</span>
+                                        <span class="stat-value">${data.summary.trade_count}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    if (data.trades && data.trades.length > 0) {
+                        html += `<table class="modal-trades-table">`;
+                        html += `
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Side</th>
+                                    <th>Entry</th>
+                                    <th>Exit</th>
+                                    <th>P&L</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                        `;
+                        
+                        data.trades.forEach(trade => {
+                            html += `
+                                <tr class="${trade.pnl_class}" onclick="showTradeDetails(${trade.id})">
+                                    <td>${trade.symbol}</td>
+                                    <td class="side-${trade.side.toLowerCase()}">${trade.side}</td>
+                                    <td>${trade.entry_price}</td>
+                                    <td>${trade.exit_price}</td>
+                                    <td class="pnl-${trade.pnl_class}">${trade.pnl}</td>
+                                    <td>${trade.entry_time}</td>
+                                </tr>
+                            `;
+                        });
+                        
+                        html += `</tbody></table>`;
+                    } else {
+                        html += `<div class="no-trades">No trades on this day</div>`;
+                    }
+                    
+                    content.innerHTML = html;
+                    modal.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error fetching day trades:', error);
+                });
+        }
+        
+        // Show trade details
+        function showTradeDetails(tradeId) {
+            fetch(`/api/trade/${tradeId}`)
+                .then(response => response.json())
+                .then(trade => {
+                    const modal = document.getElementById('tradeModal');
+                    const content = document.getElementById('modalContent');
+                    
+                    let html = `
+                        <div class="trade-detail">
+                            <h3>${trade.symbol} - ${trade.side.toUpperCase()} Trade</h3>
+                            
+                            <div class="trade-stats">
+                                <div class="stat-row">
+                                    <span class="stat-label">Entry Price:</span>
+                                    <span class="stat-value">$${trade.entry_price.toFixed(2)}</span>
+                                </div>
+                                <div class="stat-row">
+                                    <span class="stat-label">Exit Price:</span>
+                                    <span class="stat-value">$${trade.exit_price.toFixed(2)}</span>
+                                </div>
+                                <div class="stat-row">
+                                    <span class="stat-label">Quantity:</span>
+                                    <span class="stat-value">${trade.quantity.toFixed(4)}</span>
+                                </div>
+                                <div class="stat-row">
+                                    <span class="stat-label">P&L:</span>
+                                    <span class="stat-value ${trade.pnl >= 0 ? 'positive' : 'negative'}">
+                                        ${trade.pnl >= 0 ? '+' : ''}$${trade.pnl.toFixed(2)} (${trade.pnl_percent.toFixed(2)}%)
+                                    </span>
+                                </div>
+                                <div class="stat-row">
+                                    <span class="stat-label">Entry Time:</span>
+                                    <span class="stat-value">${trade.entry_time}</span>
+                                </div>
+                                ${trade.exit_time ? `
+                                <div class="stat-row">
+                                    <span class="stat-label">Exit Time:</span>
+                                    <span class="stat-value">${trade.exit_time}</span>
+                                </div>
+                                ` : ''}
+                                <div class="stat-row">
+                                    <span class="stat-label">Fees:</span>
+                                    <span class="stat-value">$${trade.fees.toFixed(2)}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="trade-tabs">
+                                <button class="tab-btn active" onclick="switchTab('screenshots')">Screenshots</button>
+                                <button class="tab-btn" onclick="switchTab('keylevels')">Key Levels</button>
+                                <button class="tab-btn" onclick="switchTab('confirmations')">Confirmations</button>
+                                <button class="tab-btn" onclick="switchTab('model')">Model</button>
+                            </div>
+                            
+                            <div id="screenshotsTab" class="tab-content active">
+                                <div class="screenshot-upload">
+                                    <h4>Trade Screenshots (3 slots)</h4>
+                                    <div class="screenshot-slots">
+                                        <div class="screenshot-slot">
+                                            <div class="slot-label">Before Trade</div>
+                                            <div class="slot-content">
+                                                ${trade.details.screenshot_urls[0] ? 
+                                                    `<img src="${trade.details.screenshot_urls[0]}" alt="Before Trade">` : 
+                                                    '<div class="upload-placeholder">Click to upload</div>'
+                                                }
+                                            </div>
+                                        </div>
+                                        <div class="screenshot-slot">
+                                            <div class="slot-label">Trade Taken</div>
+                                            <div class="slot-content">
+                                                ${trade.details.screenshot_urls[1] ? 
+                                                    `<img src="${trade.details.screenshot_urls[1]}" alt="Trade Taken">` : 
+                                                    '<div class="upload-placeholder">Click to upload</div>'
+                                                }
+                                            </div>
+                                        </div>
+                                        <div class="screenshot-slot">
+                                            <div class="slot-label">After Trade</div>
+                                            <div class="slot-content">
+                                                ${trade.details.screenshot_urls[2] ? 
+                                                    `<img src="${trade.details.screenshot_urls[2]}" alt="After Trade">` : 
+                                                    '<div class="upload-placeholder">Click to upload</div>'
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="keylevelsTab" class="tab-content">
+                                <h4>Key Levels Used</h4>
+                                <div class="custom-list">
+                                    ${trade.details.key_levels ? 
+                                        `<div class="list-item">${trade.details.key_levels}</div>` :
+                                        '<div class="empty-list">No key levels recorded</div>'
+                                    }
+                                </div>
+                            </div>
+                            
+                            <div id="confirmationsTab" class="tab-content">
+                                <h4>Confirmations Used</h4>
+                                <div class="custom-list">
+                                    ${trade.details.confirmations ? 
+                                        `<div class="list-item">${trade.details.confirmations}</div>` :
+                                        '<div class="empty-list">No confirmations recorded</div>'
+                                    }
+                                </div>
+                            </div>
+                            
+                            <div id="modelTab" class="tab-content">
+                                <h4>Trading Model</h4>
+                                <div class="custom-list">
+                                    ${trade.details.model ? 
+                                        `<div class="list-item">${trade.details.model}</div>` :
+                                        '<div class="empty-list">No model recorded</div>'
+                                    }
+                                </div>
+                            </div>
+                            
+                            <div class="notes-section">
+                                <h4>Notes</h4>
+                                <textarea id="tradeNotes" class="notes-textarea" placeholder="Add notes about this trade...">${trade.notes || ''}</textarea>
+                            </div>
+                            
+                            <div class="modal-actions">
+                                <button class="btn-save" onclick="saveTradeDetails(${trade.id})">
+                                    <i class="fas fa-save"></i> Save Changes
+                                </button>
+                                <button class="btn-close" onclick="closeModal()">
+                                    <i class="fas fa-times"></i> Close
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    content.innerHTML = html;
+                    modal.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error fetching trade details:', error);
+                });
+        }
+        
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            
+            // Activate clicked button
+            event.target.classList.add('active');
+        }
+        
+        // Save trade details
+        function saveTradeDetails(tradeId) {
+            const notes = document.getElementById('tradeNotes').value;
+            
+            const data = {
+                additional_notes: notes
+            };
+            
+            fetch(`/api/update-trade-details/${tradeId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert('Trade details saved successfully!');
+                } else {
+                    alert('Error saving trade details');
+                }
+            })
+            .catch(error => {
+                console.error('Error saving trade details:', error);
+                alert('Error saving trade details');
+            });
+        }
+        
+        // Close modals
+        function closeModal() {
+            document.getElementById('tradeModal').style.display = 'none';
+        }
+        
+        function closeDayModal() {
+            document.getElementById('dayModal').style.display = 'none';
+        }
+        
+        // Refresh data
+        function refreshData() {
+            const refreshBtn = document.querySelector('.btn-refresh');
+            const updateTime = document.getElementById('lastUpdateTime');
+            
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+            refreshBtn.disabled = true;
+            
+            fetch('/api/refresh-data')
+                .then(response => response.json())
+                .then(data => {
+                    setTimeout(() => {
+                        refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
+                        refreshBtn.disabled = false;
+                        updateTime.textContent = new Date().toLocaleTimeString();
+                        
+                        if (data.success) {
+                            alert(`Data refreshed! ${data.message}`);
+                            location.reload();
+                        } else {
+                            alert(`Refresh failed: ${data.error}`);
+                        }
+                    }, 1000);
+                })
+                .catch(error => {
+                    refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
+                    refreshBtn.disabled = false;
+                    alert('Error refreshing data');
+                });
+        }
+        
+        // Initialize calendar when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            generateCalendar();
+            
+            // Update last update time
+            document.getElementById('lastUpdateTime').textContent = new Date().toLocaleTimeString();
+            
+            // Close modals when clicking outside
+            window.onclick = function(event) {
+                const tradeModal = document.getElementById('tradeModal');
+                const dayModal = document.getElementById('dayModal');
+                
+                if (event.target == tradeModal) {
+                    tradeModal.style.display = 'none';
+                }
+                if (event.target == dayModal) {
+                    dayModal.style.display = 'none';
+                }
+            };
+        });
+    </script>
+</body>
+</html>
