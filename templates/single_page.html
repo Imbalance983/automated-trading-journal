@@ -84,7 +84,7 @@
 
         .metrics-dashboard {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(6, 1fr);
             gap: 15px;
             padding: 25px;
             background: #0b0b0b;
@@ -98,10 +98,60 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             text-align: center;
             transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
         }
 
         .metric-card:hover {
             transform: translateY(-5px);
+        }
+
+        .metric-card.win-rate-card {
+            grid-column: 1;
+            grid-row: 1 / 3;
+        }
+
+        .metric-card.key-metric {
+            padding: 12px;
+        }
+
+        .chart-container {
+            position: absolute;
+            width: 130px;
+            height: 70px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+        }
+
+        .chart-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .metric-value {
+            font-size: 1.6em;
+            font-weight: bold;
+            color: #ffffff;
+            position: relative;
+            z-index: 3;
+        }
+
+        .metric-value.positive {
+            color: #00ff88;
+        }
+
+        .metric-value.negative {
+            color: #ff3366;
         }
 
         .metric-label {
@@ -618,12 +668,15 @@
 
         <div class="metrics-dashboard" id="metricsDashboard">
             <div class="metric-card">
-                <div class="metric-label">Total P&L</div>
-                <div class="metric-value" id="totalPnl">$0</div>
+                <div class="metric-label">Win Rate</div>
+                <div class="metric-value" id="winRateValue">0%</div>
+                <div class="chart-container">
+                    <canvas id="winRateChart"></canvas>
+                </div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">Win Rate</div>
-                <div class="metric-value" id="winRate">0%</div>
+                <div class="metric-label">Total P&L</div>
+                <div class="metric-value" id="totalPnl">$0</div>
             </div>
             <div class="metric-card">
                 <div class="metric-label">Total Trades</div>
@@ -943,11 +996,55 @@
             document.getElementById('totalPnl').textContent = '$' + stats.total_pnl.toFixed(2);
             document.getElementById('totalPnl').className = 'metric-value ' + (stats.total_pnl >= 0 ? 'positive' : 'negative');
             
-            document.getElementById('winRate').textContent = stats.win_rate + '%';
             document.getElementById('totalTrades').textContent = stats.total_trades;
             document.getElementById('avgWin').textContent = '$' + stats.avg_win.toFixed(2);
             document.getElementById('avgLoss').textContent = '$' + stats.avg_loss.toFixed(2);
             document.getElementById('profitFactor').textContent = stats.profit_factor.toFixed(2);
+            
+            // Update Win Rate Chart with thinner line
+            updateWinRateChart(stats.win_rate);
+        }
+
+        let winRateChart = null;
+
+        function updateWinRateChart(winRate) {
+            const ctx = document.getElementById('winRateChart').getContext('2d');
+            const winRateValue = document.getElementById('winRateValue');
+            
+            winRateValue.textContent = winRate + '%';
+            
+            // Color based on performance
+            let color;
+            if (winRate >= 60) color = '#00ff88'; // Excellent - Green
+            else if (winRate >= 50) color = '#3b82f6'; // Good - Blue
+            else if (winRate >= 40) color = '#f59e0b'; // Average - Orange
+            else color = '#ff3366'; // Poor - Red
+            
+            if (winRateChart) {
+                winRateChart.destroy();
+            }
+            
+            winRateChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [winRate, 100 - winRate],
+                        backgroundColor: [color, 'rgba(255, 255, 255, 0.05)'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '88%', // Very thin ring for arch effect
+                    rotation: -90, // Start from top
+                    circumference: 180, // Half circle (arch)
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    }
+                }
+            });
         }
 
         function displayOpenTrades(trades) {
