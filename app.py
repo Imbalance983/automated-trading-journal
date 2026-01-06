@@ -49,48 +49,44 @@ def init_db():
     if 'daily_bias' not in existing_cols:
         cursor.execute("ALTER TABLE trades ADD COLUMN daily_bias TEXT")
 
-    # API credentials table with remember_me
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS api_credentials (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        exchange TEXT DEFAULT 'bybit',
-        api_key TEXT,
-        api_secret TEXT,
-        remember_me INTEGER DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    # Ensure existing rows have bias values so filters work even if user never set them
+    cursor.execute(
+        "UPDATE trades SET weekly_bias = 'neutral' WHERE weekly_bias IS NULL OR TRIM(weekly_bias) = ''"
     )
-    ''')
+    cursor.execute(
+        "UPDATE trades SET daily_bias = 'neutral' WHERE daily_bias IS NULL OR TRIM(daily_bias) = ''"
+    )
 
     # Add sample data for December 2025 if empty
     cursor.execute("SELECT COUNT(*) FROM trades")
     if cursor.fetchone()[0] == 0:
         sample_trades = [
             ('BTCUSDT', 'long', 85000, 87000, 0.1, '2025-12-01 09:00:00', '2025-12-01 10:30:00', 200, '85000',
-             'support', 'break_retest', 'Bull Flag', 'Good trade'),
+             'support', 'break_retest', 'Bull Flag', 'Good trade', 'bullish', 'neutral'),
             ('ETHUSDT', 'short', 4500, 4400, 1.0, '2025-12-01 14:00:00', '2025-12-01 15:00:00', 100, '4500',
-             'resistance', 'candle_pattern', 'Evening Star', 'Scalp'),
+             'resistance', 'candle_pattern', 'Evening Star', 'Scalp', 'bearish', 'bearish'),
             ('SOLUSDT', 'long', 200, 210, 10.0, '2025-12-02 10:00:00', '2025-12-02 12:00:00', 100, '200', 'trendline',
-             'volume_spike', 'Breakout', 'Volume spike'),
+             'volume_spike', 'Breakout', 'Volume spike', 'bullish', 'bullish'),
             ('BTCUSDT', 'short', 86000, 85500, 0.2, '2025-12-03 11:00:00', '2025-12-03 13:00:00', -100, '86000',
-             'resistance', 'divergence', 'RSI Div', 'Failed'),
+             'resistance', 'divergence', 'RSI Div', 'Failed', 'bearish', 'neutral'),
             ('ETHUSDT', 'long', 4400, 4600, 0.5, '2025-12-05 09:30:00', '2025-12-05 16:00:00', 100, '4400', 'fibonacci',
-             'multiple_timeframe', 'Fib', '4H TF'),
+             'multiple_timeframe', 'Fib', '4H TF', 'neutral', 'bullish'),
             ('SOLUSDT', 'short', 210, 205, 5.0, '2025-12-05 14:00:00', '2025-12-05 15:30:00', 25, '210', 'pivot',
-             'break_retest', 'Pivot Reject', 'Weekly pivot'),
+             'break_retest', 'Pivot Reject', 'Weekly pivot', 'bearish', 'bearish'),
             ('BTCUSDT', 'long', 85500, 86500, 0.15, '2025-12-10 10:00:00', '2025-12-10 14:00:00', 150, '85500',
-             'support', 'candle_pattern', 'Hammer', 'Daily support'),
+             'support', 'candle_pattern', 'Hammer', 'Daily support', 'bullish', 'neutral'),
             ('ETHUSDT', 'short', 4550, 4500, 2.0, '2025-12-15 13:00:00', '2025-12-15 15:00:00', 100, '4550',
-             'resistance', 'volume_spike', 'Volume Wall', 'Rejection'),
+             'resistance', 'volume_spike', 'Volume Wall', 'Rejection', 'bearish', 'bearish'),
             ('SOLUSDT', 'long', 195, 210, 8.0, '2025-12-20 09:00:00', '2025-12-20 18:00:00', 120, '195', 'support',
-             'break_retest', 'Double Bottom', 'Reversal'),
+             'break_retest', 'Double Bottom', 'Reversal', 'bullish', 'bullish'),
             ('BTCUSDT', 'long', 87000, 88000, 0.05, '2025-12-25 11:00:00', '2025-12-25 13:00:00', 50, '87000',
-             'trendline', 'multiple_timeframe', 'Trend', 'Christmas')
+             'trendline', 'multiple_timeframe', 'Trend', 'Christmas', 'neutral', 'bullish')
         ]
 
         cursor.executemany('''
             INSERT INTO trades (asset, side, entry_price, exit_price, quantity, entry_time, exit_time, 
-                              pnl, key_level, key_level_type, confirmation, model, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                              pnl, key_level, key_level_type, confirmation, model, notes, weekly_bias, daily_bias)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', sample_trades)
 
     conn.commit()
@@ -115,6 +111,8 @@ def index():
 @app.route('/api/trades', methods=['GET'])
 def get_trades():
     period = request.args.get('period', 'all')
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -122,6 +120,10 @@ def get_trades():
     # Build query based on period
     query = "SELECT * FROM trades WHERE 1=1"
     params = []
+
+    if start_date and end_date:
+        query += " AND DATE(entry_time) BETWEEN ? AND ?"
+        params.extend([start_date, end_date])
 
     if period == 'today':
         query += " AND DATE(entry_time) = DATE('now')"
@@ -134,6 +136,13 @@ def get_trades():
     cursor.execute(query, params)
 
     trades = [dict(row) for row in cursor.fetchall()]
+
+    # Ensure bias fields are always present so filters work even if older trades have blanks
+    for t in trades:
+        if not t.get('weekly_bias') or str(t.get('weekly_bias')).strip() == '':
+            t['weekly_bias'] = 'neutral'
+        if not t.get('daily_bias') or str(t.get('daily_bias')).strip() == '':
+            t['daily_bias'] = 'neutral'
 
     # Calculate statistics
     total_trades = len(trades)
@@ -292,6 +301,7 @@ def get_calendar_data():
     events = []
     for row in rows:
         win_rate = (row['winning_trades'] / row['trade_count'] * 100) if row['trade_count'] > 0 else 0
+        win_rate = round(win_rate, 1)
 
         # Determine color based on P&L
         if row['daily_pnl'] > 0:
@@ -302,7 +312,7 @@ def get_calendar_data():
             color = '#9E9E9E'  # Gray
 
         events.append({
-            'title': f"${row['daily_pnl']:.0f} | {row['trade_count']} trades | {win_rate:.0f}% WR",
+            'title': f"${row['daily_pnl']:.0f} | {row['trade_count']} trades | {round(win_rate, 1)}% WR",
             'start': row['trade_date'],
             'allDay': True,
             'backgroundColor': color,
@@ -450,8 +460,41 @@ def sync_bybit_trades():
     # This would integrate with actual Bybit API
     return jsonify({
         'success': True,
-        'message': 'Bybit sync would work with real API keys',
-        'count': 0
+        'message': 'Trade sync feature coming soon!',
+        'trades_synced': 0
+    })
+
+
+@app.route('/api/bulk_fill_bias', methods=['POST'])
+def bulk_fill_bias():
+    data = request.json or {}
+    weekly_value = (data.get('weekly_bias') or 'neutral').strip().lower()
+    daily_value = (data.get('daily_bias') or 'neutral').strip().lower()
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "UPDATE trades SET weekly_bias = ? WHERE weekly_bias IS NULL OR TRIM(weekly_bias) = ''",
+        (weekly_value,),
+    )
+    weekly_updated = cursor.rowcount
+
+    cursor.execute(
+        "UPDATE trades SET daily_bias = ? WHERE daily_bias IS NULL OR TRIM(daily_bias) = ''",
+        (daily_value,),
+    )
+    daily_updated = cursor.rowcount
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        'success': True,
+        'weekly_updated': weekly_updated,
+        'daily_updated': daily_updated,
+        'weekly_bias': weekly_value,
+        'daily_bias': daily_value,
     })
 
 

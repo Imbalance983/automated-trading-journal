@@ -34,47 +34,54 @@
         }
 
         .header {
-            background: #1a1a1a;
+            background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%), #0b0b0b;
             color: white;
-            padding: 30px;
+            padding: 15px 20px;
             text-align: center;
-            border-bottom: 1px solid #333333;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
         }
 
         .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+            font-size: 1.6em;
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-size: 0.85em;
+            color: #9ca3af;
         }
 
         /* Period Filter Tabs */
         .period-filter {
             display: flex;
             justify-content: center;
-            gap: 10px;
-            padding: 20px;
+            gap: 6px;
+            padding: 8px 20px;
             background: #0b0b0b;
-            border-bottom: 1px solid #333333;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
         }
 
         .period-tab {
-            padding: 10px 25px;
-            border: 1px solid #333333;
-            border-radius: 8px;
-            background: #111111;
+            padding: 6px 12px;
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 6px;
+            background: rgba(255,255,255,0.03);
+            color: #e5e7eb;
             cursor: pointer;
-            font-weight: 600;
+            font-weight: 500;
+            font-size: 0.85em;
             transition: all 0.3s;
             user-select: none;
         }
 
         .period-tab:hover {
-            border-color: #555555;
+            border-color: rgba(139, 92, 246, 0.45);
         }
 
         .period-tab.active {
-            background: #1a1a1a;
-            color: white;
-            border-color: #555555;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(139, 92, 246, 0.18));
+            color: #ffffff;
+            border-color: rgba(139, 92, 246, 0.75);
         }
 
         /* Horizontal Metrics Dashboard */
@@ -89,7 +96,7 @@
 
         .metric-card {
             background: #111111;
-            padding: 20px;
+            padding: 16px;
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             text-align: center;
@@ -102,7 +109,7 @@
         }
 
         .metric-label {
-            font-size: 0.85em;
+            font-size: 0.8em;
             color: #bbbbbb;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -110,7 +117,7 @@
         }
 
         .metric-value {
-            font-size: 1.8em;
+            font-size: 1.6em;
             font-weight: bold;
             color: #ffffff;
         }
@@ -145,7 +152,16 @@
             border: 1px solid #333333;
         }
 
-        .api-input {\r\n            flex: 1;\r\n            min-width: 200px;\r\n            padding: 10px 15px;\r\n            border: 1px solid #333333;\r\n            border-radius: 8px;\r\n            font-size: 0.95em;\r\n            background: #111111;\r\n            color: #ffffff;\r\n        }
+        .api-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 15px;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            font-size: 0.95em;
+            background: #111111;
+            color: #ffffff;
+        }
 
         .remember-me {
             display: flex;
@@ -170,21 +186,25 @@
         }
 
         .btn-primary {
-            background: #007bff;
-            color: white;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(139, 92, 246, 0.18));
+            color: #ffffff;
+            border: 1px solid rgba(139, 92, 246, 0.45);
         }
 
         .btn-primary:hover {
-            background: #0056b3;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(139, 92, 246, 0.25));
+            border-color: rgba(139, 92, 246, 0.75);
         }
 
         .btn-success {
-            background: #28a745;
-            color: white;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(139, 92, 246, 0.18));
+            color: #ffffff;
+            border: 1px solid rgba(139, 92, 246, 0.45);
         }
 
         .btn-success:hover {
-            background: #218838;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(139, 92, 246, 0.25));
+            border-color: rgba(139, 92, 246, 0.75);
         }
 
         .btn-danger {
@@ -229,21 +249,65 @@
 
         /* Color code entire day cells */
         .fc-day-profit {
-            background-color: rgba(0, 255, 136, 0.08) !important;
+            background-color: rgba(0, 255, 136, 0.12) !important;
+            border-radius: 10px;
         }
 
         .fc-day-loss {
-            background-color: rgba(255, 51, 102, 0.08) !important;
+            background-color: rgba(255, 51, 102, 0.12) !important;
+            border-radius: 10px;
         }
 
         .fc-day-breakeven {
-            background-color: rgba(255, 255, 255, 0.04) !important;
+            background-color: rgba(255, 255, 255, 0.03) !important;
+            border-radius: 10px;
         }
 
         .fc-daygrid-day {
             cursor: pointer;
             transition: all 0.2s;
             position: relative;
+        }
+
+        /* Calendar grid styling (dark, minimal borders like reference) */
+        .fc .fc-scrollgrid,
+        .fc .fc-scrollgrid-section > td,
+        .fc .fc-daygrid-body,
+        .fc .fc-toolbar .fc-button,
+        .fc .fc-toolbar .fc-button:focus,
+        .fc .fc-toolbar .fc-button:active,
+        .fc .fc-toolbar .fc-button:focus-visible {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            outline: none !important;
+            color: #ffffff !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            min-width: auto !important;
+            height: auto !important;
+            line-height: 1 !important;
+        }
+
+        .fc .fc-toolbar .fc-button:hover {
+            background: rgba(255, 255, 255, 0.06) !important;
+        }
+
+        .fc .fc-toolbar .fc-button .fc-icon {
+            color: #ffffff !important;
+        }
+
+        .fc .fc-col-header-cell {
+            background: #0b0b0b !important;
+            border: none !important;
+        }
+
+        .fc .fc-col-header-cell-cushion {
+            background: transparent !important;
+            border: none !important;
+            padding: 8px 4px !important;
+            color: #ffffff !important;
+            font-weight: 600 !important;
         }
 
         .fc-daygrid-day:hover {
@@ -253,17 +317,19 @@
         /* Day stats overlay */
         .day-stats {
             position: absolute;
-            bottom: 2px;
-            left: 2px;
-            right: 2px;
-            font-size: 0.7em;
-            background: rgba(0, 0, 0, 0.70);
-            color: #ffffff;
-            padding: 3px;
-            border-radius: 4px;
-            line-height: 1.2;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -45%);
+            text-align: center;
+            font-size: 0.78em;
+            background: transparent;
+            color: #eaeaea;
+            padding: 0;
+            border-radius: 0;
+            line-height: 1.15;
             pointer-events: none;
-            border: 1px solid rgba(255,255,255,0.08);
+            border: none;
+            width: calc(100% - 14px);
         }
 
         .day-trades {
@@ -276,11 +342,11 @@
         }
 
         .day-pnl.positive {
-            color: #28a745;
+            color: #8ff5c6;
         }
 
         .day-pnl.negative {
-            color: #dc3545;
+            color: #ff9db2;
         }
 
         .day-wr {
@@ -299,11 +365,15 @@
             overflow-y: auto;
         }
 
+        #tradesList {
+            margin-top: 52px;
+        }
+
         .trade-card {
             background: #0b0b0b;
-            padding: 15px;
+            padding: 10px;
             border-radius: 8px;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             border-left: 4px solid #007bff;
             cursor: pointer;
             transition: all 0.2s;
@@ -325,12 +395,12 @@
         .trade-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .trade-asset {
             font-weight: bold;
-            font-size: 1.1em;
+            font-size: 0.95em;
         }
 
         .trade-pnl {
@@ -346,7 +416,7 @@
         }
 
         .trade-details {
-            font-size: 0.9em;
+            font-size: 0.8em;
             color: #bbbbbb;
         }
 
@@ -415,293 +485,304 @@
 
         .filter-select {
             padding: 8px 12px;
-            border: 1px solid #333333;
+            border: 1px solid rgba(255,255,255,0.10);
             border-radius: 8px;
-            background: #111111;
+            background: rgba(255,255,255,0.03);
+            color: #ffffff;
+            color-scheme: dark;
             cursor: pointer;
             font-size: 0.95em;
         }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-        }
-
-        .stat-box {
+        .filter-select option {
             background: #0b0b0b;
-            padding: 20px;
-            border-radius: 12px;
-            border-left: 4px solid #007bff;
-            position: relative;
-        }
-
-        .stat-box-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .stat-title {
-            font-size: 1.1em;
-            font-weight: 600;
             color: #ffffff;
         }
 
-        .stat-actions {
-            display: flex;
-            gap: 8px;
+    .filter-select:focus {
+        outline: none;
+        border-color: rgba(139, 92, 246, 0.45);
+    }
+
+    .filter-select:active,
+    .filter-select:focus-visible {
+        background: #0b0b0b;
+        color: #ffffff;
+    }
+
+    .stat-box {
+        background: #0b0b0b;
+        padding: 20px;
+        border-radius: 12px;
+        border-left: 4px solid rgba(255,255,255,0.10);
+        position: relative;
+    }
+
+    .stat-box.stat-keylevels { border-left-color: rgba(0, 255, 136, 0.85); }
+    .stat-box.stat-confirmations { border-left-color: rgba(59, 130, 246, 0.85); }
+    .stat-box.stat-models { border-left-color: rgba(255, 51, 102, 0.85); }
+
+    .stat-box-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .stat-title {
+        font-size: 1.1em;
+        font-weight: 600;
+        color: #ffffff;
+    }
+
+    .stat-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .stat-list {
+        font-size: 0.95em;
+        line-height: 1.8;
+    }
+
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .stat-item:last-child {
+        border-bottom: none;
+    }
+
+    .stat-name {
+        font-weight: 500;
+        flex: 1;
+    }
+
+    .stat-metrics {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .stat-count {
+        background: #1a1a1a;
+        color: white;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 0.85em;
+    }
+
+    .stat-wr {
+        font-size: 0.85em;
+        font-weight: 600;
+    }
+
+    .stat-wr.good {
+        color: #00ff88;
+    }
+
+    .stat-wr.average {
+        color: #bbbbbb;
+    }
+
+    .stat-wr.poor {
+        color: #ff3366;
+    }
+
+    /* Modal */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        animation: fadeIn 0.3s;
+    }
+
+    .modal.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background: #111111;
+        padding: 30px;
+        border-radius: 15px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: slideIn 0.3s;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+        from { transform: translateY(-50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .close {
+        font-size: 2em;
+        cursor: pointer;
+        color: #adb5bd;
+    }
+
+    .close:hover {
+        color: #ffffff;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #ffffff;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #333333;
+        border-radius: 8px;
+        font-size: 1em;
+    }
+
+    .form-group textarea {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    /* Manage Options Modal */
+    .option-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        background: #0b0b0b;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+
+    .btn-delete {
+        padding: 5px 12px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.85em;
+    }
+
+    .btn-delete:hover {
+        background: #c82333;
+    }
+
+    .add-option-form input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #333333;
+        border-radius: 8px;
+    }
+
+    /* P&L Chart Section */
+    .pnl-chart-section {
+        padding: 25px;
+        background: #0b0b0b;
+        border-bottom: 1px solid #333333;
+    }
+
+    .pnl-chart-container {
+        background: #111111;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        height: 220px;
+    }
+
+    .pnl-chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .pnl-chart-title {
+        font-size: 1.2em;
+        font-weight: 600;
+        color: #ffffff;
+    }
+
+    .pnl-chart-canvas {
+        height: 180px;
+        width: 100%;
+    }
+
+    #customRange {
+        display: none;
+        justify-content: flex-start;
+        gap: 10px;
+        padding: 10px 0 0 0;
+        flex-wrap: wrap;
+    }
+
+    @media (max-width: 768px) {
+        .main-content {
+            grid-template-columns: 1fr;
         }
 
-        .stat-list {
-            font-size: 0.95em;
-            line-height: 1.8;
-        }
-
-        .stat-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        .stat-item:last-child {
-            border-bottom: none;
-        }
-
-        .stat-name {
-            font-weight: 500;
-            flex: 1;
-        }
-
-        .stat-metrics {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .stat-count {
-            background: #1a1a1a;
-            color: white;
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 0.85em;
-        }
-
-        .stat-wr {
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 0.85em;
-            font-weight: 600;
-        }
-
-        .stat-wr.good {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .stat-wr.average {
-            background: #0b0b0b;
-            color: #856404;
-        }
-
-        .stat-wr.poor {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            animation: fadeIn 0.3s;
-        }
-
-        .modal.active {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-content {
-            background: #111111;
-            padding: 30px;
-            border-radius: 15px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            animation: slideIn 0.3s;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes slideIn {
-            from { transform: translateY(-50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #e9ecef;
-        }
-
-        .close {
-            font-size: 2em;
-            cursor: pointer;
-            color: #adb5bd;
-        }
-
-        .close:hover {
-            color: #ffffff;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #ffffff;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #333333;
-            border-radius: 8px;
-            font-size: 1em;
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 80px;
+        .metrics-dashboard {
+            grid-template-columns: repeat(2, 1fr);
         }
 
         .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            grid-template-columns: 1fr;
         }
-
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        /* Manage Options Modal */
-        .option-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            background: #0b0b0b;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
-
-        .btn-delete {
-            padding: 5px 12px;
-            background: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.85em;
-        }
-
-        .btn-delete:hover {
-            background: #c82333;
-        }
-
-        
-        .add-option-form input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #333333;
-            border-radius: 8px;
-        }
-        /* P&L Chart Section */
-        .pnl-chart-section {
-            padding: 25px;
-            background: #0b0b0b;
-            border-bottom: 1px solid #333333;
-        }
-
-        .pnl-chart-container {
-            background: #111111;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            height: 220px;
-        }
-
-        .pnl-chart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .pnl-chart-title {
-            font-size: 1.2em;
-            font-weight: 600;
-            color: #ffffff;
-        }
-
-        .pnl-chart-canvas {
-            height: 180px;
-            width: 100%;
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-
-            .metrics-dashboard {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    }
+</style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>📊 Trading Journal Pro</h1>
-            <p>Track, Analyze, Improve Your Trading Performance</p>
-        </div>
-
-        <!-- Period Filter -->
-        <div class="period-filter">
-            <div class="period-tab active" data-period="all" onclick="changePeriod('all')">📅 All Time</div>
-            <div class="period-tab" data-period="month" onclick="changePeriod('month')">📆 This Month</div>
-            <div class="period-tab" data-period="week" onclick="changePeriod('week')">📅 This Week</div>
-            <div class="period-tab" data-period="today" onclick="changePeriod('today')">📍 Today</div>
+            <h1>ImbAlance Trading Journal</h1>
+            <p>Performance Statistics</p>
         </div>
 
         <!-- Horizontal Metrics Dashboard -->
@@ -734,9 +815,22 @@
 
         <!-- P&L Chart Section -->
         <div class="pnl-chart-section">
+            <!-- Period Filter -->
+            <div class="period-filter">
+                <div class="period-tab active" data-period="all" onclick="changePeriod('all')">All Time</div>
+                <div class="period-tab" data-period="month" onclick="changePeriod('month')">This Month</div>
+                <div class="period-tab" data-period="week" onclick="changePeriod('week')">This Week</div>
+                <div class="period-tab" data-period="today" onclick="changePeriod('today')">Today</div>
+                <div class="period-tab" data-period="custom" onclick="changePeriod('custom')">Custom</div>
+            </div>
+            <div id="customRange">
+                <input type="date" id="customStart" class="api-input" style="max-width: 170px; min-width: 150px;" />
+                <input type="date" id="customEnd" class="api-input" style="max-width: 170px; min-width: 150px;" />
+                <button class="btn btn-primary" style="padding: 8px 14px;" onclick="applyCustomRange()">Apply</button>
+            </div>
             <div class="pnl-chart-container">
                 <div class="pnl-chart-header">
-                    <div class="pnl-chart-title">📈 Cumulative P&L Over Time</div>
+                    <div class="pnl-chart-title">Cumulative P&L Over Time</div>
                 </div>
                 <canvas id="pnlChart" class="pnl-chart-canvas"></canvas>
             </div>
@@ -745,15 +839,15 @@
         <!-- Compact API Settings -->
         <div class="api-section">
             <div class="api-container">
-                <div class="api-status" id="apiStatus">🔴 Not Connected</div>
+                <div class="api-status" id="apiStatus"> Not Connected</div>
                 <input type="text" class="api-input" id="apiKey" placeholder="Bybit API Key">
                 <input type="password" class="api-input" id="apiSecret" placeholder="API Secret">
                 <label class="remember-me">
                     <input type="checkbox" id="rememberMe">
                     <span>Remember Me</span>
                 </label>
-                <button class="btn btn-primary" onclick="saveApiCredentials()">💾 Save</button>
-                <button class="btn btn-success" onclick="syncBybitTrades()">🔄 Sync Trades</button>
+                <button class="btn btn-primary" onclick="saveApiCredentials()"> Save</button>
+                <button class="btn btn-success" onclick="syncBybitTrades()"> Sync Trades</button>
             </div>
         </div>
 
@@ -761,7 +855,7 @@
         <div class="main-content">
             <!-- Calendar Section -->
             <div class="calendar-section">
-                <h2>📅 Trading Calendar</h2>
+                <h2>Trading Calendar</h2>
                 <div id="calendar"></div>
             </div>
 
@@ -775,7 +869,7 @@
         <!-- Statistics Section - Expandable -->
         <div class="stats-section">
             <div class="stats-header" onclick="toggleStats()">
-                <h2>📈 Performance Statistics</h2>
+                <h2>Performance Statistics</h2>
                 <span class="stats-toggle" id="statsToggle">▼</span>
             </div>
             <div class="stats-content" id="statsContent">
@@ -795,10 +889,31 @@
                             <option value="short">Short Only</option>
                         </select>
                     </div>
+                    <div class="filter-group">
+                        <span class="filter-label">Bias Type</span>
+                        <select class="filter-select" id="biasTypeFilter" onchange="updateStatsFilter()">
+                            <option value="all">Weekly + Daily</option>
+                            <option value="weekly">Weekly Only</option>
+                            <option value="daily">Daily Only</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <span class="filter-label">Bias Value</span>
+                        <select class="filter-select" id="biasValueFilter" onchange="updateStatsFilter()">
+                            <option value="all">Any</option>
+                            <option value="bullish">Bullish</option>
+                            <option value="bearish">Bearish</option>
+                            <option value="neutral">Neutral</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <span class="filter-label">Bias</span>
+                        <button class="btn btn-secondary" style="padding: 8px 12px; font-size: 0.95em;" onclick="bulkFillBias()">Fill Missing Bias (Neutral)</button>
+                    </div>
                 </div>
 
                 <div class="stats-grid">
-                    <div class="stat-box">
+                    <div class="stat-box stat-keylevels">
                         <div class="stat-box-header">
                             <div class="stat-title">Key Levels Performance</div>
                             <div class="stat-actions">
@@ -807,7 +922,7 @@
                         </div>
                         <div class="stat-list" id="keyLevelsStats"></div>
                     </div>
-                    <div class="stat-box">
+                    <div class="stat-box stat-confirmations">
                         <div class="stat-box-header">
                             <div class="stat-title">Confirmations Performance</div>
                             <div class="stat-actions">
@@ -816,7 +931,7 @@
                         </div>
                         <div class="stat-list" id="confirmationsStats"></div>
                     </div>
-                    <div class="stat-box">
+                    <div class="stat-box stat-models">
                         <div class="stat-box-header">
                             <div class="stat-title">Models Performance</div>
                             <div class="stat-actions">
@@ -940,8 +1055,8 @@
                 </div>
 
                 <div class="btn-group">
-                    <button type="submit" class="btn btn-primary">💾 Save Trade</button>
-                    <button type="button" class="btn btn-danger" onclick="deleteTrade()">🗑️ Delete</button>
+                    <button type="submit" class="btn btn-primary"> Save Trade</button>
+                    <button type="button" class="btn btn-danger" onclick="deleteTrade()"> Delete</button>
                     <button type="button" class="btn" onclick="closeModal('tradeModal')">Cancel</button>
                 </div>
             </form>
@@ -971,11 +1086,13 @@
         let calendar;
         let currentTrade = null;
         let currentPeriod = 'all';
+        let customStartDate = '';
+        let customEndDate = '';
         let currentManageType = '';
         let statsOpen = false;
         let calendarDates = {};
         let allTrades = [];
-        let statsFilter = { asset: 'all', side: 'all' };
+        let statsFilter = { asset: 'all', side: 'all', biasType: 'all', biasValue: 'all' };
         let pnlChart = null; // ADD P&L CHART VARIABLE
         
         // ADD MANAGED OPTIONS DATA
@@ -1027,9 +1144,9 @@
                 initialDate: '2025-12-15',
                 height: 'auto',
                 headerToolbar: {
-                    left: 'prev,next today',
+                    left: 'prev,next',
                     center: 'title',
-                    right: 'dayGridMonth'
+                    right: ''
                 },
                 dayCellDidMount: function(info) {
                     const dateStr = info.date.toISOString().split('T')[0];
@@ -1046,10 +1163,14 @@
                         
                         const statsDiv = document.createElement('div');
                         statsDiv.className = 'day-stats';
+                        const displayWr = Number(dayData.winRate);
+                        const wrText = Number.isFinite(displayWr)
+                            ? `${displayWr.toFixed(0)}% WR`
+                            : `${dayData.winRate}% WR`;
                         statsDiv.innerHTML = `
                             <div class="day-trades">${dayData.count} trade${dayData.count > 1 ? 's' : ''}</div>
                             <div class="day-pnl ${dayData.pnl >= 0 ? 'positive' : 'negative'}">${dayData.pnl >= 0 ? '+' : ''}${dayData.pnl.toFixed(0)}</div>
-                            <div class="day-wr">${dayData.winRate}% WR</div>
+                            <div class="day-wr">${wrText}</div>
                         `;
                         info.el.appendChild(statsDiv);
                     }
@@ -1101,19 +1222,56 @@
         // KEEP ORIGINAL changePeriod function unchanged
         function changePeriod(period) {
             currentPeriod = period;
+
+            const customRange = document.getElementById('customRange');
+            if (customRange) {
+                customRange.style.display = period === 'custom' ? 'flex' : 'none';
+            }
             
             document.querySelectorAll('.period-tab').forEach(tab => {
                 tab.classList.remove('active');
             });
             document.querySelector(`[data-period="${period}"]`).classList.add('active');
-            
+
+            if (period !== 'custom') {
+                customStartDate = '';
+                customEndDate = '';
+                const startEl = document.getElementById('customStart');
+                const endEl = document.getElementById('customEnd');
+                if (startEl) startEl.value = '';
+                if (endEl) endEl.value = '';
+                loadTrades();
+            }
+        }
+
+        function applyCustomRange() {
+            const start = document.getElementById('customStart')?.value || '';
+            const end = document.getElementById('customEnd')?.value || '';
+
+            if (!start || !end) {
+                alert('Please select both start and end dates');
+                return;
+            }
+            if (start > end) {
+                alert('Start date must be before end date');
+                return;
+            }
+
+            customStartDate = start;
+            customEndDate = end;
+            currentPeriod = 'custom';
+
             loadTrades();
         }
 
         // KEEP ORIGINAL loadTrades function unchanged
         async function loadTrades() {
             try {
-                const response = await fetch(`/api/trades?period=${currentPeriod}`);
+                let url = `/api/trades?period=${currentPeriod}`;
+                if (currentPeriod === 'custom' && customStartDate && customEndDate) {
+                    url += `&start_date=${encodeURIComponent(customStartDate)}&end_date=${encodeURIComponent(customEndDate)}`;
+                }
+                const response = await fetch(url);
                 const data = await response.json();
                 
                 allTrades = data.trades;
@@ -1147,25 +1305,61 @@
         function updateStatsFilter() {
             statsFilter.asset = document.getElementById('assetFilter').value;
             statsFilter.side = document.getElementById('sideFilter').value;
+            statsFilter.biasType = document.getElementById('biasTypeFilter').value;
+            statsFilter.biasValue = document.getElementById('biasValueFilter').value;
             updateStatisticsFiltered();
+        }
+
+        function normalizeSide(value) {
+            if (value == null) return '';
+            const v = String(value).trim().toLowerCase();
+            if (v === 'buy') return 'long';
+            if (v === 'sell') return 'short';
+            return v;
+        }
+
+        function normalizeBias(value) {
+            if (value == null) return '';
+            return String(value).trim().toLowerCase();
         }
 
         // FIX THIS FUNCTION: Update Statistics with filtering
         function updateStatisticsFiltered() {
             // Filter trades based on current filters - FIX SIDE FILTER
             let filteredTrades = allTrades;
-            
+
             if (statsFilter.asset !== 'all') {
                 filteredTrades = filteredTrades.filter(t => t.asset === statsFilter.asset);
             }
-            
+
             if (statsFilter.side !== 'all') {
-                // FIX: Check if trade has side property and compare properly
+                const selectedSide = normalizeSide(statsFilter.side);
+                filteredTrades = filteredTrades.filter(t => normalizeSide(t.side) === selectedSide);
+            }
+
+            const selectedBiasType = (statsFilter.biasType || 'all').toLowerCase();
+            const selectedBiasValue = normalizeBias(statsFilter.biasValue);
+
+            if (selectedBiasType !== 'all' || selectedBiasValue !== 'all') {
                 filteredTrades = filteredTrades.filter(t => {
-                    return t.side && t.side.toLowerCase() === statsFilter.side.toLowerCase();
+                    const weekly = normalizeBias(t.weekly_bias);
+                    const daily = normalizeBias(t.daily_bias);
+
+                    const includeWeekly = selectedBiasType === 'all' || selectedBiasType === 'weekly';
+                    const includeDaily = selectedBiasType === 'all' || selectedBiasType === 'daily';
+
+                    const candidates = [];
+                    if (includeWeekly && weekly) candidates.push(weekly);
+                    if (includeDaily && daily) candidates.push(daily);
+
+                    if (selectedBiasValue === 'all') {
+                        return candidates.length > 0;
+                    }
+
+                    return candidates.includes(selectedBiasValue);
                 });
             }
-            
+
             // Calculate performance stats - MODIFIED TO SHOW ONLY WIN RATE
             const keyLevelStats = calculatePerformanceStats(filteredTrades, 'key_level_type');
             document.getElementById('keyLevelsStats').innerHTML = formatPerformanceStats(keyLevelStats);
@@ -1209,7 +1403,7 @@
             return stats;
         }
 
-        // MODIFY THIS FUNCTION: Format performance stats - REMOVE P&L DISPLAY
+        // MODIFY THIS FUNCTION: Format performance stats - REMOVE P&L DISPLAY, SIMPLIFY COLORS
         function formatPerformanceStats(stats) {
             const entries = Object.entries(stats);
             
@@ -1229,7 +1423,7 @@
                         <span class="stat-name">${displayName}</span>
                         <div class="stat-metrics">
                             <span class="stat-count">${data.total}</span>
-                            <span class="stat-wr ${wrClass}">${data.winRate}% WR</span>
+                            <span class="stat-wr ${wrClass}">${data.winRate}%</span>
                         </div>
                     </div>
                 `;
@@ -1565,7 +1759,8 @@
             const upColor = '#00ff88';
             const downColor = '#ff3366';
             const lineColor = last >= 0 ? upColor : downColor;
-            const fillColor = last >= 0 ? 'rgba(0, 255, 136, 0.10)' : 'rgba(255, 51, 102, 0.10)';
+            const fillColor = 'transparent';
+            const zeroSeries = series.map(() => 0);
 
             const minVal = series.length ? Math.min(...series) : 0;
             const maxVal = series.length ? Math.max(...series) : 0;
@@ -1582,9 +1777,17 @@
                             borderColor: lineColor,
                             backgroundColor: fillColor,
                             borderWidth: 2,
-                            fill: true,
+                            fill: false,
                             pointRadius: 0,
                             tension: 0.35
+                        }, {
+                            data: zeroSeries,
+                            borderColor: 'rgba(255, 255, 255, 0.85)',
+                            borderWidth: 1,
+                            borderDash: [3, 4],
+                            pointRadius: 0,
+                            fill: false,
+                            tension: 0
                         }]
                     },
                     options: {
@@ -1601,13 +1804,13 @@
                         },
                         scales: {
                             x: {
-                                grid: { color: '#333333' },
+                                grid: { display: false, drawBorder: false },
                                 ticks: { color: '#aaaaaa', maxRotation: 0, autoSkip: true, maxTicksLimit: 10 }
                             },
                             y: {
                                 suggestedMin: minVal - pad,
                                 suggestedMax: maxVal + pad,
-                                grid: { color: '#333333' },
+                                grid: { display: false, drawBorder: false },
                                 ticks: {
                                     color: '#aaaaaa',
                                     callback: (value) => `$${Number(value).toFixed(0)}`
@@ -1621,10 +1824,14 @@
                 pnlChart.data.datasets[0].data = series;
                 pnlChart.data.datasets[0].borderColor = lineColor;
                 pnlChart.data.datasets[0].backgroundColor = fillColor;
+                if (pnlChart.data.datasets[1]) {
+                    pnlChart.data.datasets[1].data = zeroSeries;
+                }
                 pnlChart.options.scales.y.suggestedMin = minVal - pad;
                 pnlChart.options.scales.y.suggestedMax = maxVal + pad;
                 pnlChart.update();
             }
         }
-    </script>\r\n</body>
+    </script>
+</body>
 </html>
