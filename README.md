@@ -1,7 +1,7 @@
 📊 Professional Trading Journal
 A modern, web-based trading journal for serious traders. Track your trades, analyze performance, and improve your strategy with beautiful visualizations and powerful analytics.
 
-https://img.shields.io/badge/version-1.0.0-green https://img.shields.io/badge/python-3.8+-blue https://img.shields.io/badge/flask-2.3.3-lightgrey https://img.shields.io/badge/license-MIT-orange
+https://img.shields.io/badge/version-1.1.0-green https://img.shields.io/badge/python-3.8+-blue https://img.shields.io/badge/flask-2.3.3-lightgrey https://img.shields.io/badge/license-MIT-orange
 
 ✨ Features
 📅 Calendar View
@@ -10,6 +10,8 @@ Visualize trading days with color-coded P&L (Green = Profit, Red = Loss)
 Click any day to view trades for that specific day
 
 Monthly/weekly performance overview
+
+Clean dark calendar with white weekday headers and minimal navigation
 
 📈 Advanced Statistics
 Key Levels Analysis: Track Support/Resistance performance
@@ -20,7 +22,7 @@ Model Performance: Evaluate different trading models
 
 Filter by: Asset (BTC/ETH/SOL) and Trade Type
 
-Period Filters: Day/Week/Month/All time views
+Period Filters: Day/Week/Month/All time views + **Custom date range**
 
 💼 Trade Management
 Add, edit, delete trades with full details
@@ -52,6 +54,13 @@ Intuitive drag-and-drop calendar
 Real-time statistics updates
 
 Readable dark panels across metrics, calendar, trades list, and stats
+
+**New in v1.1:**
+- Custom timeframe selector for key metrics and P&L chart
+- Thin dashed white zero-line on cumulative P&L chart (no fill)
+- Distinct accent colors for Key Levels / Confirmations / Models stats boxes
+- Clean calendar styling: white weekday headers, no button rectangles
+- Slightly more compact metrics dashboard
 
 🚀 Quick Start
 Prerequisites
@@ -86,10 +95,6 @@ automated-trading-journal/
 ├── .gitignore            # Git ignore rules
 ├── templates/
 │   └── single_page.html  # Complete web interface
-├── static/               # CSS, JavaScript, images
-│   ├── css/
-│   ├── js/
-│   └── images/
 └── trading_journal.db    # SQLite database (auto-created)
 🛠️ Usage Guide
 Adding Trades Manually
