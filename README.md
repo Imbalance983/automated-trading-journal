@@ -31,6 +31,8 @@ Detailed notes and analysis for each trade
 
 Categorize trades by Key Level, Confirmation, and Model
 
+Track Weekly and Daily Bias per trade (Bullish/Bearish/Neutral)
+
 🔄 Bybit Integration
 Auto-sync trades directly from Bybit exchange
 
@@ -41,13 +43,15 @@ Secure API key management
 Real-time trade synchronization
 
 🎨 Professional UI
-Dark theme optimized for traders
+Dark theme optimized for traders with neon P&L indicators
 
 Responsive design works on all devices
 
 Intuitive drag-and-drop calendar
 
 Real-time statistics updates
+
+Readable dark panels across metrics, calendar, trades list, and stats
 
 🚀 Quick Start
 Prerequisites
@@ -110,6 +114,10 @@ Key Level (Support/Resistance)
 Confirmation method
 
 Trading model
+
+Weekly Bias (Bullish/Bearish/Neutral)
+
+Daily Bias (Bullish/Bearish/Neutral)
 
 Optional: Add screenshot URL and notes
 
