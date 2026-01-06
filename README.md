@@ -143,30 +143,17 @@ Optional: Add screenshot URL and notes
 Click "Save Trade"
 
 Using Bybit Integration
-✅ **Fully Tested and Working**
+Get API keys from Bybit
 
-1. Get API keys from Bybit:
-   - Go to Bybit → API Management
-   - Create API key with "Read" permissions
-   - Copy API Key and Secret
+Go to "Bybit Sync" section
 
-2. Configure in app:
-   - Go to "Bybit Sync" section
-   - Enter API Key and Secret
-   - Select network (Mainnet/Testnet)
-   - Click "Save Credentials"
+Enter API Key and Secret
 
-3. Sync trades:
-   - Click "Sync Trades" to import automatically
-   - App will fetch closed PnL positions
-   - Validates and normalizes all trade data
-   - Prevents duplicates automatically
+Select network (Mainnet/Testnet)
 
-4. Features:
-   - Supports USDT linear & inverse contracts
-   - Automatic timestamp conversion
-   - Error handling with detailed logging
-   - Trade validation before import
+Click "Save Credentials"
+
+Click "Sync Trades" to import automatically
 
 Analyzing Performance
 Calendar: Click any day to see daily trades
