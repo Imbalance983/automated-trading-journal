@@ -1,7 +1,7 @@
 📊 Professional Trading Journal
 A modern, web-based trading journal for serious traders. Track your trades, analyze performance, and improve your strategy with beautiful visualizations and powerful analytics.
 
-https://img.shields.io/badge/version-1.1.0-green https://img.shields.io/badge/python-3.8+-blue https://img.shields.io/badge/flask-2.3.3-lightgrey https://img.shields.io/badge/license-MIT-orange
+https://img.shields.io/badge/version-1.2.0-green https://img.shields.io/badge/python-3.8+-blue https://img.shields.io/badge/flask-2.3.3-lightgrey https://img.shields.io/badge/license-MIT-orange
 
 ✨ Features
 📅 Calendar View
@@ -36,13 +36,19 @@ Categorize trades by Key Level, Confirmation, and Model
 Track Weekly and Daily Bias per trade (Bullish/Bearish/Neutral)
 
 🔄 Bybit Integration
-Auto-sync trades directly from Bybit exchange
+✅ **FULLY WORKING** - Auto-sync trades directly from Bybit exchange
 
-Support for both mainnet and testnet
+Support for both mainnet and testnet networks
 
-Secure API key management
+Secure API key management with local storage only
 
-Real-time trade synchronization
+Real-time trade synchronization with duplicate prevention
+
+Automatic trade validation and normalization
+
+Handles USDT linear and inverse perpetual contracts
+
+Import history with proper timestamp conversion
 
 🎨 Professional UI
 Dark theme optimized for traders with neon P&L indicators
@@ -55,7 +61,15 @@ Real-time statistics updates
 
 Readable dark panels across metrics, calendar, trades list, and stats
 
-**New in v1.1:**
+**New in v1.2:**
+- ✅ **Bybit sync fully implemented and tested**
+- Automatic trade import from Bybit API
+- Duplicate prevention and validation
+- Support for USDT linear/inverse contracts
+- Comprehensive error handling and logging
+- Debug tools for troubleshooting
+
+**Previous v1.1 features:**
 - Custom timeframe selector for key metrics and P&L chart
 - Thin dashed white zero-line on cumulative P&L chart (no fill)
 - Distinct accent colors for Key Levels / Confirmations / Models stats boxes
@@ -129,17 +143,30 @@ Optional: Add screenshot URL and notes
 Click "Save Trade"
 
 Using Bybit Integration
-Get API keys from Bybit
+✅ **Fully Tested and Working**
 
-Go to "Bybit Sync" section
+1. Get API keys from Bybit:
+   - Go to Bybit → API Management
+   - Create API key with "Read" permissions
+   - Copy API Key and Secret
 
-Enter API Key and Secret
+2. Configure in app:
+   - Go to "Bybit Sync" section
+   - Enter API Key and Secret
+   - Select network (Mainnet/Testnet)
+   - Click "Save Credentials"
 
-Select network (Mainnet/Testnet)
+3. Sync trades:
+   - Click "Sync Trades" to import automatically
+   - App will fetch closed PnL positions
+   - Validates and normalizes all trade data
+   - Prevents duplicates automatically
 
-Click "Save Credentials"
-
-Click "Sync Trades" to import automatically
+4. Features:
+   - Supports USDT linear & inverse contracts
+   - Automatic timestamp conversion
+   - Error handling with detailed logging
+   - Trade validation before import
 
 Analyzing Performance
 Calendar: Click any day to see daily trades

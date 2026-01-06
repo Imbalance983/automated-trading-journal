@@ -8,7 +8,6 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-        /* ALL YOUR ORIGINAL CSS STAYS EXACTLY THE SAME */
         * {
             margin: 0;
             padding: 0;
@@ -51,7 +50,6 @@
             color: #9ca3af;
         }
 
-        /* Period Filter Tabs */
         .period-filter {
             display: flex;
             justify-content: center;
@@ -84,7 +82,6 @@
             border-color: rgba(139, 92, 246, 0.75);
         }
 
-        /* Horizontal Metrics Dashboard */
         .metrics-dashboard {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -130,7 +127,6 @@
             color: #ff3366;
         }
 
-        /* API Settings Compact */
         .api-section {
             padding: 20px 25px;
             background: #0b0b0b;
@@ -225,7 +221,6 @@
             background: #5a6268;
         }
 
-        /* Main Content */
         .main-content {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -233,7 +228,6 @@
             padding: 25px;
         }
 
-        /* Calendar Section */
         .calendar-section h2 { color: #ffffff; }
 
         .calendar-section {
@@ -247,7 +241,6 @@
             margin-top: 20px;
         }
 
-        /* Color code entire day cells */
         .fc-day-profit {
             background-color: rgba(0, 255, 136, 0.12) !important;
             border-radius: 10px;
@@ -269,7 +262,6 @@
             position: relative;
         }
 
-        /* Calendar grid styling (dark, minimal borders like reference) */
         .fc .fc-scrollgrid,
         .fc .fc-scrollgrid-section > td,
         .fc .fc-daygrid-body,
@@ -314,7 +306,6 @@
             opacity: 0.8;
         }
 
-        /* Day stats overlay */
         .day-stats {
             position: absolute;
             top: 50%;
@@ -353,7 +344,6 @@
             color: #bbbbbb;
         }
 
-        /* Trades List */
         .trades-section h2 { color: #ffffff; }
 
         .trades-section {
@@ -420,7 +410,6 @@
             color: #bbbbbb;
         }
 
-        /* Statistics Section */
         .stats-section {
             padding: 25px;
         }
@@ -462,7 +451,6 @@
             max-height: 3000px;
         }
 
-        /* Stats Filters */
         .stats-filters {
             display: flex;
             gap: 15px;
@@ -499,283 +487,280 @@
             color: #ffffff;
         }
 
-    .filter-select:focus {
-        outline: none;
-        border-color: rgba(139, 92, 246, 0.45);
-    }
-
-    .filter-select:active,
-    .filter-select:focus-visible {
-        background: #0b0b0b;
-        color: #ffffff;
-    }
-
-    .stat-box {
-        background: #0b0b0b;
-        padding: 20px;
-        border-radius: 12px;
-        border-left: 4px solid rgba(255,255,255,0.10);
-        position: relative;
-    }
-
-    .stat-box.stat-keylevels { border-left-color: rgba(0, 255, 136, 0.85); }
-    .stat-box.stat-confirmations { border-left-color: rgba(59, 130, 246, 0.85); }
-    .stat-box.stat-models { border-left-color: rgba(255, 51, 102, 0.85); }
-
-    .stat-box-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-    }
-
-    .stat-title {
-        font-size: 1.1em;
-        font-weight: 600;
-        color: #ffffff;
-    }
-
-    .stat-actions {
-        display: flex;
-        gap: 8px;
-    }
-
-    .stat-list {
-        font-size: 0.95em;
-        line-height: 1.8;
-    }
-
-    .stat-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 0;
-        border-bottom: 1px solid #dee2e6;
-    }
-
-    .stat-item:last-child {
-        border-bottom: none;
-    }
-
-    .stat-name {
-        font-weight: 500;
-        flex: 1;
-    }
-
-    .stat-metrics {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-    }
-
-    .stat-count {
-        background: #1a1a1a;
-        color: white;
-        padding: 3px 10px;
-        border-radius: 12px;
-        font-size: 0.85em;
-    }
-
-    .stat-wr {
-        font-size: 0.85em;
-        font-weight: 600;
-    }
-
-    .stat-wr.good {
-        color: #00ff88;
-    }
-
-    .stat-wr.average {
-        color: #bbbbbb;
-    }
-
-    .stat-wr.poor {
-        color: #ff3366;
-    }
-
-    /* Modal */
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.5);
-        animation: fadeIn 0.3s;
-    }
-
-    .modal.active {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .modal-content {
-        background: #111111;
-        padding: 30px;
-        border-radius: 15px;
-        max-width: 600px;
-        width: 90%;
-        max-height: 90vh;
-        overflow-y: auto;
-        animation: slideIn 0.3s;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-
-    @keyframes slideIn {
-        from { transform: translateY(-50px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-    }
-
-    .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 2px solid #e9ecef;
-    }
-
-    .close {
-        font-size: 2em;
-        cursor: pointer;
-        color: #adb5bd;
-    }
-
-    .close:hover {
-        color: #ffffff;
-    }
-
-    .form-group {
-        margin-bottom: 20px;
-    }
-
-    .form-group label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 600;
-        color: #ffffff;
-    }
-
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-        width: 100%;
-        padding: 12px;
-        border: 1px solid #333333;
-        border-radius: 8px;
-        font-size: 1em;
-    }
-
-    .form-group textarea {
-        resize: vertical;
-        min-height: 80px;
-    }
-
-    .form-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
-    }
-
-    .btn-group {
-        display: flex;
-        gap: 10px;
-        margin-top: 20px;
-    }
-
-    /* Manage Options Modal */
-    .option-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px;
-        background: #0b0b0b;
-        border-radius: 8px;
-        margin-bottom: 10px;
-    }
-
-    .btn-delete {
-        padding: 5px 12px;
-        background: #dc3545;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 0.85em;
-    }
-
-    .btn-delete:hover {
-        background: #c82333;
-    }
-
-    .add-option-form input {
-        flex: 1;
-        padding: 10px;
-        border: 1px solid #333333;
-        border-radius: 8px;
-    }
-
-    /* P&L Chart Section */
-    .pnl-chart-section {
-        padding: 25px;
-        background: #0b0b0b;
-        border-bottom: 1px solid #333333;
-    }
-
-    .pnl-chart-container {
-        background: #111111;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        height: 220px;
-    }
-
-    .pnl-chart-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-    }
-
-    .pnl-chart-title {
-        font-size: 1.2em;
-        font-weight: 600;
-        color: #ffffff;
-    }
-
-    .pnl-chart-canvas {
-        height: 180px;
-        width: 100%;
-    }
-
-    #customRange {
-        display: none;
-        justify-content: flex-start;
-        gap: 10px;
-        padding: 10px 0 0 0;
-        flex-wrap: wrap;
-    }
-
-    @media (max-width: 768px) {
-        .main-content {
-            grid-template-columns: 1fr;
+        .filter-select:focus {
+            outline: none;
+            border-color: rgba(139, 92, 246, 0.45);
         }
 
-        .metrics-dashboard {
-            grid-template-columns: repeat(2, 1fr);
+        .filter-select:active,
+        .filter-select:focus-visible {
+            background: #0b0b0b;
+            color: #ffffff;
+        }
+
+        .stat-box {
+            background: #0b0b0b;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid rgba(255,255,255,0.10);
+            position: relative;
+        }
+
+        .stat-box.stat-keylevels { border-left-color: rgba(0, 255, 136, 0.85); }
+        .stat-box.stat-confirmations { border-left-color: rgba(59, 130, 246, 0.85); }
+        .stat-box.stat-models { border-left-color: rgba(255, 51, 102, 0.85); }
+
+        .stat-box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .stat-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .stat-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .stat-list {
+            font-size: 0.95em;
+            line-height: 1.8;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-name {
+            font-weight: 500;
+            flex: 1;
+        }
+
+        .stat-metrics {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .stat-count {
+            background: #1a1a1a;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+        }
+
+        .stat-wr {
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .stat-wr.good {
+            color: #00ff88;
+        }
+
+        .stat-wr.average {
+            color: #bbbbbb;
+        }
+
+        .stat-wr.poor {
+            color: #ff3366;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #111111;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .close {
+            font-size: 2em;
+            cursor: pointer;
+            color: #adb5bd;
+        }
+
+        .close:hover {
+            color: #ffffff;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
         }
 
         .form-row {
-            grid-template-columns: 1fr;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
         }
-    }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .option-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #0b0b0b;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .btn-delete {
+            padding: 5px 12px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
+
+        .add-option-form input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #333333;
+            border-radius: 8px;
+        }
+
+        .pnl-chart-section {
+            padding: 25px;
+            background: #0b0b0b;
+            border-bottom: 1px solid #333333;
+        }
+
+        .pnl-chart-container {
+            background: #111111;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            height: 220px;
+        }
+
+        .pnl-chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .pnl-chart-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .pnl-chart-canvas {
+            height: 180px;
+            width: 100%;
+        }
+
+        #customRange {
+            display: none;
+            justify-content: flex-start;
+            gap: 10px;
+            padding: 10px 0 0 0;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-dashboard {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
 </style>
 </head>
 <body>
@@ -785,7 +770,6 @@
             <p>Performance Statistics</p>
         </div>
 
-        <!-- Horizontal Metrics Dashboard -->
         <div class="metrics-dashboard" id="metricsDashboard">
             <div class="metric-card">
                 <div class="metric-label">Total P&L</div>
@@ -813,9 +797,7 @@
             </div>
         </div>
 
-        <!-- P&L Chart Section -->
         <div class="pnl-chart-section">
-            <!-- Period Filter -->
             <div class="period-filter">
                 <div class="period-tab active" data-period="all" onclick="changePeriod('all')">All Time</div>
                 <div class="period-tab" data-period="month" onclick="changePeriod('month')">This Month</div>
@@ -836,10 +818,9 @@
             </div>
         </div>
 
-        <!-- Compact API Settings -->
         <div class="api-section">
             <div class="api-container">
-                <div class="api-status" id="apiStatus"> Not Connected</div>
+                <div class="api-status" id="apiStatus">🔴 Not Connected</div>
                 <input type="text" class="api-input" id="apiKey" placeholder="Bybit API Key">
                 <input type="password" class="api-input" id="apiSecret" placeholder="API Secret">
                 <select class="api-input" id="bybitNetwork" style="max-width: 160px; min-width: 140px;">
@@ -850,34 +831,30 @@
                     <input type="checkbox" id="rememberMe">
                     <span>Remember Me</span>
                 </label>
-                <button class="btn btn-primary" onclick="saveApiCredentials()"> Save</button>
-                <button class="btn btn-success" onclick="syncBybitTrades()"> Sync Trades</button>
+                <button class="btn btn-primary" onclick="saveApiCredentials()">💾 Save</button>
+                <button class="btn btn-success" onclick="syncBybitTrades()">🔄 Sync Trades</button>
+                <button class="btn btn-secondary" onclick="clearBybitImports()">🗑️ Clear History</button>
             </div>
         </div>
 
-        <!-- Main Content -->
         <div class="main-content">
-            <!-- Calendar Section -->
             <div class="calendar-section">
                 <h2>Trading Calendar</h2>
                 <div id="calendar"></div>
             </div>
 
-            <!-- Recent Trades -->
             <div class="trades-section">
                 <h2>Recent Trades</h2>
                 <div id="tradesList"></div>
             </div>
         </div>
 
-        <!-- Statistics Section - Expandable -->
         <div class="stats-section">
             <div class="stats-header" onclick="toggleStats()">
                 <h2>Performance Statistics</h2>
                 <span class="stats-toggle" id="statsToggle">▼</span>
             </div>
             <div class="stats-content" id="statsContent">
-                <!-- Filters -->
                 <div class="stats-filters">
                     <div class="filter-group">
                         <span class="filter-label">Filter by Asset</span>
@@ -949,7 +926,6 @@
         </div>
     </div>
 
-    <!-- Trade Detail Modal -->
     <div class="modal" id="tradeModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1009,7 +985,6 @@
                         <label>Key Level Type</label>
                         <select id="keyLevelType">
                             <option value="">Select...</option>
-                            <!-- Options will be populated from managed list -->
                         </select>
                     </div>
                 </div>
@@ -1019,7 +994,6 @@
                         <label>Confirmation</label>
                         <select id="confirmation">
                             <option value="">Select...</option>
-                            <!-- Options will be populated from managed list -->
                         </select>
                     </div>
                     <div class="form-group">
@@ -1059,15 +1033,14 @@
                 </div>
 
                 <div class="btn-group">
-                    <button type="submit" class="btn btn-primary"> Save Trade</button>
-                    <button type="button" class="btn btn-danger" onclick="deleteTrade()"> Delete</button>
+                    <button type="submit" class="btn btn-primary">💾 Save Trade</button>
+                    <button type="button" class="btn btn-danger" onclick="deleteTrade()">🗑️ Delete</button>
                     <button type="button" class="btn" onclick="closeModal('tradeModal')">Cancel</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Manage Options Modal -->
     <div class="modal" id="manageModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1086,7 +1059,6 @@
     </div>
 
     <script>
-        // KEEP ALL ORIGINAL VARIABLES AND INITIALIZATION
         let calendar;
         let currentTrade = null;
         let currentPeriod = 'all';
@@ -1097,35 +1069,29 @@
         let calendarDates = {};
         let allTrades = [];
         let statsFilter = { asset: 'all', side: 'all', biasType: 'all', biasValue: 'all' };
-        let pnlChart = null; // ADD P&L CHART VARIABLE
+        let pnlChart = null;
         
-        // ADD MANAGED OPTIONS DATA
         let managedOptions = {
             keyLevels: ['support', 'resistance', 'fibonacci', 'trendline', 'pivot'],
             confirmations: ['break_retest', 'candle_pattern', 'volume_spike', 'divergence', 'multiple_timeframe'],
             models: ['Bull Flag', 'Head & Shoulders', 'Double Top', 'Double Bottom', 'Triple Top', 'Triple Bottom']
         };
 
-        // Initialize - ADD populateManagedOptions
         document.addEventListener('DOMContentLoaded', function() {
             initCalendar();
             loadTrades();
             loadApiCredentials();
             checkApiStatus();
-            populateManagedOptions(); // ADD THIS
+            populateManagedOptions();
         });
 
-        // ADD NEW FUNCTION: Populate managed options in trade form
         function populateManagedOptions() {
             const keyLevelTypeSelect = document.getElementById('keyLevelType');
             const confirmationSelect = document.getElementById('confirmation');
-            const modelSelect = document.getElementById('model');
             
-            // Clear existing options (except first)
             keyLevelTypeSelect.innerHTML = '<option value="">Select...</option>';
             confirmationSelect.innerHTML = '<option value="">Select...</option>';
             
-            // Populate with managed options
             managedOptions.keyLevels.forEach(option => {
                 const displayName = option.replace(/_/g, ' ');
                 keyLevelTypeSelect.innerHTML += `<option value="${option}">${displayName}</option>`;
@@ -1135,12 +1101,8 @@
                 const displayName = option.replace(/_/g, ' ');
                 confirmationSelect.innerHTML += `<option value="${option}">${displayName}</option>`;
             });
-            
-            // For models, keep as input but populate dropdown if we want
-            // Currently keeping as input as in original
         }
 
-        // KEEP ORIGINAL initCalendar function unchanged
         function initCalendar() {
             const calendarEl = document.getElementById('calendar');
             calendar = new FullCalendar.Calendar(calendarEl, {
@@ -1187,7 +1149,6 @@
             loadCalendarData();
         }
 
-        // KEEP ORIGINAL loadCalendarData function unchanged
         async function loadCalendarData() {
             try {
                 const response = await fetch('/api/calendar_data');
@@ -1208,7 +1169,6 @@
             }
         }
 
-        // KEEP ORIGINAL toggleStats function unchanged
         function toggleStats() {
             statsOpen = !statsOpen;
             const content = document.getElementById('statsContent');
@@ -1223,7 +1183,6 @@
             }
         }
 
-        // KEEP ORIGINAL changePeriod function unchanged
         function changePeriod(period) {
             currentPeriod = period;
 
@@ -1268,7 +1227,6 @@
             loadTrades();
         }
 
-        // KEEP ORIGINAL loadTrades function unchanged
         async function loadTrades() {
             try {
                 let url = `/api/trades?period=${currentPeriod}`;
@@ -1284,14 +1242,13 @@
                 displayTrades(data.trades.slice(0, 10));
                 populateAssetFilter(data.trades);
                 updateStatisticsFiltered();
-                updatePnlChart(data.trades); // ADD P&L CHART UPDATE
+                updatePnlChart(data.trades);
                 
             } catch (error) {
                 console.error('Error loading trades:', error);
             }
         }
 
-        // KEEP ORIGINAL populateAssetFilter function unchanged
         function populateAssetFilter(trades) {
             const assets = [...new Set(trades.map(t => t.asset))].sort();
             const assetFilter = document.getElementById('assetFilter');
@@ -1305,7 +1262,6 @@
             }
         }
 
-        // KEEP ORIGINAL updateStatsFilter function unchanged
         function updateStatsFilter() {
             statsFilter.asset = document.getElementById('assetFilter').value;
             statsFilter.side = document.getElementById('sideFilter').value;
@@ -1327,9 +1283,7 @@
             return String(value).trim().toLowerCase();
         }
 
-        // FIX THIS FUNCTION: Update Statistics with filtering
         function updateStatisticsFiltered() {
-            // Filter trades based on current filters - FIX SIDE FILTER
             let filteredTrades = allTrades;
 
             if (statsFilter.asset !== 'all') {
@@ -1364,7 +1318,6 @@
                 });
             }
 
-            // Calculate performance stats - MODIFIED TO SHOW ONLY WIN RATE
             const keyLevelStats = calculatePerformanceStats(filteredTrades, 'key_level_type');
             document.getElementById('keyLevelsStats').innerHTML = formatPerformanceStats(keyLevelStats);
             
@@ -1375,7 +1328,6 @@
             document.getElementById('modelsStats').innerHTML = formatPerformanceStats(modelStats);
         }
 
-        // MODIFY THIS FUNCTION: Calculate performance statistics - REMOVE P&L
         function calculatePerformanceStats(trades, field) {
             const stats = {};
             
@@ -1397,7 +1349,6 @@
                 }
             });
             
-            // Calculate win rates
             Object.keys(stats).forEach(key => {
                 stats[key].winRate = stats[key].total > 0 
                     ? (stats[key].wins / stats[key].total * 100).toFixed(1)
@@ -1407,7 +1358,6 @@
             return stats;
         }
 
-        // MODIFY THIS FUNCTION: Format performance stats - REMOVE P&L DISPLAY, SIMPLIFY COLORS
         function formatPerformanceStats(stats) {
             const entries = Object.entries(stats);
             
@@ -1415,7 +1365,6 @@
                 return '<p style="color: #bbbbbb; text-align: center;">No data for current filter</p>';
             }
             
-            // Sort by win rate descending
             entries.sort((a, b) => parseFloat(b[1].winRate) - parseFloat(a[1].winRate));
             
             return entries.map(([key, data]) => {
@@ -1434,7 +1383,6 @@
             }).join('');
         }
 
-        // KEEP ORIGINAL updateMetrics function unchanged
         function updateMetrics(stats) {
             document.getElementById('totalPnl').textContent = '$' + stats.total_pnl.toFixed(2);
             document.getElementById('totalPnl').className = 'metric-value ' + (stats.total_pnl >= 0 ? 'positive' : 'negative');
@@ -1446,7 +1394,6 @@
             document.getElementById('profitFactor').textContent = stats.profit_factor.toFixed(2);
         }
 
-        // KEEP ORIGINAL displayTrades function unchanged
         function displayTrades(trades) {
             const container = document.getElementById('tradesList');
             if (trades.length === 0) {
@@ -1472,9 +1419,6 @@
             `).join('');
         }
 
-        // REMOVE ORIGINAL updateStatistics function since we're using updateStatisticsFiltered
-
-        // KEEP ORIGINAL showDayTrades function unchanged
         async function showDayTrades(dateStr) {
             try {
                 const response = await fetch(`/api/trades_by_date?date=${dateStr}`);
@@ -1493,7 +1437,6 @@
             }
         }
 
-        // KEEP ORIGINAL editTrade function unchanged
         async function editTrade(tradeId) {
             try {
                 const response = await fetch(`/api/trades/${tradeId}`);
@@ -1523,7 +1466,6 @@
             }
         }
 
-        // KEEP ORIGINAL saveTrade form submission unchanged
         document.getElementById('tradeForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -1574,7 +1516,6 @@
             }
         });
 
-        // KEEP ORIGINAL deleteTrade function unchanged
         async function deleteTrade() {
             const tradeId = document.getElementById('tradeId').value;
             if (!tradeId || !confirm('Are you sure you want to delete this trade?')) return;
@@ -1592,7 +1533,6 @@
             }
         }
 
-        // ADD NEW FUNCTION: Manage Options
         function manageOptions(type) {
             currentManageType = type;
             const title = type === 'keyLevels' ? 'Manage Key Levels' : 
@@ -1617,7 +1557,6 @@
             document.getElementById('manageModal').classList.add('active');
         }
 
-        // ADD NEW FUNCTION: Add option
         function addOption() {
             const input = document.getElementById('newOptionInput');
             const newOption = input.value.trim();
@@ -1645,7 +1584,6 @@
             updateStatisticsFiltered();
         }
 
-        // ADD NEW FUNCTION: Delete option
         function deleteOption(option) {
             if (!confirm(`Are you sure you want to delete "${option}"?`)) return;
             
@@ -1659,7 +1597,6 @@
             }
         }
 
-        // KEEP ORIGINAL closeModal function unchanged
         function closeModal(modalId) {
             document.getElementById(modalId).classList.remove('active');
             if (modalId === 'tradeModal') {
@@ -1668,7 +1605,6 @@
             }
         }
 
-        // KEEP ALL ORIGINAL API FUNCTIONS UNCHANGED
         async function loadApiCredentials() {
             try {
                 const response = await fetch('/api/get_bybit_credentials');
@@ -1742,10 +1678,44 @@
                 }
             } catch (error) {
                 console.error('Error syncing trades:', error);
+                alert('Sync error. Check console for details.');
             }
         }
 
-        // Cumulative P&L chart (stable)
+        async function clearBybitImports() {
+            if (!confirm('Clear import history? This will allow re-importing all trades.')) return;
+            
+            try {
+                const response = await fetch('/api/clear_bybit_imports', { method: 'POST' });
+                const data = await response.json();
+                alert(data.message);
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error clearing import history');
+            }
+        }
+
+        async function bulkFillBias() {
+            if (!confirm('Fill all missing bias values with "neutral"?')) return;
+            
+            try {
+                const response = await fetch('/api/bulk_fill_bias', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ weekly_bias: 'neutral', daily_bias: 'neutral' })
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(`Updated ${result.weekly_updated} weekly and ${result.daily_updated} daily bias values`);
+                    loadTrades();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error filling bias values');
+            }
+        }
+
         function updatePnlChart(trades) {
             const canvas = document.getElementById('pnlChart');
             if (!canvas) return;
