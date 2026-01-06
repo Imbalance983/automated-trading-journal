@@ -1,404 +1,461 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, request, jsonify, session
+from flask_cors import CORS
 import sqlite3
-import json
 from datetime import datetime, timedelta
-import random
 import os
-import base64
+import json
+import atexit
+from backup_system import backup_data
 
 app = Flask(__name__)
+app.secret_key = 'your-secret-key-here'
+CORS(app)
 
 
-# ==================== DATABASE ====================
-def get_db():
+# Initialize database
+def init_db():
+    conn = sqlite3.connect('trading_journal.db')
+    cursor = conn.cursor()
+
+    # Trades table with screenshots
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS trades (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        asset TEXT NOT NULL,
+        side TEXT NOT NULL,
+        entry_price REAL NOT NULL,
+        exit_price REAL NOT NULL,
+        quantity REAL NOT NULL,
+        entry_time TEXT NOT NULL,
+        exit_time TEXT NOT NULL,
+        pnl REAL NOT NULL,
+        key_level TEXT,
+        key_level_type TEXT,
+        confirmation TEXT,
+        model TEXT,
+        weekly_bias TEXT,
+        daily_bias TEXT,
+        notes TEXT,
+        screenshot_url TEXT,
+        status TEXT DEFAULT 'closed',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+
+    cursor.execute("PRAGMA table_info(trades)")
+    existing_cols = {row[1] for row in cursor.fetchall()}
+    if 'weekly_bias' not in existing_cols:
+        cursor.execute("ALTER TABLE trades ADD COLUMN weekly_bias TEXT")
+    if 'daily_bias' not in existing_cols:
+        cursor.execute("ALTER TABLE trades ADD COLUMN daily_bias TEXT")
+
+    # API credentials table with remember_me
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS api_credentials (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        exchange TEXT DEFAULT 'bybit',
+        api_key TEXT,
+        api_secret TEXT,
+        remember_me INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+
+    # Add sample data for December 2025 if empty
+    cursor.execute("SELECT COUNT(*) FROM trades")
+    if cursor.fetchone()[0] == 0:
+        sample_trades = [
+            ('BTCUSDT', 'long', 85000, 87000, 0.1, '2025-12-01 09:00:00', '2025-12-01 10:30:00', 200, '85000',
+             'support', 'break_retest', 'Bull Flag', 'Good trade'),
+            ('ETHUSDT', 'short', 4500, 4400, 1.0, '2025-12-01 14:00:00', '2025-12-01 15:00:00', 100, '4500',
+             'resistance', 'candle_pattern', 'Evening Star', 'Scalp'),
+            ('SOLUSDT', 'long', 200, 210, 10.0, '2025-12-02 10:00:00', '2025-12-02 12:00:00', 100, '200', 'trendline',
+             'volume_spike', 'Breakout', 'Volume spike'),
+            ('BTCUSDT', 'short', 86000, 85500, 0.2, '2025-12-03 11:00:00', '2025-12-03 13:00:00', -100, '86000',
+             'resistance', 'divergence', 'RSI Div', 'Failed'),
+            ('ETHUSDT', 'long', 4400, 4600, 0.5, '2025-12-05 09:30:00', '2025-12-05 16:00:00', 100, '4400', 'fibonacci',
+             'multiple_timeframe', 'Fib', '4H TF'),
+            ('SOLUSDT', 'short', 210, 205, 5.0, '2025-12-05 14:00:00', '2025-12-05 15:30:00', 25, '210', 'pivot',
+             'break_retest', 'Pivot Reject', 'Weekly pivot'),
+            ('BTCUSDT', 'long', 85500, 86500, 0.15, '2025-12-10 10:00:00', '2025-12-10 14:00:00', 150, '85500',
+             'support', 'candle_pattern', 'Hammer', 'Daily support'),
+            ('ETHUSDT', 'short', 4550, 4500, 2.0, '2025-12-15 13:00:00', '2025-12-15 15:00:00', 100, '4550',
+             'resistance', 'volume_spike', 'Volume Wall', 'Rejection'),
+            ('SOLUSDT', 'long', 195, 210, 8.0, '2025-12-20 09:00:00', '2025-12-20 18:00:00', 120, '195', 'support',
+             'break_retest', 'Double Bottom', 'Reversal'),
+            ('BTCUSDT', 'long', 87000, 88000, 0.05, '2025-12-25 11:00:00', '2025-12-25 13:00:00', 50, '87000',
+             'trendline', 'multiple_timeframe', 'Trend', 'Christmas')
+        ]
+
+        cursor.executemany('''
+            INSERT INTO trades (asset, side, entry_price, exit_price, quantity, entry_time, exit_time, 
+                              pnl, key_level, key_level_type, confirmation, model, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', sample_trades)
+
+    conn.commit()
+    conn.close()
+
+
+init_db()
+
+
+def get_db_connection():
     conn = sqlite3.connect('trading_journal.db')
     conn.row_factory = sqlite3.Row
     return conn
 
 
-def init_db():
-    conn = get_db()
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS trades (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            symbol TEXT,
-            asset TEXT,
-            side TEXT,
-            entry_price REAL,
-            exit_price REAL,
-            quantity REAL,
-            entry_time TEXT,
-            exit_time TEXT,
-            pnl REAL,
-            pnl_percentage REAL,
-            status TEXT DEFAULT 'closed',
-            key_level TEXT,
-            key_level_type TEXT,
-            confirmation TEXT,
-            model TEXT,
-            notes TEXT,
-            screenshot TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    conn.commit()
-    conn.close()
-
-
-# ==================== SAMPLE DATA ====================
-def add_sample_data():
-    conn = get_db()
-    cursor = conn.execute('SELECT COUNT(*) FROM trades')
-    if cursor.fetchone()[0] > 10:
-        conn.close()
-        return
-
-    print("➕ Adding 30 sample trades for December 2025...")
-
-    for i in range(30):
-        day = (i % 31) + 1
-        try:
-            exit_date = datetime(2025, 12, day, random.randint(9, 17), random.randint(0, 59))
-            entry_date = exit_date - timedelta(hours=random.randint(1, 6))
-        except:
-            exit_date = datetime(2025, 12, 28, 14, 30)
-            entry_date = exit_date - timedelta(hours=2)
-
-        asset = ['BTC', 'ETH', 'SOL'][i % 3]
-        symbol = f'{asset}USDT'
-        side = 'buy' if i % 2 == 0 else 'sell'
-
-        if asset == 'BTC':
-            entry_price = random.uniform(58000, 68000)
-            key_levels = [('60k Resistance', 'resistance'), ('58k Support', 'support'),
-                          ('65k Resistance', 'resistance'), ('55k Support', 'support')]
-        elif asset == 'ETH':
-            entry_price = random.uniform(3500, 4200)
-            key_levels = [('4k Resistance', 'resistance'), ('3.8k Support', 'support'),
-                          ('4.2k Resistance', 'resistance'), ('3.5k Support', 'support')]
-        else:
-            entry_price = random.uniform(80, 150)
-            key_levels = [('100 Resistance', 'resistance'), ('90 Support', 'support'),
-                          ('110 Resistance', 'resistance'), ('85 Support', 'support')]
-
-        pnl_percent = random.uniform(-10, 15)
-        exit_price = entry_price * (1 + pnl_percent / 100)
-        quantity = random.uniform(0.1, 2.0)
-        pnl = (exit_price - entry_price) * quantity
-
-        key_level, key_level_type = random.choice(key_levels)
-        confirmations = ['Volume Spike', 'Order Book', 'RSI Divergence', 'Trend Break']
-        models = ['Breakout', 'Pullback', 'Reversal', 'Trend Following']
-
-        conn.execute('''
-            INSERT INTO trades (symbol, asset, side, entry_price, exit_price, quantity,
-                              entry_time, exit_time, pnl, pnl_percentage,
-                              key_level, key_level_type, confirmation, model)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            symbol, asset, side, round(entry_price, 2), round(exit_price, 2), round(quantity, 3),
-            entry_date.strftime('%Y-%m-%d %H:%M:%S'), exit_date.strftime('%Y-%m-%d %H:%M:%S'),
-            round(pnl, 2), round(pnl_percent, 2),
-            key_level, key_level_type,
-            random.choice(confirmations), random.choice(models)
-        ))
-
-    conn.commit()
-    conn.close()
-    print("✅ Added 30 sample trades")
-
-
-# ==================== STATS ====================
-def calculate_stats(trades, category):
-    stats = {}
-    for trade in trades:
-        value = trade.get(category)
-        if not value:
-            continue
-        if value not in stats:
-            stats[value] = {'total': 0, 'wins': 0, 'win_rate': 0}
-        stats[value]['total'] += 1
-        if trade.get('pnl', 0) > 0:
-            stats[value]['wins'] += 1
-        stats[value]['win_rate'] = round((stats[value]['wins'] / stats[value]['total']) * 100, 1)
-    return dict(sorted(stats.items(), key=lambda x: x[1]['total'], reverse=True))
-
-
-def calculate_period_stats(trades, period='all'):
-    """Calculate stats for day/week/month/all"""
-    now = datetime.now()
-    filtered_trades = []
-
-    for trade in trades:
-        if trade.get('exit_time'):
-            try:
-                if 'T' in trade['exit_time']:
-                    trade_date = datetime.fromisoformat(trade['exit_time'].replace('Z', '+00:00'))
-                else:
-                    trade_date = datetime.strptime(trade['exit_time'], '%Y-%m-%d %H:%M:%S')
-
-                if period == 'day':
-                    if trade_date.date() == now.date():
-                        filtered_trades.append(trade)
-                elif period == 'week':
-                    week_ago = now - timedelta(days=7)
-                    if trade_date >= week_ago:
-                        filtered_trades.append(trade)
-                elif period == 'month':
-                    month_ago = now - timedelta(days=30)
-                    if trade_date >= month_ago:
-                        filtered_trades.append(trade)
-                else:  # 'all'
-                    filtered_trades.append(trade)
-            except:
-                pass
-
-    total = len(filtered_trades)
-    winning = sum(1 for t in filtered_trades if t.get('pnl', 0) > 0)
-    total_pnl = sum(t.get('pnl', 0) for t in filtered_trades)
-    win_rate = round((winning / total * 100), 1) if total > 0 else 0
-
-    return {
-        'total_trades': total,
-        'winning_trades': winning,
-        'total_pnl': round(total_pnl, 2),
-        'win_rate': win_rate
-    }
-
-
-# ==================== MAIN PAGE ====================
+# ================== BASIC ROUTES ==================
 @app.route('/')
-def dashboard():
-    conn = get_db()
-    cursor = conn.execute('SELECT * FROM trades WHERE status = "closed" ORDER BY exit_time DESC')
+def index():
+    return render_template('single_page.html')
+
+
+@app.route('/api/trades', methods=['GET'])
+def get_trades():
+    period = request.args.get('period', 'all')
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Build query based on period
+    query = "SELECT * FROM trades WHERE 1=1"
+    params = []
+
+    if period == 'today':
+        query += " AND DATE(entry_time) = DATE('now')"
+    elif period == 'week':
+        query += " AND entry_time >= DATE('now', '-7 days')"
+    elif period == 'month':
+        query += " AND strftime('%Y-%m', entry_time) = strftime('%Y-%m', 'now')"
+
+    query += " ORDER BY entry_time DESC"
+    cursor.execute(query, params)
+
     trades = [dict(row) for row in cursor.fetchall()]
+
+    # Calculate statistics
+    total_trades = len(trades)
+    winning_trades = sum(1 for t in trades if t['pnl'] > 0)
+    losing_trades = sum(1 for t in trades if t['pnl'] < 0)
+    total_pnl = sum(t['pnl'] for t in trades)
+    win_rate = (winning_trades / total_trades * 100) if total_trades > 0 else 0
+
+    # Calculate average win/loss
+    wins = [t['pnl'] for t in trades if t['pnl'] > 0]
+    losses = [t['pnl'] for t in trades if t['pnl'] < 0]
+    avg_win = sum(wins) / len(wins) if wins else 0
+    avg_loss = sum(losses) / len(losses) if losses else 0
+
+    # Calculate profit factor
+    total_wins = sum(wins) if wins else 0
+    total_losses = abs(sum(losses)) if losses else 0
+    profit_factor = total_wins / total_losses if total_losses > 0 else 0
+
+    # Key levels stats
+    cursor.execute('''
+        SELECT key_level_type, COUNT(*) as count 
+        FROM trades 
+        WHERE key_level_type IS NOT NULL AND key_level_type != ''
+        GROUP BY key_level_type
+    ''')
+    key_levels = {row['key_level_type']: row['count'] for row in cursor.fetchall()}
+
+    # Confirmations stats
+    cursor.execute('''
+        SELECT confirmation, COUNT(*) as count 
+        FROM trades 
+        WHERE confirmation IS NOT NULL AND confirmation != ''
+        GROUP BY confirmation
+    ''')
+    confirmations = {row['confirmation']: row['count'] for row in cursor.fetchall()}
+
+    # Models stats
+    cursor.execute('''
+        SELECT model, COUNT(*) as count 
+        FROM trades 
+        WHERE model IS NOT NULL AND model != ''
+        GROUP BY model
+    ''')
+    models = {row['model']: row['count'] for row in cursor.fetchall()}
+
     conn.close()
-
-    # If no trades, add sample data
-    if len(trades) < 5:
-        add_sample_data()
-        return dashboard()  # Reload
-
-    # ========== CALENDAR DATA ==========
-    trades_by_date = {}
-    for trade in trades:
-        if trade.get('exit_time'):
-            try:
-                exit_time_str = str(trade['exit_time'])
-                if 'T' in exit_time_str:
-                    date = exit_time_str.split('T')[0]
-                else:
-                    date = exit_time_str.split(' ')[0]
-
-                if len(date) == 10 and date[4] == '-' and date[7] == '-':
-                    if date not in trades_by_date:
-                        trades_by_date[date] = {
-                            'total_trades': 0,
-                            'total_pnl': 0.0,
-                            'wins': 0,
-                            'losses': 0,
-                            'trades': []
-                        }
-
-                    trades_by_date[date]['total_trades'] += 1
-                    trades_by_date[date]['total_pnl'] += float(trade.get('pnl', 0))
-
-                    if float(trade.get('pnl', 0)) > 0:
-                        trades_by_date[date]['wins'] += 1
-                    else:
-                        trades_by_date[date]['losses'] += 1
-
-                    # Store trade ID for quick access
-                    trades_by_date[date]['trades'].append(trade['id'])
-
-            except Exception as e:
-                print(f"Error processing date: {e}")
-
-    # Convert to JSON safely
-    try:
-        trades_by_date_json = json.dumps(trades_by_date)
-    except:
-        trades_by_date_json = '{}'
-
-    # ========== PERIOD STATS ==========
-    all_stats = calculate_period_stats(trades, 'all')
-    day_stats = calculate_period_stats(trades, 'day')
-    week_stats = calculate_period_stats(trades, 'week')
-    month_stats = calculate_period_stats(trades, 'month')
-
-    # ========== CATEGORY STATS ==========
-    key_levels_stats = calculate_stats(trades, 'key_level')
-    confirmations_stats = calculate_stats(trades, 'confirmation')
-    models_stats = calculate_stats(trades, 'model')
-
-    # ========== ASSETS ==========
-    assets = sorted(set(t.get('asset', 'Unknown') for t in trades))
-
-    # Recent trades (5 only)
-    recent_trades = trades[:5]
-
-    return render_template(
-        'single_page.html',
-        trades=recent_trades,
-        all_stats=all_stats,
-        day_stats=day_stats,
-        week_stats=week_stats,
-        month_stats=month_stats,
-        trades_by_date=trades_by_date_json,
-        key_levels_stats=key_levels_stats,
-        confirmations_stats=confirmations_stats,
-        models_stats=models_stats,
-        assets=assets,
-        total_trades=all_stats['total_trades']  # For compatibility
-    )
-
-
-# ==================== API ROUTES ====================
-@app.route('/api/day_trades/<date>')
-def day_trades(date):
-    conn = get_db()
-    cursor = conn.execute('SELECT * FROM trades WHERE exit_time LIKE ?', (f'{date}%',))
-    trades = [dict(row) for row in cursor.fetchall()]
-    conn.close()
-
-    daily_pnl = sum(t.get('pnl', 0) for t in trades)
-    wins = sum(1 for t in trades if t.get('pnl', 0) > 0)
 
     return jsonify({
         'trades': trades,
-        'stats': {
-            'date': date,
-            'total_trades': len(trades),
-            'winning_trades': wins,
-            'daily_pnl': round(daily_pnl, 2),
-            'daily_win_rate': round((wins / len(trades)) * 100, 1) if trades else 0
+        'statistics': {
+            'total_trades': total_trades,
+            'winning_trades': winning_trades,
+            'losing_trades': losing_trades,
+            'total_pnl': total_pnl,
+            'win_rate': round(win_rate, 1),
+            'avg_win': round(avg_win, 2),
+            'avg_loss': round(avg_loss, 2),
+            'profit_factor': round(profit_factor, 2),
+            'key_levels': key_levels,
+            'confirmations': confirmations,
+            'models': models
         }
     })
 
 
-@app.route('/api/get_trade/<int:trade_id>')
-def get_trade(trade_id):
-    conn = get_db()
-    cursor = conn.execute('SELECT * FROM trades WHERE id = ?', (trade_id,))
-    trade = cursor.fetchone()
-    conn.close()
+@app.route('/api/trades/<int:trade_id>', methods=['GET', 'PUT', 'DELETE'])
+def manage_trade(trade_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
 
-    if trade:
-        return jsonify({'success': True, 'trade': dict(trade)})
-    return jsonify({'success': False, 'error': 'Trade not found'})
+    if request.method == 'GET':
+        cursor.execute('SELECT * FROM trades WHERE id = ?', (trade_id,))
+        trade = cursor.fetchone()
+        conn.close()
+        return jsonify(dict(trade)) if trade else ('', 404)
 
-
-@app.route('/api/update_trade/<int:trade_id>', methods=['POST'])
-def update_trade(trade_id):
-    data = request.json
-    conn = get_db()
-
-    updates = []
-    values = []
-    for field in ['key_level', 'key_level_type', 'confirmation', 'model', 'notes', 'screenshot']:
-        if field in data:
-            updates.append(f"{field} = ?")
-            values.append(data[field])
-
-    if updates:
-        values.append(trade_id)
-        conn.execute(f"UPDATE trades SET {', '.join(updates)} WHERE id = ?", values)
+    elif request.method == 'PUT':
+        data = request.json
+        cursor.execute('''
+            UPDATE trades SET
+                asset = ?, side = ?, entry_price = ?, exit_price = ?, quantity = ?,
+                entry_time = ?, exit_time = ?, pnl = ?, key_level = ?, key_level_type = ?,
+                confirmation = ?, model = ?, weekly_bias = ?, daily_bias = ?, notes = ?, screenshot_url = ?
+            WHERE id = ?
+        ''', (
+            data['asset'], data['side'], data['entry_price'], data['exit_price'], data['quantity'],
+            data['entry_time'], data['exit_time'], data['pnl'], data.get('key_level'),
+            data.get('key_level_type'), data.get('confirmation'), data.get('model'),
+            data.get('weekly_bias'), data.get('daily_bias'),
+            data.get('notes'), data.get('screenshot_url'), trade_id
+        ))
         conn.commit()
+        conn.close()
+        return jsonify({'success': True})
 
-    conn.close()
-    return jsonify({'success': True})
-
-
-@app.route('/api/delete_trade/<int:trade_id>', methods=['DELETE'])
-def delete_trade(trade_id):
-    conn = get_db()
-    conn.execute('DELETE FROM trades WHERE id = ?', (trade_id,))
-    conn.commit()
-    conn.close()
-    return jsonify({'success': True})
+    elif request.method == 'DELETE':
+        cursor.execute('DELETE FROM trades WHERE id = ?', (trade_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
 
 
-@app.route('/api/add_trade', methods=['POST'])
-def add_trade():
+@app.route('/api/trades', methods=['POST'])
+def create_trade():
     data = request.json
-    conn = get_db()
 
     # Calculate P&L
-    pnl = (data['exit_price'] - data['entry_price']) * data['quantity']
-    if data['side'] == 'sell':
-        pnl = -pnl
-    pnl_percent = ((data['exit_price'] - data['entry_price']) / data['entry_price']) * 100
+    if data['side'] == 'long':
+        pnl = (float(data['exit_price']) - float(data['entry_price'])) * float(data['quantity'])
+    else:
+        pnl = (float(data['entry_price']) - float(data['exit_price'])) * float(data['quantity'])
 
-    conn.execute('''
-        INSERT INTO trades (asset, side, entry_price, exit_price, quantity,
-                          entry_time, exit_time, pnl, pnl_percentage,
-                          key_level, key_level_type, confirmation, model, screenshot, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        INSERT INTO trades (asset, side, entry_price, exit_price, quantity, entry_time, exit_time, pnl,
+                          key_level, key_level_type, confirmation, model, weekly_bias, daily_bias, notes, screenshot_url)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
-        data['asset'], data['side'], data['entry_price'], data['exit_price'],
-        data['quantity'], data.get('entry_time', datetime.now().isoformat()),
-        data.get('exit_time', datetime.now().isoformat()), pnl, pnl_percent,
-        data.get('key_level', ''), data.get('key_level_type', ''),
-        data.get('confirmation', ''), data.get('model', ''),
-        data.get('screenshot', ''), 'closed'
+        data['asset'], data['side'], data['entry_price'], data['exit_price'], data['quantity'],
+        data['entry_time'], data['exit_time'], pnl, data.get('key_level'), data.get('key_level_type'),
+        data.get('confirmation'), data.get('model'), data.get('weekly_bias'), data.get('daily_bias'),
+        data.get('notes'), data.get('screenshot_url')
     ))
 
+    trade_id = cursor.lastrowid
     conn.commit()
     conn.close()
-    return jsonify({'success': True})
+
+    return jsonify({'success': True, 'id': trade_id})
 
 
-@app.route('/api/get_categories')
-def get_categories():
-    conn = get_db()
-    categories = {
-        'key_levels': [r[0] for r in conn.execute(
-            'SELECT DISTINCT key_level FROM trades WHERE key_level IS NOT NULL AND key_level != ""').fetchall()],
-        'confirmations': [r[0] for r in conn.execute(
-            'SELECT DISTINCT confirmation FROM trades WHERE confirmation IS NOT NULL AND confirmation != ""').fetchall()],
-        'models': [r[0] for r in
-                   conn.execute('SELECT DISTINCT model FROM trades WHERE model IS NOT NULL AND model != ""').fetchall()]
-    }
+# ================== ENHANCED FEATURES ==================
+# Calendar data with full day color coding
+@app.route('/api/calendar_data', methods=['GET'])
+def get_calendar_data():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT 
+            DATE(entry_time) as trade_date,
+            SUM(pnl) as daily_pnl,
+            COUNT(*) as trade_count,
+            SUM(CASE WHEN pnl > 0 THEN 1 ELSE 0 END) as winning_trades
+        FROM trades 
+        GROUP BY DATE(entry_time)
+        ORDER BY trade_date
+    ''')
+
+    rows = cursor.fetchall()
     conn.close()
-    return jsonify(categories)
+
+    events = []
+    for row in rows:
+        win_rate = (row['winning_trades'] / row['trade_count'] * 100) if row['trade_count'] > 0 else 0
+
+        # Determine color based on P&L
+        if row['daily_pnl'] > 0:
+            color = '#4CAF50'  # Green
+        elif row['daily_pnl'] < 0:
+            color = '#f44336'  # Red
+        else:
+            color = '#9E9E9E'  # Gray
+
+        events.append({
+            'title': f"${row['daily_pnl']:.0f} | {row['trade_count']} trades | {win_rate:.0f}% WR",
+            'start': row['trade_date'],
+            'allDay': True,
+            'backgroundColor': color,
+            'borderColor': color,
+            'textColor': '#ffffff',
+            'extendedProps': {
+                'pnl': row['daily_pnl'],
+                'trade_count': row['trade_count'],
+                'win_rate': win_rate
+            }
+        })
+
+    return jsonify(events)
 
 
-@app.route('/api/update_category', methods=['POST'])
-def update_category():
+# Get trades for a specific day
+@app.route('/api/trades_by_date', methods=['GET'])
+def get_trades_by_date():
+    date_str = request.args.get('date')
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT * FROM trades 
+        WHERE DATE(entry_time) = ? 
+        ORDER BY entry_time DESC
+    ''', (date_str,))
+
+    trades = [dict(row) for row in cursor.fetchall()]
+
+    # Calculate daily stats
+    total_pnl = sum(t['pnl'] for t in trades)
+    total_trades = len(trades)
+    winning_trades = sum(1 for t in trades if t['pnl'] > 0)
+    win_rate = (winning_trades / total_trades * 100) if total_trades > 0 else 0
+
+    conn.close()
+
+    return jsonify({
+        'trades': trades,
+        'daily_stats': {
+            'total_pnl': total_pnl,
+            'total_trades': total_trades,
+            'winning_trades': winning_trades,
+            'win_rate': round(win_rate, 1)
+        }
+    })
+
+
+# P&L chart data
+@app.route('/api/pnl_data', methods=['GET'])
+def get_pnl_data():
+    period = request.args.get('period', 'all')
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    if period == 'today':
+        query = "SELECT DATE(entry_time) as date, SUM(pnl) as pnl FROM trades WHERE DATE(entry_time) = DATE('now') GROUP BY DATE(entry_time) ORDER BY date"
+    elif period == 'week':
+        query = "SELECT DATE(entry_time) as date, SUM(pnl) as pnl FROM trades WHERE entry_time >= DATE('now', '-7 days') GROUP BY DATE(entry_time) ORDER BY date"
+    elif period == 'month':
+        query = "SELECT DATE(entry_time) as date, SUM(pnl) as pnl FROM trades WHERE strftime('%Y-%m', entry_time) = strftime('%Y-%m', 'now') GROUP BY DATE(entry_time) ORDER BY date"
+    else:
+        query = "SELECT DATE(entry_time) as date, SUM(pnl) as pnl FROM trades GROUP BY DATE(entry_time) ORDER BY date"
+
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    conn.close()
+
+    dates = [row['date'] for row in rows]
+    daily_pnl = [row['pnl'] for row in rows]
+
+    # Calculate cumulative P&L
+    cumulative = []
+    running_total = 0
+    for pnl in daily_pnl:
+        running_total += pnl
+        cumulative.append(running_total)
+
+    return jsonify({
+        'dates': dates,
+        'daily_pnl': daily_pnl,
+        'cumulative_pnl': cumulative
+    })
+
+
+# Bybit API routes with remember me
+@app.route('/api/save_bybit_credentials', methods=['POST'])
+def save_bybit_credentials():
     data = request.json
-    conn = get_db()
-    conn.execute(f"UPDATE trades SET {data['type']} = ? WHERE {data['type']} = ?",
-                 (data['new_name'], data['old_name']))
+    api_key = data.get('api_key')
+    api_secret = data.get('api_secret')
+    remember_me = data.get('remember_me', False)
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Clear existing
+    cursor.execute('DELETE FROM api_credentials')
+
+    # Insert new with remember_me flag
+    cursor.execute('INSERT INTO api_credentials (exchange, api_key, api_secret, remember_me) VALUES (?, ?, ?, ?)',
+                   ('bybit', api_key, api_secret, 1 if remember_me else 0))
+
     conn.commit()
     conn.close()
-    return jsonify({'success': True})
+
+    return jsonify({'success': True, 'message': 'Credentials saved'})
 
 
-@app.route('/api/delete_category', methods=['POST'])
-def delete_category():
-    data = request.json
-    conn = get_db()
-    conn.execute(f"UPDATE trades SET {data['type']} = NULL WHERE {data['type']} = ?", (data['name'],))
-    conn.commit()
+@app.route('/api/get_bybit_credentials', methods=['GET'])
+def get_bybit_credentials():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM api_credentials WHERE remember_me = 1 LIMIT 1')
+    creds = cursor.fetchone()
     conn.close()
-    return jsonify({'success': True})
+
+    if creds and creds['api_key']:
+        return jsonify({
+            'connected': True,
+            'api_key': creds['api_key'],
+            'api_secret': creds['api_secret'],
+            'remember_me': bool(creds['remember_me'])
+        })
+    return jsonify({'connected': False})
 
 
-# ==================== START ====================
+@app.route('/api/get_bybit_status', methods=['GET'])
+def get_bybit_status():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM api_credentials LIMIT 1')
+    creds = cursor.fetchone()
+    conn.close()
+
+    if creds and creds['api_key']:
+        return jsonify({'connected': True, 'status': 'Configured (not connected)'})
+    return jsonify({'connected': False, 'status': 'Not configured'})
+
+
+@app.route('/api/sync_bybit_trades', methods=['POST'])
+def sync_bybit_trades():
+    # This would integrate with actual Bybit API
+    return jsonify({
+        'success': True,
+        'message': 'Bybit sync would work with real API keys',
+        'count': 0
+    })
+
+
 if __name__ == '__main__':
-    init_db()
-    add_sample_data()
-
-    print("=" * 60)
-    print("🚀 TRADING JOURNAL - FINAL VERSION")
-    print("=" * 60)
-    print("✅ Calendar with clickable dates")
-    print("✅ Add trade with ALL fields")
-    print("✅ Period filters (Day/Week/Month/All)")
-    print("✅ Better color coding")
-    print("✅ 5 recent trades only")
-    print("✅ Complete category management")
-    print("=" * 60)
-    print("=" * 60)
-
+    # Register backup function to run on app exit
+    atexit.register(backup_data)
     app.run(debug=True, port=5000)

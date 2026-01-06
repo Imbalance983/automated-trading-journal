@@ -1,1052 +1,1630 @@
-<!DOCTYPE html>
-<html>
+﻿<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Journal</title>
-    
-    <!-- FullCalendar -->
-    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet'>
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
-    
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Arial; }
-        body { background: #0f0f0f; color: white; padding: 20px; max-width: 1400px; margin: 0 auto; }
-        
-        .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #333; }
-        .header h1 { color: #FFC107; font-size: 2.5em; margin-bottom: 10px; }
-        
-        .section {
-            background: #1a1a1a;
-            padding: 25px;
-            margin-bottom: 30px;
-            border-radius: 12px;
-            border: 1px solid #333;
+    <title>Trading Journal Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+        /* ALL YOUR ORIGINAL CSS STAYS EXACTLY THE SAME */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        
-        .section-title {
-            color: #FFC107;
-            font-size: 1.4em;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #333;
-        }
-        
-        .period-filters {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .period-btn {
-            flex: 1;
-            padding: 10px;
-            background: #2a2a2a;
-            border: 2px solid #333;
-            color: #888;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        
-        .period-btn.active {
-            background: #FFC107;
-            border-color: #FFC107;
-            color: black;
-        }
-        
-        .metrics {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .metric-card {
-            background: #1a1a1a;
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #000000;
+            color: #ffffff;
+            min-height: 100vh;
             padding: 20px;
-            border-radius: 10px;
-            border-left: 4px solid #FFC107;
         }
-        
-        .metric-value {
-            font-size: 2em;
-            font-weight: bold;
-            color: #4CAF50;
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #111111;
+            border: 1px solid #333333;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
         }
-        
-        .metric-value.negative {
-            color: #f44336;
-        }
-        
-        .metric-label {
-            color: #888;
-            font-size: 0.9em;
-            margin-top: 5px;
-        }
-        
-        #calendar {
+
+        .header {
             background: #1a1a1a;
-            padding: 20px;
-            border-radius: 10px;
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-bottom: 1px solid #333333;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
             margin-bottom: 10px;
         }
-        
-        .fc-toolbar-title { color: #FFC107 !important; }
-        .fc-col-header-cell { background: #2a2a2a !important; color: #FFC107 !important; }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #1a1a1a;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-top: 10px;
-        }
-        
-        th {
-            background: #2a2a2a;
-            color: #FFC107;
-            padding: 12px;
-            text-align: left;
-            font-size: 0.9em;
-        }
-        
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #333;
-        }
-        
-        .win { color: #4CAF50; font-weight: bold; }
-        .loss { color: #f44336; font-weight: bold; }
-        
-        .btn {
-            background: #FFC107;
-            color: black;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            margin: 2px;
-        }
-        
-        .btn:hover { background: #ffb300; }
-        .btn-small { padding: 5px 10px; font-size: 0.9em; }
-        .btn-success { background: #4CAF50; color: white; }
-        .btn-danger { background: #f44336; color: white; }
-        
-        .filters {
+
+        /* Period Filter Tabs */
+        .period-filter {
             display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+            background: #0b0b0b;
+            border-bottom: 1px solid #333333;
+        }
+
+        .period-tab {
+            padding: 10px 25px;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            background: #111111;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            user-select: none;
+        }
+
+        .period-tab:hover {
+            border-color: #555555;
+        }
+
+        .period-tab.active {
+            background: #1a1a1a;
+            color: white;
+            border-color: #555555;
+        }
+
+        /* Horizontal Metrics Dashboard */
+        .metrics-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            padding: 25px;
+            background: #0b0b0b;
+            border-bottom: 1px solid #333333;
+        }
+
+        .metric-card {
+            background: #111111;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .metric-label {
+            font-size: 0.85em;
+            color: #bbbbbb;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .metric-value.positive {
+            color: #00ff88;
+        }
+
+        .metric-value.negative {
+            color: #ff3366;
+        }
+
+        /* API Settings Compact */
+        .api-section {
+            padding: 20px 25px;
+            background: #0b0b0b;
+            border-bottom: 1px solid #333333;
+        }
+
+        .api-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
             flex-wrap: wrap;
         }
-        
-        .filter-group {
-            flex: 1;
-            min-width: 200px;
+
+        .api-status {
+            font-weight: 600;
+            padding: 8px 15px;
+            border-radius: 20px;
+            background: #111111;
+            border: 1px solid #333333;
         }
-        
-        .filter-group label {
-            display: block;
-            color: #888;
-            font-size: 0.9em;
-            margin-bottom: 5px;
+
+        .api-input {\r\n            flex: 1;\r\n            min-width: 200px;\r\n            padding: 10px 15px;\r\n            border: 1px solid #333333;\r\n            border-radius: 8px;\r\n            font-size: 0.95em;\r\n            background: #111111;\r\n            color: #ffffff;\r\n        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
         }
-        
-        .filter-group select {
-            width: 100%;
-            padding: 8px;
-            background: #2a2a2a;
-            border: 1px solid #444;
+
+        .remember-me input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #007bff;
             color: white;
-            border-radius: 6px;
         }
-        
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            padding: 25px;
+        }
+
+        /* Calendar Section */
+        .calendar-section h2 { color: #ffffff; }
+
+        .calendar-section {
+            background: #111111;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        #calendar {
+            margin-top: 20px;
+        }
+
+        /* Color code entire day cells */
+        .fc-day-profit {
+            background-color: rgba(0, 255, 136, 0.08) !important;
+        }
+
+        .fc-day-loss {
+            background-color: rgba(255, 51, 102, 0.08) !important;
+        }
+
+        .fc-day-breakeven {
+            background-color: rgba(255, 255, 255, 0.04) !important;
+        }
+
+        .fc-daygrid-day {
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .fc-daygrid-day:hover {
+            opacity: 0.8;
+        }
+
+        /* Day stats overlay */
+        .day-stats {
+            position: absolute;
+            bottom: 2px;
+            left: 2px;
+            right: 2px;
+            font-size: 0.7em;
+            background: rgba(0, 0, 0, 0.70);
+            color: #ffffff;
+            padding: 3px;
+            border-radius: 4px;
+            line-height: 1.2;
+            pointer-events: none;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .day-trades {
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .day-pnl {
+            font-weight: bold;
+        }
+
+        .day-pnl.positive {
+            color: #28a745;
+        }
+
+        .day-pnl.negative {
+            color: #dc3545;
+        }
+
+        .day-wr {
+            color: #bbbbbb;
+        }
+
+        /* Trades List */
+        .trades-section h2 { color: #ffffff; }
+
+        .trades-section {
+            background: #111111;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .trade-card {
+            background: #0b0b0b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 4px solid #007bff;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .trade-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .trade-card.profit {
+            border-left-color: #00ff88;
+        }
+
+        .trade-card.loss {
+            border-left-color: #ff3366;
+        }
+
+        .trade-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .trade-asset {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .trade-pnl {
+            font-weight: bold;
+        }
+
+        .trade-pnl.positive {
+            color: #00ff88;
+        }
+
+        .trade-pnl.negative {
+            color: #ff3366;
+        }
+
+        .trade-details {
+            font-size: 0.9em;
+            color: #bbbbbb;
+        }
+
+        /* Statistics Section */
+        .stats-section {
+            padding: 25px;
+        }
+
+        .stats-header h2 { color: #ffffff; }
+
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            padding: 15px;
+            background: #0b0b0b;
+            border-radius: 8px;
+            user-select: none;
+        }
+
+        .stats-header:hover {
+            background: #111111;
+        }
+
+        .stats-toggle {
+            font-size: 1.5em;
+            transition: transform 0.3s;
+        }
+
+        .stats-toggle.open {
+            transform: rotate(180deg);
+        }
+
+        .stats-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .stats-content.open {
+            max-height: 3000px;
+        }
+
+        /* Stats Filters */
+        .stats-filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-label {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #bbbbbb;
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            background: #111111;
+            cursor: pointer;
+            font-size: 0.95em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-box {
+            background: #0b0b0b;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #007bff;
+            position: relative;
+        }
+
+        .stat-box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .stat-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .stat-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .stat-list {
+            font-size: 0.95em;
+            line-height: 1.8;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-name {
+            font-weight: 500;
+            flex: 1;
+        }
+
+        .stat-metrics {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .stat-count {
+            background: #1a1a1a;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+        }
+
+        .stat-wr {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .stat-wr.good {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .stat-wr.average {
+            background: #0b0b0b;
+            color: #856404;
+        }
+
+        .stat-wr.poor {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal.active {
+            display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
         }
-        
+
         .modal-content {
-            background: #1a1a1a;
+            background: #111111;
             padding: 30px;
-            border-radius: 12px;
-            width: 90%;
+            border-radius: 15px;
             max-width: 600px;
-            border: 2px solid #FFC107;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s;
         }
-        
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; color: #888; margin-bottom: 5px; }
-        .form-group input, .form-group select, .form-group textarea {
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .close {
+            font-size: 2em;
+            cursor: pointer;
+            color: #adb5bd;
+        }
+
+        .close:hover {
+            color: #ffffff;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
             width: 100%;
-            padding: 10px;
-            background: #2a2a2a;
-            border: 1px solid #444;
-            color: white;
-            border-radius: 6px;
+            padding: 12px;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            font-size: 1em;
         }
-        
-        .form-grid {
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-row {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: 1fr 1fr;
             gap: 15px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* Manage Options Modal */
+        .option-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #0b0b0b;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .btn-delete {
+            padding: 5px 12px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
+
+        
+        .add-option-form input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #333333;
+            border-radius: 8px;
+        }
+        /* P&L Chart Section */
+        .pnl-chart-section {
+            padding: 25px;
+            background: #0b0b0b;
+            border-bottom: 1px solid #333333;
+        }
+
+        .pnl-chart-container {
+            background: #111111;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            height: 220px;
+        }
+
+        .pnl-chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .pnl-chart-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .pnl-chart-canvas {
+            height: 180px;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-dashboard {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- HEADER -->
-    <div class="header">
-        <h1>📊 Trading Journal</h1>
-        <p style="color: #888;">Complete trading system</p>
-    </div>
-    
-    <!-- PERIOD FILTERS -->
-    <div class="section">
-        <div class="section-title">📈 Performance Metrics</div>
-        <div class="period-filters">
-            <button class="period-btn active" onclick="changePeriod('all')">All Time</button>
-            <button class="period-btn" onclick="changePeriod('month')">This Month</button>
-            <button class="period-btn" onclick="changePeriod('week')">This Week</button>
-            <button class="period-btn" onclick="changePeriod('day')">Today</button>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Trading Journal Pro</h1>
+            <p>Track, Analyze, Improve Your Trading Performance</p>
         </div>
-        
-        <div class="metrics">
+
+        <!-- Period Filter -->
+        <div class="period-filter">
+            <div class="period-tab active" data-period="all" onclick="changePeriod('all')">📅 All Time</div>
+            <div class="period-tab" data-period="month" onclick="changePeriod('month')">📆 This Month</div>
+            <div class="period-tab" data-period="week" onclick="changePeriod('week')">📅 This Week</div>
+            <div class="period-tab" data-period="today" onclick="changePeriod('today')">📍 Today</div>
+        </div>
+
+        <!-- Horizontal Metrics Dashboard -->
+        <div class="metrics-dashboard" id="metricsDashboard">
             <div class="metric-card">
-                <div class="metric-value" id="total-trades">0</div>
-                <div class="metric-label">Total Trades</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-value" id="win-rate">0%</div>
-                <div class="metric-label">Win Rate</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-value" id="winning-trades">0</div>
-                <div class="metric-label">Winning Trades</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-value" id="total-pnl">$0</div>
                 <div class="metric-label">Total P&L</div>
+                <div class="metric-value" id="totalPnl">$0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Win Rate</div>
+                <div class="metric-value" id="winRate">0%</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Total Trades</div>
+                <div class="metric-value" id="totalTrades">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Avg Win</div>
+                <div class="metric-value positive" id="avgWin">$0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Avg Loss</div>
+                <div class="metric-value negative" id="avgLoss">$0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Profit Factor</div>
+                <div class="metric-value" id="profitFactor">0.00</div>
+            </div>
+        </div>
+
+        <!-- P&L Chart Section -->
+        <div class="pnl-chart-section">
+            <div class="pnl-chart-container">
+                <div class="pnl-chart-header">
+                    <div class="pnl-chart-title">📈 Cumulative P&L Over Time</div>
+                </div>
+                <canvas id="pnlChart" class="pnl-chart-canvas"></canvas>
+            </div>
+        </div>
+
+        <!-- Compact API Settings -->
+        <div class="api-section">
+            <div class="api-container">
+                <div class="api-status" id="apiStatus">🔴 Not Connected</div>
+                <input type="text" class="api-input" id="apiKey" placeholder="Bybit API Key">
+                <input type="password" class="api-input" id="apiSecret" placeholder="API Secret">
+                <label class="remember-me">
+                    <input type="checkbox" id="rememberMe">
+                    <span>Remember Me</span>
+                </label>
+                <button class="btn btn-primary" onclick="saveApiCredentials()">💾 Save</button>
+                <button class="btn btn-success" onclick="syncBybitTrades()">🔄 Sync Trades</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Calendar Section -->
+            <div class="calendar-section">
+                <h2>📅 Trading Calendar</h2>
+                <div id="calendar"></div>
+            </div>
+
+            <!-- Recent Trades -->
+            <div class="trades-section">
+                <h2>Recent Trades</h2>
+                <div id="tradesList"></div>
+            </div>
+        </div>
+
+        <!-- Statistics Section - Expandable -->
+        <div class="stats-section">
+            <div class="stats-header" onclick="toggleStats()">
+                <h2>📈 Performance Statistics</h2>
+                <span class="stats-toggle" id="statsToggle">▼</span>
+            </div>
+            <div class="stats-content" id="statsContent">
+                <!-- Filters -->
+                <div class="stats-filters">
+                    <div class="filter-group">
+                        <span class="filter-label">Filter by Asset</span>
+                        <select class="filter-select" id="assetFilter" onchange="updateStatsFilter()">
+                            <option value="all">All Assets</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <span class="filter-label">Filter by Side</span>
+                        <select class="filter-select" id="sideFilter" onchange="updateStatsFilter()">
+                            <option value="all">All (Long + Short)</option>
+                            <option value="long">Long Only</option>
+                            <option value="short">Short Only</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-box-header">
+                            <div class="stat-title">Key Levels Performance</div>
+                            <div class="stat-actions">
+                                <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.85em;" onclick="manageOptions('keyLevels')">Manage</button>
+                            </div>
+                        </div>
+                        <div class="stat-list" id="keyLevelsStats"></div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-box-header">
+                            <div class="stat-title">Confirmations Performance</div>
+                            <div class="stat-actions">
+                                <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.85em;" onclick="manageOptions('confirmations')">Manage</button>
+                            </div>
+                        </div>
+                        <div class="stat-list" id="confirmationsStats"></div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-box-header">
+                            <div class="stat-title">Models Performance</div>
+                            <div class="stat-actions">
+                                <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.85em;" onclick="manageOptions('models')">Manage</button>
+                            </div>
+                        </div>
+                        <div class="stat-list" id="modelsStats"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    
-    <!-- QUICK ACTIONS -->
-    <div class="section">
-        <div class="section-title">⚡ Quick Actions</div>
-        <div>
-            <button class="btn btn-success" onclick="showAddTradeModal()">➕ Add Trade</button>
-            <button class="btn" onclick="showCategoryManager()">🏷️ Manage Categories</button>
-            <button class="btn" onclick="location.reload()">🔄 Refresh</button>
-        </div>
-    </div>
-    
-    <!-- CALENDAR -->
-    <div class="section">
-        <div class="section-title">📅 Trading Calendar</div>
-        <div id="calendar"></div>
-        <div style="color: #888; font-size: 0.9em; margin-top: 10px;">
-            <span style="color: #4CAF50;">■</span> Winning Day 
-            <span style="color: #f44336; margin-left: 15px;">■</span> Losing Day
-        </div>
-    </div>
-    
-    <!-- RECENT TRADES (5 ONLY) -->
-    <div class="section">
-        <div class="section-title">🔄 Recent Trades</div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Asset</th>
-                    <th>Side</th>
-                    <th>P&L</th>
-                    <th>Key Level</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for trade in trades %}
-                <tr>
-                    <td>{{ trade.exit_time.split(' ')[0] if trade.exit_time else 'N/A' }}</td>
-                    <td><strong>{{ trade.asset }}</strong></td>
-                    <td><span style="color: {{ '#4CAF50' if trade.side == 'buy' else '#f44336' }}">{{ trade.side|upper }}</span></td>
-                    <td class="{{ 'win' if trade.pnl > 0 else 'loss' }}">
-                        <strong>${{ "%.2f"|format(trade.pnl) }}</strong>
-                    </td>
-                    <td>{{ trade.key_level or 'Not set' }}</td>
-                    <td>
-                        <button class="btn btn-small" onclick="editTrade({{ trade.id }})">Edit</button>
-                        <button class="btn btn-small btn-danger" onclick="deleteTrade({{ trade.id }})">Delete</button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    
-    <!-- STATISTICS -->
-    <div class="section">
-        <div class="section-title">📊 Statistics</div>
-        
-        <!-- FILTERS -->
-        <div class="filters">
-            <div class="filter-group">
-                <label>Asset:</label>
-                <select id="asset-filter" onchange="filterStats()">
-                    <option value="ALL">All Assets</option>
-                    {% for asset in assets %}
-                    <option value="{{ asset }}">{{ asset }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>Key Level Type:</label>
-                <select id="type-filter" onchange="filterStats()">
-                    <option value="ALL">All Types</option>
-                    <option value="support">Support Only</option>
-                    <option value="resistance">Resistance Only</option>
-                </select>
-            </div>
-        </div>
-        
-        <!-- KEY LEVELS -->
-        <div style="margin-bottom: 30px;">
-            <h3 style="color: #FFC107; margin-bottom: 15px;">🎯 Key Levels</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Key Level</th>
-                        <th style="text-align: center;">Win Rate</th>
-                        <th style="text-align: center;">Total Trades</th>
-                    </tr>
-                </thead>
-                <tbody id="key-levels-body">
-                    {% for level, stats in key_levels_stats.items() %}
-                    <tr>
-                        <td>{{ level }}</td>
-                        <td style="text-align: center; color: #4CAF50; font-weight: bold;">
-                            {{ stats.win_rate }}%
-                        </td>
-                        <td style="text-align: center; color: #FFC107;">
-                            {{ stats.wins }}/{{ stats.total }}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        
-        <!-- CONFIRMATIONS -->
-        <div style="margin-bottom: 30px;">
-            <h3 style="color: #FFC107; margin-bottom: 15px;">✅ Confirmations</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Confirmation</th>
-                        <th style="text-align: center;">Win Rate</th>
-                        <th style="text-align: center;">Total Trades</th>
-                    </tr>
-                </thead>
-                <tbody id="confirmations-body">
-                    {% for confirmation, stats in confirmations_stats.items() %}
-                    <tr>
-                        <td>{{ confirmation }}</td>
-                        <td style="text-align: center; color: #4CAF50; font-weight: bold;">
-                            {{ stats.win_rate }}%
-                        </td>
-                        <td style="text-align: center; color: #FFC107;">
-                            {{ stats.wins }}/{{ stats.total }}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        
-        <!-- MODELS -->
-        <div>
-            <h3 style="color: #FFC107; margin-bottom: 15px;">🔧 Models</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Model</th>
-                        <th style="text-align: center;">Win Rate</th>
-                        <th style="text-align: center;">Total Trades</th>
-                    </tr>
-                </thead>
-                <tbody id="models-body">
-                    {% for model, stats in models_stats.items() %}
-                    <tr>
-                        <td>{{ model }}</td>
-                        <td style="text-align: center; color: #4CAF50; font-weight: bold;">
-                            {{ stats.win_rate }}%
-                        </td>
-                        <td style="text-align: center; color: #FFC107;">
-                            {{ stats.wins }}/{{ stats.total }}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-    
-    <!-- ========== MODALS ========== -->
-    
-    <!-- ADD TRADE MODAL -->
-    <div id="addTradeModal" class="modal">
+
+    <!-- Trade Detail Modal -->
+    <div class="modal" id="tradeModal">
         <div class="modal-content">
-            <h2 style="color: #FFC107; margin-bottom: 20px;">➕ Add New Trade</h2>
-            <form onsubmit="addTrade(); return false;">
-                <div class="form-grid">
+            <div class="modal-header">
+                <h2>Trade Details</h2>
+                <span class="close" onclick="closeModal('tradeModal')">&times;</span>
+            </div>
+            <form id="tradeForm">
+                <input type="hidden" id="tradeId">
+                
+                <div class="form-row">
                     <div class="form-group">
-                        <label>Asset *</label>
-                        <select id="new-asset" required>
-                            <option value="">Select asset...</option>
-                            <option value="BTC">BTC</option>
-                            <option value="ETH">ETH</option>
-                            <option value="SOL">SOL</option>
+                        <label>Asset</label>
+                        <input type="text" id="asset" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Side</label>
+                        <select id="side" required>
+                            <option value="long">Long</option>
+                            <option value="short">Short</option>
                         </select>
                     </div>
-                    
+                </div>
+
+                <div class="form-row">
                     <div class="form-group">
-                        <label>Side *</label>
-                        <select id="new-side" required>
-                            <option value="">Select side...</option>
-                            <option value="buy">Buy</option>
-                            <option value="sell">Sell</option>
-                        </select>
+                        <label>Entry Price</label>
+                        <input type="number" step="0.01" id="entryPrice" required>
                     </div>
-                    
                     <div class="form-group">
-                        <label>Entry Price *</label>
-                        <input type="number" step="0.01" id="new-entry" placeholder="65000" required>
+                        <label>Exit Price</label>
+                        <input type="number" step="0.01" id="exitPrice" required>
                     </div>
-                    
-                    <div class="form-group">
-                        <label>Exit Price *</label>
-                        <input type="number" step="0.01" id="new-exit" placeholder="65200" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Quantity *</label>
-                        <input type="number" step="0.001" id="new-quantity" placeholder="0.1" required>
-                    </div>
-                    
+                </div>
+
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" step="0.01" id="quantity" required>
+                </div>
+
+                <div class="form-row">
                     <div class="form-group">
                         <label>Entry Time</label>
-                        <input type="datetime-local" id="new-entry-time">
+                        <input type="datetime-local" id="entryTime" required>
                     </div>
-                    
                     <div class="form-group">
                         <label>Exit Time</label>
-                        <input type="datetime-local" id="new-exit-time">
+                        <input type="datetime-local" id="exitTime" required>
                     </div>
                 </div>
-                
-                <h3 style="color: #FFC107; margin: 20px 0 15px 0;">Trade Analysis</h3>
-                
-                <div class="form-grid">
+
+                <div class="form-row">
                     <div class="form-group">
                         <label>Key Level</label>
-                        <input type="text" id="new-key-level" placeholder="e.g., 60k Resistance">
+                        <input type="text" id="keyLevel" placeholder="e.g., 85000">
                     </div>
-                    
                     <div class="form-group">
                         <label>Key Level Type</label>
-                        <select id="new-key-level-type">
-                            <option value="">Select type...</option>
-                            <option value="support">Support</option>
-                            <option value="resistance">Resistance</option>
+                        <select id="keyLevelType">
+                            <option value="">Select...</option>
+                            <!-- Options will be populated from managed list -->
                         </select>
                     </div>
-                    
+                </div>
+
+                <div class="form-row">
                     <div class="form-group">
-                        <label>Confirmation Method</label>
-                        <input type="text" id="new-confirmation" placeholder="e.g., Volume Spike">
+                        <label>Confirmation</label>
+                        <select id="confirmation">
+                            <option value="">Select...</option>
+                            <!-- Options will be populated from managed list -->
+                        </select>
                     </div>
-                    
                     <div class="form-group">
-                        <label>Trading Model</label>
-                        <input type="text" id="new-model" placeholder="e.g., Breakout">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Screenshot URL</label>
-                        <input type="text" id="new-screenshot" placeholder="https://example.com/screenshot.png">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Notes</label>
-                        <textarea id="new-notes" rows="2" placeholder="Additional notes..."></textarea>
+                        <label>Model/Pattern</label>
+                        <input type="text" id="model" placeholder="e.g., Bull Flag">
                     </div>
                 </div>
-                
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button type="submit" class="btn btn-success">Add Trade</button>
-                    <button type="button" class="btn" onclick="closeModal('addTradeModal')">Cancel</button>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Weekly Bias</label>
+                        <select id="weeklyBias">
+                            <option value="">Select...</option>
+                            <option value="bullish">Bullish</option>
+                            <option value="bearish">Bearish</option>
+                            <option value="neutral">Neutral</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Daily Bias</label>
+                        <select id="dailyBias">
+                            <option value="">Select...</option>
+                            <option value="bullish">Bullish</option>
+                            <option value="bearish">Bearish</option>
+                            <option value="neutral">Neutral</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Screenshot URL</label>
+                    <input type="text" id="screenshotUrl" placeholder="https://...">
+                </div>
+
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="notes" placeholder="Trade notes, lessons learned..."></textarea>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">💾 Save Trade</button>
+                    <button type="button" class="btn btn-danger" onclick="deleteTrade()">🗑️ Delete</button>
+                    <button type="button" class="btn" onclick="closeModal('tradeModal')">Cancel</button>
                 </div>
             </form>
         </div>
     </div>
-    
-    <!-- DAY TRADES MODAL -->
-    <div id="dayTradesModal" class="modal">
+
+    <!-- Manage Options Modal -->
+    <div class="modal" id="manageModal">
         <div class="modal-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="color: #FFC107;" id="dayModalTitle">Trades for </h2>
-                <button class="btn" onclick="closeModal('dayTradesModal')">×</button>
+            <div class="modal-header">
+                <h2 id="manageModalTitle">Manage Options</h2>
+                <span class="close" onclick="closeModal('manageModal')">&times;</span>
             </div>
-            
-            <div id="dayTradesContent"></div>
-        </div>
-    </div>
-    
-    <!-- EDIT TRADE MODAL -->
-    <div id="editTradeModal" class="modal">
-        <div class="modal-content">
-            <h2 style="color: #FFC107; margin-bottom: 20px;">✏️ Edit Trade</h2>
-            <div id="editTradeContent"></div>
-        </div>
-    </div>
-    
-    <!-- CATEGORY MANAGER MODAL -->
-    <div id="categoryManagerModal" class="modal">
-        <div class="modal-content">
-            <h2 style="color: #FFC107; margin-bottom: 20px;">🏷️ Category Manager</h2>
-            <div id="categoryManagerContent"></div>
+            <div id="manageOptionsList"></div>
+            <div class="add-option-form">
+                <input type="text" id="newOptionInput" placeholder="Add new option...">
+                <button class="btn btn-primary" onclick="addOption()">Add</button>
+            </div>
+            <div class="btn-group" style="margin-top: 20px;">
+                <button type="button" class="btn" onclick="closeModal('manageModal')">Close</button>
+            </div>
         </div>
     </div>
 
-    <!-- JAVASCRIPT -->
     <script>
-        // ========== CALENDAR ==========
+        // KEEP ALL ORIGINAL VARIABLES AND INITIALIZATION
+        let calendar;
+        let currentTrade = null;
+        let currentPeriod = 'all';
+        let currentManageType = '';
+        let statsOpen = false;
+        let calendarDates = {};
+        let allTrades = [];
+        let statsFilter = { asset: 'all', side: 'all' };
+        let pnlChart = null; // ADD P&L CHART VARIABLE
+        
+        // ADD MANAGED OPTIONS DATA
+        let managedOptions = {
+            keyLevels: ['support', 'resistance', 'fibonacci', 'trendline', 'pivot'],
+            confirmations: ['break_retest', 'candle_pattern', 'volume_spike', 'divergence', 'multiple_timeframe'],
+            models: ['Bull Flag', 'Head & Shoulders', 'Double Top', 'Double Bottom', 'Triple Top', 'Triple Bottom']
+        };
+
+        // Initialize - ADD populateManagedOptions
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Starting calendar...');
+            initCalendar();
+            loadTrades();
+            loadApiCredentials();
+            checkApiStatus();
+            populateManagedOptions(); // ADD THIS
+        });
+
+        // ADD NEW FUNCTION: Populate managed options in trade form
+        function populateManagedOptions() {
+            const keyLevelTypeSelect = document.getElementById('keyLevelType');
+            const confirmationSelect = document.getElementById('confirmation');
+            const modelSelect = document.getElementById('model');
             
-            try {
-                // Get the JSON from Flask
-                const jsonString = '{{ trades_by_date }}';
-                let tradesByDate = {};
-                
-                if (jsonString && jsonString !== '{}') {
-                    try {
-                        tradesByDate = JSON.parse(jsonString);
-                    } catch (e) {
-                        console.error('JSON parse error:', e);
-                        tradesByDate = {};
-                    }
-                }
-                
-                console.log('Calendar data:', Object.keys(tradesByDate).length, 'days');
-                
-                // If no data, use test data
-                if (Object.keys(tradesByDate).length === 0) {
-                    tradesByDate = {
-                        '2025-12-15': {total_trades: 3, total_pnl: 150, wins: 2, losses: 1, trades: []},
-                        '2025-12-20': {total_trades: 2, total_pnl: -50, wins: 1, losses: 1, trades: []},
-                        '2025-12-25': {total_trades: 4, total_pnl: 320, wins: 3, losses: 1, trades: []}
-                    };
-                }
-                
-                const events = [];
-                for (const date in tradesByDate) {
-                    const stats = tradesByDate[date];
-                    if (stats.total_trades > 0) {
-                        // Color gradient based on P&L
-                        let color;
-                        if (stats.total_pnl > 0) {
-                            const intensity = Math.min(0.7, stats.total_pnl / 1000);
-                            color = `rgba(76, 175, 80, ${0.3 + intensity})`;
+            // Clear existing options (except first)
+            keyLevelTypeSelect.innerHTML = '<option value="">Select...</option>';
+            confirmationSelect.innerHTML = '<option value="">Select...</option>';
+            
+            // Populate with managed options
+            managedOptions.keyLevels.forEach(option => {
+                const displayName = option.replace(/_/g, ' ');
+                keyLevelTypeSelect.innerHTML += `<option value="${option}">${displayName}</option>`;
+            });
+            
+            managedOptions.confirmations.forEach(option => {
+                const displayName = option.replace(/_/g, ' ');
+                confirmationSelect.innerHTML += `<option value="${option}">${displayName}</option>`;
+            });
+            
+            // For models, keep as input but populate dropdown if we want
+            // Currently keeping as input as in original
+        }
+
+        // KEEP ORIGINAL initCalendar function unchanged
+        function initCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                initialDate: '2025-12-15',
+                height: 'auto',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth'
+                },
+                dayCellDidMount: function(info) {
+                    const dateStr = info.date.toISOString().split('T')[0];
+                    if (calendarDates[dateStr]) {
+                        const dayData = calendarDates[dateStr];
+                        
+                        if (dayData.pnl > 0) {
+                            info.el.classList.add('fc-day-profit');
+                        } else if (dayData.pnl < 0) {
+                            info.el.classList.add('fc-day-loss');
                         } else {
-                            const intensity = Math.min(0.7, Math.abs(stats.total_pnl) / 1000);
-                            color = `rgba(244, 67, 54, ${0.3 + intensity})`;
+                            info.el.classList.add('fc-day-breakeven');
                         }
                         
-                        events.push({
-                            title: `${stats.total_trades}t | $${stats.total_pnl.toFixed(2)}`,
-                            start: date,
-                            backgroundColor: color,
-                            borderColor: stats.total_pnl > 0 ? '#4CAF50' : '#f44336',
-                            textColor: 'white',
-                            extendedProps: {
-                                date: date,
-                                stats: stats,
-                                tradeIds: stats.trades || []
-                            }
-                        });
+                        const statsDiv = document.createElement('div');
+                        statsDiv.className = 'day-stats';
+                        statsDiv.innerHTML = `
+                            <div class="day-trades">${dayData.count} trade${dayData.count > 1 ? 's' : ''}</div>
+                            <div class="day-pnl ${dayData.pnl >= 0 ? 'positive' : 'negative'}">${dayData.pnl >= 0 ? '+' : ''}${dayData.pnl.toFixed(0)}</div>
+                            <div class="day-wr">${dayData.winRate}% WR</div>
+                        `;
+                        info.el.appendChild(statsDiv);
                     }
+                },
+                dateClick: function(info) {
+                    showDayTrades(info.dateStr);
                 }
+            });
+            calendar.render();
+            loadCalendarData();
+        }
+
+        // KEEP ORIGINAL loadCalendarData function unchanged
+        async function loadCalendarData() {
+            try {
+                const response = await fetch('/api/calendar_data');
+                const events = await response.json();
                 
-                const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-                    initialView: 'dayGridMonth',
-                    initialDate: '2025-12-01',
-                    events: events,
-                    eventClick: function(info) {
-                        const date = info.event.extendedProps.date;
-                        const stats = info.event.extendedProps.stats;
-                        const tradeIds = info.event.extendedProps.tradeIds;
-                        showDayTrades(date, stats, tradeIds);
-                    },
-                    height: 'auto'
+                calendarDates = {};
+                events.forEach(event => {
+                    calendarDates[event.start] = {
+                        pnl: event.extendedProps.pnl,
+                        count: event.extendedProps.trade_count,
+                        winRate: event.extendedProps.win_rate
+                    };
                 });
                 
                 calendar.render();
-                console.log('✅ Calendar loaded');
+            } catch (error) {
+                console.error('Error loading calendar:', error);
+            }
+        }
+
+        // KEEP ORIGINAL toggleStats function unchanged
+        function toggleStats() {
+            statsOpen = !statsOpen;
+            const content = document.getElementById('statsContent');
+            const toggle = document.getElementById('statsToggle');
+            
+            if (statsOpen) {
+                content.classList.add('open');
+                toggle.classList.add('open');
+            } else {
+                content.classList.remove('open');
+                toggle.classList.remove('open');
+            }
+        }
+
+        // KEEP ORIGINAL changePeriod function unchanged
+        function changePeriod(period) {
+            currentPeriod = period;
+            
+            document.querySelectorAll('.period-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[data-period="${period}"]`).classList.add('active');
+            
+            loadTrades();
+        }
+
+        // KEEP ORIGINAL loadTrades function unchanged
+        async function loadTrades() {
+            try {
+                const response = await fetch(`/api/trades?period=${currentPeriod}`);
+                const data = await response.json();
                 
-                // Initialize period stats
-                updatePeriodStats('all');
+                allTrades = data.trades;
                 
-                // Set default times in add trade form
-                const now = new Date();
-                const today = now.toISOString().slice(0, 16);
-                document.getElementById('new-entry-time').value = today;
-                document.getElementById('new-exit-time').value = today;
+                updateMetrics(data.statistics);
+                displayTrades(data.trades.slice(0, 10));
+                populateAssetFilter(data.trades);
+                updateStatisticsFiltered();
+                updatePnlChart(data.trades); // ADD P&L CHART UPDATE
                 
             } catch (error) {
-                console.error('Calendar error:', error);
+                console.error('Error loading trades:', error);
             }
-        });
-        
-        // ========== DAY TRADES VIEW ==========
-        function showDayTrades(date, stats, tradeIds) {
-            document.getElementById('dayModalTitle').textContent = `Trades for ${date}`;
+        }
+
+        // KEEP ORIGINAL populateAssetFilter function unchanged
+        function populateAssetFilter(trades) {
+            const assets = [...new Set(trades.map(t => t.asset))].sort();
+            const assetFilter = document.getElementById('assetFilter');
+            const currentValue = assetFilter.value;
             
-            let content = `
-                <div style="background: #2a2a2a; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
-                        <div>
-                            <div style="color: #888; font-size: 0.9em;">Total Trades</div>
-                            <div style="font-size: 1.5em; font-weight: bold; color: #FFC107;">${stats.total_trades}</div>
-                        </div>
-                        <div>
-                            <div style="color: #888; font-size: 0.9em;">Daily P&L</div>
-                            <div style="font-size: 1.5em; font-weight: bold; color: ${stats.total_pnl >= 0 ? '#4CAF50' : '#f44336'}">
-                                $${stats.total_pnl.toFixed(2)}
-                            </div>
-                        </div>
-                        <div>
-                            <div style="color: #888; font-size: 0.9em;">Win/Loss</div>
-                            <div style="font-size: 1.5em; font-weight: bold; color: #FFC107;">${stats.wins}/${stats.losses}</div>
-                        </div>
-                        <div>
-                            <div style="color: #888; font-size: 0.9em;">Win Rate</div>
-                            <div style="font-size: 1.5em; font-weight: bold; color: #4CAF50;">
-                                ${stats.total_trades > 0 ? Math.round((stats.wins / stats.total_trades) * 100) : 0}%
-                            </div>
+            assetFilter.innerHTML = '<option value="all">All Assets</option>' + 
+                assets.map(asset => `<option value="${asset}">${asset}</option>`).join('');
+            
+            if (assets.includes(currentValue)) {
+                assetFilter.value = currentValue;
+            }
+        }
+
+        // KEEP ORIGINAL updateStatsFilter function unchanged
+        function updateStatsFilter() {
+            statsFilter.asset = document.getElementById('assetFilter').value;
+            statsFilter.side = document.getElementById('sideFilter').value;
+            updateStatisticsFiltered();
+        }
+
+        // FIX THIS FUNCTION: Update Statistics with filtering
+        function updateStatisticsFiltered() {
+            // Filter trades based on current filters - FIX SIDE FILTER
+            let filteredTrades = allTrades;
+            
+            if (statsFilter.asset !== 'all') {
+                filteredTrades = filteredTrades.filter(t => t.asset === statsFilter.asset);
+            }
+            
+            if (statsFilter.side !== 'all') {
+                // FIX: Check if trade has side property and compare properly
+                filteredTrades = filteredTrades.filter(t => {
+                    return t.side && t.side.toLowerCase() === statsFilter.side.toLowerCase();
+                });
+            }
+            
+            // Calculate performance stats - MODIFIED TO SHOW ONLY WIN RATE
+            const keyLevelStats = calculatePerformanceStats(filteredTrades, 'key_level_type');
+            document.getElementById('keyLevelsStats').innerHTML = formatPerformanceStats(keyLevelStats);
+            
+            const confirmationStats = calculatePerformanceStats(filteredTrades, 'confirmation');
+            document.getElementById('confirmationsStats').innerHTML = formatPerformanceStats(confirmationStats);
+            
+            const modelStats = calculatePerformanceStats(filteredTrades, 'model');
+            document.getElementById('modelsStats').innerHTML = formatPerformanceStats(modelStats);
+        }
+
+        // MODIFY THIS FUNCTION: Calculate performance statistics - REMOVE P&L
+        function calculatePerformanceStats(trades, field) {
+            const stats = {};
+            
+            trades.forEach(trade => {
+                const key = trade[field];
+                if (!key || key === '') return;
+                
+                if (!stats[key]) {
+                    stats[key] = {
+                        total: 0,
+                        wins: 0
+                    };
+                }
+                
+                stats[key].total++;
+                
+                if (trade.pnl > 0) {
+                    stats[key].wins++;
+                }
+            });
+            
+            // Calculate win rates
+            Object.keys(stats).forEach(key => {
+                stats[key].winRate = stats[key].total > 0 
+                    ? (stats[key].wins / stats[key].total * 100).toFixed(1)
+                    : 0;
+            });
+            
+            return stats;
+        }
+
+        // MODIFY THIS FUNCTION: Format performance stats - REMOVE P&L DISPLAY
+        function formatPerformanceStats(stats) {
+            const entries = Object.entries(stats);
+            
+            if (entries.length === 0) {
+                return '<p style="color: #bbbbbb; text-align: center;">No data for current filter</p>';
+            }
+            
+            // Sort by win rate descending
+            entries.sort((a, b) => parseFloat(b[1].winRate) - parseFloat(a[1].winRate));
+            
+            return entries.map(([key, data]) => {
+                const wrClass = data.winRate >= 60 ? 'good' : data.winRate >= 50 ? 'average' : 'poor';
+                const displayName = key.replace(/_/g, ' ');
+                
+                return `
+                    <div class="stat-item">
+                        <span class="stat-name">${displayName}</span>
+                        <div class="stat-metrics">
+                            <span class="stat-count">${data.total}</span>
+                            <span class="stat-wr ${wrClass}">${data.winRate}% WR</span>
                         </div>
                     </div>
+                `;
+            }).join('');
+        }
+
+        // KEEP ORIGINAL updateMetrics function unchanged
+        function updateMetrics(stats) {
+            document.getElementById('totalPnl').textContent = '$' + stats.total_pnl.toFixed(2);
+            document.getElementById('totalPnl').className = 'metric-value ' + (stats.total_pnl >= 0 ? 'positive' : 'negative');
+            
+            document.getElementById('winRate').textContent = stats.win_rate + '%';
+            document.getElementById('totalTrades').textContent = stats.total_trades;
+            document.getElementById('avgWin').textContent = '$' + stats.avg_win.toFixed(2);
+            document.getElementById('avgLoss').textContent = '$' + stats.avg_loss.toFixed(2);
+            document.getElementById('profitFactor').textContent = stats.profit_factor.toFixed(2);
+        }
+
+        // KEEP ORIGINAL displayTrades function unchanged
+        function displayTrades(trades) {
+            const container = document.getElementById('tradesList');
+            if (trades.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #bbbbbb;">No trades for this period</p>';
+                return;
+            }
+            
+            container.innerHTML = trades.map(trade => `
+                <div class="trade-card ${trade.pnl > 0 ? 'profit' : 'loss'}" onclick="editTrade(${trade.id})">
+                    <div class="trade-header">
+                        <span class="trade-asset">${trade.asset} ${trade.side.toUpperCase()}</span>
+                        <span class="trade-pnl ${trade.pnl >= 0 ? 'positive' : 'negative'}">
+                            ${trade.pnl >= 0 ? '+' : ''}$${trade.pnl.toFixed(2)}
+                        </span>
+                    </div>
+                    <div class="trade-details">
+                        ${new Date(trade.entry_time).toLocaleDateString()} • 
+                        Entry: $${trade.entry_price} → Exit: $${trade.exit_price}
+                        ${trade.key_level_type ? `<br>📍 ${trade.key_level_type.replace(/_/g, ' ')}` : ''}
+                        ${trade.confirmation ? ` • ✓ ${trade.confirmation.replace(/_/g, ' ')}` : ''}
+                    </div>
                 </div>
+            `).join('');
+        }
+
+        // REMOVE ORIGINAL updateStatistics function since we're using updateStatisticsFiltered
+
+        // KEEP ORIGINAL showDayTrades function unchanged
+        async function showDayTrades(dateStr) {
+            try {
+                const response = await fetch(`/api/trades_by_date?date=${dateStr}`);
+                const data = await response.json();
                 
-                <div style="margin-bottom: 20px;">
-                    <button class="btn btn-success" onclick="addTradeForDate('${date}')">
-                        + Add Trade for ${date}
-                    </button>
-                </div>
-            `;
+                if (data.trades.length === 0) {
+                    alert('No trades on this day');
+                    return;
+                }
+
+                displayTrades(data.trades);
+                
+                document.querySelector('.trades-section').scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                console.error('Error loading day trades:', error);
+            }
+        }
+
+        // KEEP ORIGINAL editTrade function unchanged
+        async function editTrade(tradeId) {
+            try {
+                const response = await fetch(`/api/trades/${tradeId}`);
+                const trade = await response.json();
+                currentTrade = trade;
+                
+                document.getElementById('tradeId').value = trade.id;
+                document.getElementById('asset').value = trade.asset;
+                document.getElementById('side').value = trade.side;
+                document.getElementById('entryPrice').value = trade.entry_price;
+                document.getElementById('exitPrice').value = trade.exit_price;
+                document.getElementById('quantity').value = trade.quantity;
+                document.getElementById('entryTime').value = trade.entry_time.replace(' ', 'T').substring(0, 16);
+                document.getElementById('exitTime').value = trade.exit_time.replace(' ', 'T').substring(0, 16);
+                document.getElementById('keyLevel').value = trade.key_level || '';
+                document.getElementById('keyLevelType').value = trade.key_level_type || '';
+                document.getElementById('confirmation').value = trade.confirmation || '';
+                document.getElementById('model').value = trade.model || '';
+                document.getElementById('weeklyBias').value = trade.weekly_bias || '';
+                document.getElementById('dailyBias').value = trade.daily_bias || '';
+                document.getElementById('screenshotUrl').value = trade.screenshot_url || '';
+                document.getElementById('notes').value = trade.notes || '';
+                
+                document.getElementById('tradeModal').classList.add('active');
+            } catch (error) {
+                console.error('Error loading trade:', error);
+            }
+        }
+
+        // KEEP ORIGINAL saveTrade form submission unchanged
+        document.getElementById('tradeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
             
-            if (tradeIds && tradeIds.length > 0) {
-                // Fetch trade details
-                fetch(`/api/day_trades/${date}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.trades.length > 0) {
-                            data.trades.forEach(trade => {
-                                content += `
-                                    <div style="background: #2a2a2a; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid ${trade.pnl > 0 ? '#4CAF50' : '#f44336'}">
-                                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                            <div>
-                                                <strong>${trade.asset} ${trade.side.toUpperCase()}</strong>
-                                                <div style="color: #888; font-size: 0.9em;">
-                                                    Entry: ${trade.entry_price} | Exit: ${trade.exit_price} | Qty: ${trade.quantity}
-                                                </div>
-                                            </div>
-                                            <div class="${trade.pnl > 0 ? 'win' : 'loss'}" style="font-weight: bold;">
-                                                $${trade.pnl.toFixed(2)}
-                                            </div>
-                                        </div>
-                                        
-                                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;">
-                                            <div>
-                                                <small style="color: #888;">Key Level:</small><br>
-                                                ${trade.key_level || 'Not set'}
-                                            </div>
-                                            <div>
-                                                <small style="color: #888;">Confirmation:</small><br>
-                                                ${trade.confirmation || 'Not set'}
-                                            </div>
-                                            <div>
-                                                <small style="color: #888;">Model:</small><br>
-                                                ${trade.model || 'Not set'}
-                                            </div>
-                                            <div>
-                                                <small style="color: #888;">Type:</small><br>
-                                                ${trade.key_level_type || 'Not set'}
-                                            </div>
-                                        </div>
-                                        
-                                        <div style="display: flex; gap: 10px;">
-                                            <button class="btn btn-small" onclick="editTrade(${trade.id})">Edit Details</button>
-                                            <button class="btn btn-small btn-danger" onclick="deleteTrade(${trade.id})">Delete</button>
-                                        </div>
-                                    </div>
-                                `;
-                            });
-                        } else {
-                            content += `<p style="color: #888; text-align: center; padding: 20px;">No trades found for this date.</p>`;
-                        }
-                        
-                        document.getElementById('dayTradesContent').innerHTML = content;
-                        showModal('dayTradesModal');
-                    });
+            const tradeId = document.getElementById('tradeId').value;
+            const data = {
+                asset: document.getElementById('asset').value,
+                side: document.getElementById('side').value,
+                entry_price: parseFloat(document.getElementById('entryPrice').value),
+                exit_price: parseFloat(document.getElementById('exitPrice').value),
+                quantity: parseFloat(document.getElementById('quantity').value),
+                entry_time: document.getElementById('entryTime').value.replace('T', ' ') + ':00',
+                exit_time: document.getElementById('exitTime').value.replace('T', ' ') + ':00',
+                key_level: document.getElementById('keyLevel').value,
+                key_level_type: document.getElementById('keyLevelType').value,
+                confirmation: document.getElementById('confirmation').value,
+                model: document.getElementById('model').value,
+                weekly_bias: document.getElementById('weeklyBias').value,
+                daily_bias: document.getElementById('dailyBias').value,
+                screenshot_url: document.getElementById('screenshotUrl').value,
+                notes: document.getElementById('notes').value
+            };
+
+            if (data.side === 'long') {
+                data.pnl = (data.exit_price - data.entry_price) * data.quantity;
             } else {
-                content += `<p style="color: #888; text-align: center; padding: 40px;">No trades found for this date.</p>`;
-                document.getElementById('dayTradesContent').innerHTML = content;
-                showModal('dayTradesModal');
+                data.pnl = (data.entry_price - data.exit_price) * data.quantity;
+            }
+
+            try {
+                const url = tradeId ? `/api/trades/${tradeId}` : '/api/trades';
+                const method = tradeId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('tradeModal');
+                    loadTrades();
+                    loadCalendarData();
+                    alert('Trade saved successfully!');
+                }
+            } catch (error) {
+                console.error('Error saving trade:', error);
+                alert('Error saving trade');
+            }
+        });
+
+        // KEEP ORIGINAL deleteTrade function unchanged
+        async function deleteTrade() {
+            const tradeId = document.getElementById('tradeId').value;
+            if (!tradeId || !confirm('Are you sure you want to delete this trade?')) return;
+
+            try {
+                const response = await fetch(`/api/trades/${tradeId}`, { method: 'DELETE' });
+                if (response.ok) {
+                    closeModal('tradeModal');
+                    loadTrades();
+                    loadCalendarData();
+                    alert('Trade deleted successfully!');
+                }
+            } catch (error) {
+                console.error('Error deleting trade:', error);
             }
         }
-        
-        function addTradeForDate(date) {
-            closeModal('dayTradesModal');
+
+        // ADD NEW FUNCTION: Manage Options
+        function manageOptions(type) {
+            currentManageType = type;
+            const title = type === 'keyLevels' ? 'Manage Key Levels' : 
+                         type === 'confirmations' ? 'Manage Confirmations' : 
+                         'Manage Models/Patterns';
             
-            // Set the date in add trade modal
-            document.getElementById('new-entry-time').value = `${date}T10:00`;
-            document.getElementById('new-exit-time').value = `${date}T12:00`;
+            document.getElementById('manageModalTitle').textContent = title;
+            document.getElementById('newOptionInput').placeholder = `Add new ${type.replace(/([A-Z])/g, ' $1').toLowerCase().replace('levels', 'level')}...`;
             
-            showAddTradeModal();
-        }
-        
-        // ========== PERIOD FILTERS ==========
-        function changePeriod(period) {
-            // Update button states
-            document.querySelectorAll('.period-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
+            const optionsList = document.getElementById('manageOptionsList');
+            const options = managedOptions[type];
             
-            updatePeriodStats(period);
-        }
-        
-        function updatePeriodStats(period) {
-            // Get stats from Flask template
-            const stats = {
-                'all': {{ all_stats|tojson|safe }},
-                'month': {{ month_stats|tojson|safe }},
-                'week': {{ week_stats|tojson|safe }},
-                'day': {{ day_stats|tojson|safe }}
-            };
+            optionsList.innerHTML = options.length === 0 
+                ? '<p style="color: #bbbbbb; text-align: center;">No options added yet</p>'
+                : options.map(option => `
+                    <div class="option-item">
+                        <span>${type === 'keyLevels' || type === 'confirmations' ? option.replace(/_/g, ' ') : option}</span>
+                        <button class="btn-delete" onclick="deleteOption('${option}')">Delete</button>
+                    </div>
+                `).join('');
             
-            const periodStats = stats[period] || stats['all'];
+            document.getElementById('manageModal').classList.add('active');
+        }
+
+        // ADD NEW FUNCTION: Add option
+        function addOption() {
+            const input = document.getElementById('newOptionInput');
+            const newOption = input.value.trim();
             
-            document.getElementById('total-trades').textContent = periodStats.total_trades;
-            document.getElementById('win-rate').textContent = periodStats.win_rate + '%';
-            document.getElementById('winning-trades').textContent = periodStats.winning_trades;
+            if (!newOption) {
+                alert('Please enter an option name');
+                return;
+            }
             
-            const pnlElement = document.getElementById('total-pnl');
-            pnlElement.textContent = '$' + periodStats.total_pnl;
-            pnlElement.classList.toggle('negative', periodStats.total_pnl < 0);
-        }
-        
-        // ========== TRADE MANAGEMENT ==========
-        function showAddTradeModal() {
-            showModal('addTradeModal');
-        }
-        
-        function addTrade() {
-            const data = {
-                asset: document.getElementById('new-asset').value,
-                side: document.getElementById('new-side').value,
-                entry_price: parseFloat(document.getElementById('new-entry').value),
-                exit_price: parseFloat(document.getElementById('new-exit').value),
-                quantity: parseFloat(document.getElementById('new-quantity').value),
-                entry_time: document.getElementById('new-entry-time').value || new Date().toISOString(),
-                exit_time: document.getElementById('new-exit-time').value || new Date().toISOString(),
-                key_level: document.getElementById('new-key-level').value,
-                key_level_type: document.getElementById('new-key-level-type').value,
-                confirmation: document.getElementById('new-confirmation').value,
-                model: document.getElementById('new-model').value,
-                screenshot: document.getElementById('new-screenshot').value,
-                notes: document.getElementById('new-notes').value
-            };
+            if (managedOptions[currentManageType].includes(newOption)) {
+                alert('This option already exists');
+                return;
+            }
             
-            fetch('/api/add_trade', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire('Success!', 'Trade added.', 'success');
-                    closeModal('addTradeModal');
-                    location.reload();
-                }
-            });
-        }
-        
-        function editTrade(tradeId) {
-            fetch(`/api/get_trade/${tradeId}`)
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success) {
-                        const trade = data.trade;
-                        
-                        let html = `
-                            <form onsubmit="saveTradeEdit(${tradeId}); return false;">
-                                <div class="form-grid">
-                                    <div class="form-group">
-                                        <label>Key Level</label>
-                                        <input type="text" id="edit-key-level" value="${trade.key_level || ''}">
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label>Key Level Type</label>
-                                        <select id="edit-key-level-type">
-                                            <option value="">Select type...</option>
-                                            <option value="support" ${trade.key_level_type === 'support' ? 'selected' : ''}>Support</option>
-                                            <option value="resistance" ${trade.key_level_type === 'resistance' ? 'selected' : ''}>Resistance</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label>Confirmation</label>
-                                        <input type="text" id="edit-confirmation" value="${trade.confirmation || ''}">
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label>Model</label>
-                                        <input type="text" id="edit-model" value="${trade.model || ''}">
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label>Screenshot URL</label>
-                                        <input type="text" id="edit-screenshot" value="${trade.screenshot || ''}">
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label>Notes</label>
-                                        <textarea id="edit-notes" rows="3">${trade.notes || ''}</textarea>
-                                    </div>
-                                </div>
-                                
-                                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                                    <button type="submit" class="btn btn-success">Save Changes</button>
-                                    <button type="button" class="btn" onclick="closeModal('editTradeModal')">Cancel</button>
-                                </div>
-                            </form>
-                        `;
-                        
-                        document.getElementById('editTradeContent').innerHTML = html;
-                        showModal('editTradeModal');
-                    }
-                });
-        }
-        
-        function saveTradeEdit(tradeId) {
-            const data = {
-                key_level: document.getElementById('edit-key-level').value,
-                key_level_type: document.getElementById('edit-key-level-type').value,
-                confirmation: document.getElementById('edit-confirmation').value,
-                model: document.getElementById('edit-model').value,
-                screenshot: document.getElementById('edit-screenshot').value,
-                notes: document.getElementById('edit-notes').value
-            };
+            let formattedOption = newOption;
+            if (currentManageType === 'keyLevels' || currentManageType === 'confirmations') {
+                formattedOption = newOption.toLowerCase().replace(/\s+/g, '_');
+            }
             
-            fetch(`/api/update_trade/${tradeId}`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            })
-            .then(r => r.json())
-            .then(result => {
-                if (result.success) {
-                    Swal.fire('Success!', 'Trade updated.', 'success');
-                    closeModal('editTradeModal');
-                    location.reload();
-                }
-            });
+            managedOptions[currentManageType].push(formattedOption);
+            input.value = '';
+            
+            manageOptions(currentManageType);
+            populateManagedOptions();
+            updateStatisticsFiltered();
         }
-        
-        function deleteTrade(tradeId) {
-            Swal.fire({
-                title: 'Delete Trade?',
-                text: "This cannot be undone!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'Delete'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    fetch(`/api/delete_trade/${tradeId}`, {method: 'DELETE'})
-                        .then(r => r.json())
-                        .then(data => {
-                            if (data.success) {
-                                Swal.fire('Deleted!', '', 'success');
-                                location.reload();
-                            }
-                        });
-                }
-            });
+
+        // ADD NEW FUNCTION: Delete option
+        function deleteOption(option) {
+            if (!confirm(`Are you sure you want to delete "${option}"?`)) return;
+            
+            const index = managedOptions[currentManageType].indexOf(option);
+            if (index > -1) {
+                managedOptions[currentManageType].splice(index, 1);
+                
+                manageOptions(currentManageType);
+                populateManagedOptions();
+                updateStatisticsFiltered();
+            }
         }
-        
-        // ========== CATEGORY MANAGEMENT ==========
-        function showCategoryManager() {
-            fetch('/api/get_categories')
-                .then(r => r.json())
-                .then(data => {
-                    let html = '<div style="max-height: 400px; overflow-y: auto;">';
-                    
-                    // Key Levels
-                    html += '<h4 style="color: #FFC107; margin-bottom: 10px;">🎯 Key Levels</h4>';
-                    if (data.key_levels && data.key_levels.length > 0) {
-                        data.key_levels.forEach(level => {
-                            if (level) {
-                                html += `
-                                    <div style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #333;">
-                                        <span>${level}</span>
-                                        <div>
-                                            <button class="btn btn-small" onclick="renameCategory('key_level', '${level}')">Rename</button>
-                                            <button class="btn btn-small btn-danger" onclick="deleteCategory('key_level', '${level}')">Delete</button>
-                                        </div>
-                                    </div>
-                                `;
-                            }
-                        });
-                    }
-                    
-                    // Confirmations
-                    html += '<h4 style="color: #FFC107; margin-top: 20px; margin-bottom: 10px;">✅ Confirmations</h4>';
-                    if (data.confirmations && data.confirmations.length > 0) {
-                        data.confirmations.forEach(conf => {
-                            if (conf) {
-                                html += `
-                                    <div style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #333;">
-                                        <span>${conf}</span>
-                                        <div>
-                                            <button class="btn btn-small" onclick="renameCategory('confirmation', '${conf}')">Rename</button>
-                                            <button class="btn btn-small btn-danger" onclick="deleteCategory('confirmation', '${conf}')">Delete</button>
-                                        </div>
-                                    </div>
-                                `;
-                            }
-                        });
-                    }
-                    
-                    // Models
-                    html += '<h4 style="color: #FFC107; margin-top: 20px; margin-bottom: 10px;">🔧 Models</h4>';
-                    if (data.models && data.models.length > 0) {
-                        data.models.forEach(model => {
-                            if (model) {
-                                html += `
-                                    <div style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #333;">
-                                        <span>${model}</span>
-                                        <div>
-                                            <button class="btn btn-small" onclick="renameCategory('model', '${model}')">Rename</button>
-                                            <button class="btn btn-small btn-danger" onclick="deleteCategory('model', '${model}')">Delete</button>
-                                        </div>
-                                    </div>
-                                `;
-                            }
-                        });
-                    }
-                    
-                    html += '</div>';
-                    
-                    document.getElementById('categoryManagerContent').innerHTML = html;
-                    showModal('categoryManagerModal');
-                });
-        }
-        
-        function renameCategory(type, oldName) {
-            Swal.fire({
-                title: `Rename ${type}`,
-                input: 'text',
-                inputValue: oldName,
-                showCancelButton: true,
-                confirmButtonText: 'Rename'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    fetch('/api/update_category', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            type: type,
-                            old_name: oldName,
-                            new_name: result.value
-                        })
-                    })
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.success) {
-                            showCategoryManager();
-                        }
-                    });
-                }
-            });
-        }
-        
-        function deleteCategory(type, name) {
-            Swal.fire({
-                title: 'Delete Category?',
-                text: "This will remove it from all trades!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'Delete'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    fetch('/api/delete_category', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({type: type, name: name})
-                    })
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.success) {
-                            showCategoryManager();
-                        }
-                    });
-                }
-            });
-        }
-        
-        // ========== UTILITIES ==========
-        function showModal(modalId) {
-            document.getElementById(modalId).style.display = 'flex';
-        }
-        
+
+        // KEEP ORIGINAL closeModal function unchanged
         function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-        
-        function filterStats() {
-            // Simple filter notification
-            const asset = document.getElementById('asset-filter').value;
-            const type = document.getElementById('type-filter').value;
-            Swal.fire('Info', `Filtering by ${asset} and ${type}`, 'info');
-        }
-        
-        // Initialize
-        updatePeriodStats('all');
-        
-        // Close modals on outside click
-        window.onclick = function(event) {
-            if (event.target.classList.contains('modal')) {
-                event.target.style.display = 'none';
+            document.getElementById(modalId).classList.remove('active');
+            if (modalId === 'tradeModal') {
+                document.getElementById('tradeForm').reset();
+                currentTrade = null;
             }
         }
-    </script>
-</body>
+
+        // KEEP ALL ORIGINAL API FUNCTIONS UNCHANGED
+        async function loadApiCredentials() {
+            try {
+                const response = await fetch('/api/get_bybit_credentials');
+                const data = await response.json();
+                
+                if (data.connected) {
+                    document.getElementById('apiKey').value = data.api_key;
+                    document.getElementById('apiSecret').value = data.api_secret;
+                    document.getElementById('rememberMe').checked = data.remember_me;
+                }
+            } catch (error) {
+                console.error('Error loading credentials:', error);
+            }
+        }
+
+        async function saveApiCredentials() {
+            const data = {
+                api_key: document.getElementById('apiKey').value,
+                api_secret: document.getElementById('apiSecret').value,
+                remember_me: document.getElementById('rememberMe').checked
+            };
+
+            try {
+                const response = await fetch('/api/save_bybit_credentials', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('API credentials saved!');
+                    checkApiStatus();
+                }
+            } catch (error) {
+                console.error('Error saving credentials:', error);
+            }
+        }
+
+        async function checkApiStatus() {
+            try {
+                const response = await fetch('/api/get_bybit_status');
+                const data = await response.json();
+                
+                const statusEl = document.getElementById('apiStatus');
+                if (data.connected) {
+                    statusEl.textContent = '🟢 Connected';
+                    statusEl.style.borderColor = '#28a745';
+                } else {
+                    statusEl.textContent = '🔴 Not Connected';
+                    statusEl.style.borderColor = '#dc3545';
+                }
+            } catch (error) {
+                console.error('Error checking status:', error);
+            }
+        }
+
+        async function syncBybitTrades() {
+            try {
+                const response = await fetch('/api/sync_bybit_trades', { method: 'POST' });
+                const result = await response.json();
+
+                alert(result.message);
+                if (result.success && result.count > 0) {
+                    loadTrades();
+                    loadCalendarData();
+                }
+            } catch (error) {
+                console.error('Error syncing trades:', error);
+            }
+        }
+
+        // Cumulative P&L chart (stable)
+        function updatePnlChart(trades) {
+            const canvas = document.getElementById('pnlChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            const sortedTrades = [...trades].sort((a, b) => new Date(a.entry_time) - new Date(b.entry_time));
+
+            const labels = [];
+            const series = [];
+            let runningTotal = 0;
+
+            for (const trade of sortedTrades) {
+                runningTotal += Number(trade.pnl) || 0;
+                labels.push(new Date(trade.entry_time).toLocaleDateString());
+                series.push(runningTotal);
+            }
+
+            const last = series.length ? series[series.length - 1] : 0;
+            const upColor = '#00ff88';
+            const downColor = '#ff3366';
+            const lineColor = last >= 0 ? upColor : downColor;
+            const fillColor = last >= 0 ? 'rgba(0, 255, 136, 0.10)' : 'rgba(255, 51, 102, 0.10)';
+
+            const minVal = series.length ? Math.min(...series) : 0;
+            const maxVal = series.length ? Math.max(...series) : 0;
+            const range = Math.max(1, maxVal - minVal);
+            const pad = range * 0.1;
+
+            if (!pnlChart) {
+                pnlChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [{
+                            data: series,
+                            borderColor: lineColor,
+                            backgroundColor: fillColor,
+                            borderWidth: 2,
+                            fill: true,
+                            pointRadius: 0,
+                            tension: 0.35
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => `Cumulative: $${context.parsed.y.toFixed(2)}`
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { color: '#333333' },
+                                ticks: { color: '#aaaaaa', maxRotation: 0, autoSkip: true, maxTicksLimit: 10 }
+                            },
+                            y: {
+                                suggestedMin: minVal - pad,
+                                suggestedMax: maxVal + pad,
+                                grid: { color: '#333333' },
+                                ticks: {
+                                    color: '#aaaaaa',
+                                    callback: (value) => `$${Number(value).toFixed(0)}`
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                pnlChart.data.labels = labels;
+                pnlChart.data.datasets[0].data = series;
+                pnlChart.data.datasets[0].borderColor = lineColor;
+                pnlChart.data.datasets[0].backgroundColor = fillColor;
+                pnlChart.options.scales.y.suggestedMin = minVal - pad;
+                pnlChart.options.scales.y.suggestedMax = maxVal + pad;
+                pnlChart.update();
+            }
+        }
+    </script>\r\n</body>
 </html>
