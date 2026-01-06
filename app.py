@@ -5,7 +5,16 @@ from datetime import datetime, timedelta
 import os
 import json
 import atexit
-from backup_system import backup_data
+
+try:
+    # pybit v3+
+    from pybit.unified_trading import HTTP as BybitHTTP
+except Exception:
+    try:
+        # fallback for older pybit
+        from pybit import HTTP as BybitHTTP
+    except Exception:
+        BybitHTTP = None
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'
@@ -56,6 +65,35 @@ def init_db():
     cursor.execute(
         "UPDATE trades SET daily_bias = 'neutral' WHERE daily_bias IS NULL OR TRIM(daily_bias) = ''"
     )
+
+    # API credentials (Bybit)
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS api_credentials (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        exchange TEXT NOT NULL,
+        api_key TEXT,
+        api_secret TEXT,
+        network TEXT DEFAULT 'mainnet',
+        remember_me INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+
+    cursor.execute("PRAGMA table_info(api_credentials)")
+    creds_cols = {row[1] for row in cursor.fetchall()}
+    if 'network' not in creds_cols:
+        cursor.execute("ALTER TABLE api_credentials ADD COLUMN network TEXT DEFAULT 'mainnet'")
+    if 'remember_me' not in creds_cols:
+        cursor.execute("ALTER TABLE api_credentials ADD COLUMN remember_me INTEGER DEFAULT 0")
+
+    # Track already-imported Bybit trades to prevent duplicates
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS bybit_imports (
+        external_id TEXT PRIMARY KEY,
+        network TEXT,
+        imported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
 
     # Add sample data for December 2025 if empty
     cursor.execute("SELECT COUNT(*) FROM trades")
@@ -406,6 +444,7 @@ def save_bybit_credentials():
     data = request.json
     api_key = data.get('api_key')
     api_secret = data.get('api_secret')
+    network = (data.get('network') or 'mainnet').strip().lower()
     remember_me = data.get('remember_me', False)
 
     conn = get_db_connection()
@@ -415,8 +454,10 @@ def save_bybit_credentials():
     cursor.execute('DELETE FROM api_credentials')
 
     # Insert new with remember_me flag
-    cursor.execute('INSERT INTO api_credentials (exchange, api_key, api_secret, remember_me) VALUES (?, ?, ?, ?)',
-                   ('bybit', api_key, api_secret, 1 if remember_me else 0))
+    cursor.execute(
+        'INSERT INTO api_credentials (exchange, api_key, api_secret, network, remember_me) VALUES (?, ?, ?, ?, ?)',
+        ('bybit', api_key, api_secret, network, 1 if remember_me else 0)
+    )
 
     conn.commit()
     conn.close()
@@ -437,6 +478,7 @@ def get_bybit_credentials():
             'connected': True,
             'api_key': creds['api_key'],
             'api_secret': creds['api_secret'],
+            'network': creds['network'] if 'network' in creds.keys() else 'mainnet',
             'remember_me': bool(creds['remember_me'])
         })
     return jsonify({'connected': False})
@@ -451,17 +493,149 @@ def get_bybit_status():
     conn.close()
 
     if creds and creds['api_key']:
-        return jsonify({'connected': True, 'status': 'Configured (not connected)'})
+        net = creds['network'] if 'network' in creds.keys() else 'mainnet'
+        return jsonify({'connected': True, 'status': f'Configured ({net})'})
     return jsonify({'connected': False, 'status': 'Not configured'})
+
+
+def _get_saved_bybit_credentials():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM api_credentials LIMIT 1')
+    creds = cursor.fetchone()
+    conn.close()
+    return dict(creds) if creds else None
+
+
+def _create_bybit_client(api_key, api_secret, network):
+    if BybitHTTP is None:
+        raise RuntimeError('pybit is not installed or could not be imported')
+
+    is_testnet = str(network or 'mainnet').strip().lower() == 'testnet'
+
+    # pybit.unified_trading.HTTP signature: HTTP(testnet=bool, api_key=..., api_secret=...)
+    try:
+        return BybitHTTP(testnet=is_testnet, api_key=api_key, api_secret=api_secret)
+    except TypeError:
+        # legacy pybit.HTTP signature: HTTP(endpoint=..., api_key=..., api_secret=...)
+        endpoint = 'https://api-testnet.bybit.com' if is_testnet else 'https://api.bybit.com'
+        return BybitHTTP(endpoint=endpoint, api_key=api_key, api_secret=api_secret)
+
+
+def _parse_bybit_time(bybit_time):
+    if not bybit_time:
+        return None
+    try:
+        # Bybit commonly uses ms timestamps, sometimes as strings.
+        if isinstance(bybit_time, (int, float)):
+            return datetime.utcfromtimestamp(float(bybit_time) / 1000).strftime('%Y-%m-%d %H:%M:%S')
+        if isinstance(bybit_time, str) and bybit_time.isdigit():
+            return datetime.utcfromtimestamp(int(bybit_time) / 1000).strftime('%Y-%m-%d %H:%M:%S')
+    except Exception:
+        return None
+
+    # Already formatted string
+    return str(bybit_time)
 
 
 @app.route('/api/sync_bybit_trades', methods=['POST'])
 def sync_bybit_trades():
-    # This would integrate with actual Bybit API
+    creds = _get_saved_bybit_credentials()
+    if not creds or not creds.get('api_key') or not creds.get('api_secret'):
+        return jsonify({'success': False, 'message': 'Save your Bybit API key/secret first.', 'trades_synced': 0}), 400
+
+    network = (creds.get('network') or 'mainnet').strip().lower()
+
+    try:
+        client = _create_bybit_client(creds['api_key'], creds['api_secret'], network)
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Bybit client init failed: {e}', 'trades_synced': 0}), 500
+
+    # Fetch closed PnL items from Bybit (Unified Trading)
+    # We try multiple categories to support common account types.
+    all_items = []
+    categories = ['linear', 'inverse', 'spot']
+    for category in categories:
+        try:
+            resp = client.get_closed_pnl(category=category, limit=200)
+            result = (resp or {}).get('result') or {}
+            items = result.get('list') or []
+            if isinstance(items, list) and items:
+                all_items.extend(items)
+        except Exception:
+            continue
+
+    if not all_items:
+        return jsonify({'success': True, 'message': 'No closed trades found to import.', 'trades_synced': 0})
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    inserted = 0
+
+    for item in all_items:
+        # Prefer orderId as unique, fallback to execId if present.
+        external_id = item.get('orderId') or item.get('execId') or item.get('tradeId')
+        if not external_id:
+            continue
+
+        # Dedupe
+        cursor.execute('SELECT 1 FROM bybit_imports WHERE external_id = ? LIMIT 1', (external_id,))
+        if cursor.fetchone():
+            continue
+
+        symbol = item.get('symbol') or ''
+        side = (item.get('side') or '').strip().lower()
+        qty = float(item.get('qty') or 0)
+        entry_price = float(item.get('avgEntryPrice') or item.get('entryPrice') or 0)
+        exit_price = float(item.get('avgExitPrice') or item.get('exitPrice') or 0)
+        pnl = float(item.get('closedPnl') or item.get('pnl') or 0)
+
+        entry_time = _parse_bybit_time(item.get('createdTime') or item.get('createdTimeE3') or item.get('created_at'))
+        exit_time = _parse_bybit_time(item.get('updatedTime') or item.get('updatedTimeE3') or item.get('updated_at'))
+        if not entry_time:
+            entry_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        if not exit_time:
+            exit_time = entry_time
+
+        if side not in ('long', 'short'):
+            # Bybit returns Buy/Sell
+            if side == 'buy':
+                side = 'long'
+            elif side == 'sell':
+                side = 'short'
+            else:
+                side = 'long'
+
+        cursor.execute(
+            '''
+            INSERT INTO trades (
+                asset, side, entry_price, exit_price, quantity,
+                entry_time, exit_time, pnl,
+                key_level, key_level_type, confirmation, model,
+                weekly_bias, daily_bias, notes, screenshot_url, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''',
+            (
+                symbol, side, entry_price, exit_price, qty,
+                entry_time, exit_time, pnl,
+                None, None, None, None,
+                'neutral', 'neutral', 'Imported from Bybit', None, 'closed'
+            )
+        )
+
+        cursor.execute(
+            'INSERT INTO bybit_imports (external_id, network) VALUES (?, ?)',
+            (external_id, network)
+        )
+        inserted += 1
+
+    conn.commit()
+    conn.close()
+
     return jsonify({
         'success': True,
-        'message': 'Trade sync feature coming soon!',
-        'trades_synced': 0
+        'message': f'Imported {inserted} trade(s) from Bybit ({network}).',
+        'trades_synced': inserted
     })
 
 
@@ -500,5 +674,5 @@ def bulk_fill_bias():
 
 if __name__ == '__main__':
     # Register backup function to run on app exit
-    atexit.register(backup_data)
+    # atexit.register(backup_data)
     app.run(debug=True, port=5000)

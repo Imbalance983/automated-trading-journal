@@ -842,6 +842,10 @@
                 <div class="api-status" id="apiStatus"> Not Connected</div>
                 <input type="text" class="api-input" id="apiKey" placeholder="Bybit API Key">
                 <input type="password" class="api-input" id="apiSecret" placeholder="API Secret">
+                <select class="api-input" id="bybitNetwork" style="max-width: 160px; min-width: 140px;">
+                    <option value="mainnet">Mainnet</option>
+                    <option value="testnet">Testnet</option>
+                </select>
                 <label class="remember-me">
                     <input type="checkbox" id="rememberMe">
                     <span>Remember Me</span>
@@ -1674,6 +1678,9 @@
                     document.getElementById('apiKey').value = data.api_key;
                     document.getElementById('apiSecret').value = data.api_secret;
                     document.getElementById('rememberMe').checked = data.remember_me;
+                    if (data.network) {
+                        document.getElementById('bybitNetwork').value = data.network;
+                    }
                 }
             } catch (error) {
                 console.error('Error loading credentials:', error);
@@ -1684,6 +1691,7 @@
             const data = {
                 api_key: document.getElementById('apiKey').value,
                 api_secret: document.getElementById('apiSecret').value,
+                network: document.getElementById('bybitNetwork').value,
                 remember_me: document.getElementById('rememberMe').checked
             };
 
@@ -1728,7 +1736,7 @@
                 const result = await response.json();
 
                 alert(result.message);
-                if (result.success && result.count > 0) {
+                if (result.success && (result.trades_synced || 0) > 0) {
                     loadTrades();
                     loadCalendarData();
                 }
