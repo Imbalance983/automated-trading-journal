@@ -534,7 +534,6 @@ def _parse_bybit_time(bybit_time):
     except Exception:
         return None
 
-    # Already formatted string
     return str(bybit_time)
 
 
@@ -551,19 +550,43 @@ def sync_bybit_trades():
     except Exception as e:
         return jsonify({'success': False, 'message': f'Bybit client init failed: {e}', 'trades_synced': 0}), 500
 
-    # Fetch closed PnL items from Bybit (Unified Trading)
-    # We try multiple categories to support common account types.
+    # Fetch closed PnL items from Bybit.
+    # User preference: USDT linear only.
     all_items = []
-    categories = ['linear', 'inverse', 'spot']
-    for category in categories:
+    category = 'linear'
+    cursor_val = None
+    max_pages = 20
+    pages = 0
+
+    while pages < max_pages:
+        pages += 1
         try:
-            resp = client.get_closed_pnl(category=category, limit=200)
-            result = (resp or {}).get('result') or {}
-            items = result.get('list') or []
-            if isinstance(items, list) and items:
-                all_items.extend(items)
+            kwargs = {'category': category, 'limit': 200}
+            if cursor_val:
+                # unified_trading uses cursor, response returns nextPageCursor
+                kwargs['cursor'] = cursor_val
+            resp = client.get_closed_pnl(**kwargs)
+        except TypeError:
+            # legacy pybit may require positional args or different cursor key
+            try:
+                if cursor_val:
+                    resp = client.get_closed_pnl(category=category, limit=200, cursor=cursor_val)
+                else:
+                    resp = client.get_closed_pnl(category=category, limit=200)
+            except Exception:
+                break
         except Exception:
-            continue
+            break
+
+        result = (resp or {}).get('result') or {}
+        items = result.get('list') or []
+        if isinstance(items, list) and items:
+            all_items.extend(items)
+
+        next_cursor = result.get('nextPageCursor') or result.get('next_cursor') or result.get('cursor')
+        if not next_cursor or next_cursor == cursor_val:
+            break
+        cursor_val = next_cursor
 
     if not all_items:
         return jsonify({'success': True, 'message': 'No closed trades found to import.', 'trades_synced': 0})
@@ -584,6 +607,9 @@ def sync_bybit_trades():
             continue
 
         symbol = item.get('symbol') or ''
+        if symbol and not str(symbol).upper().endswith('USDT'):
+            continue
+
         side = (item.get('side') or '').strip().lower()
         qty = float(item.get('qty') or 0)
         entry_price = float(item.get('avgEntryPrice') or item.get('entryPrice') or 0)
