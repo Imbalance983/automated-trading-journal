@@ -57,6 +57,8 @@ def init_db():
         cursor.execute("ALTER TABLE trades ADD COLUMN weekly_bias TEXT")
     if 'daily_bias' not in existing_cols:
         cursor.execute("ALTER TABLE trades ADD COLUMN daily_bias TEXT")
+    if 'screenshot_url' not in existing_cols:
+        cursor.execute("ALTER TABLE trades ADD COLUMN screenshot_url TEXT")
 
     # Ensure existing rows have bias values so filters work even if user never set them
     cursor.execute(
