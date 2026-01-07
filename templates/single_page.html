@@ -109,15 +109,6 @@
             transform: translateY(-5px);
         }
 
-        .metric-card.win-rate-card {
-            grid-column: 1;
-            grid-row: 1 / 3;
-        }
-
-        .metric-card.key-metric {
-            padding: 12px;
-        }
-
         .chart-container {
             position: absolute;
             width: 130px;
@@ -126,32 +117,6 @@
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 1;
-        }
-
-        .chart-label {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            pointer-events: none;
-            z-index: 2;
-        }
-
-        .metric-value {
-            font-size: 1.6em;
-            font-weight: bold;
-            color: #ffffff;
-            position: relative;
-            z-index: 3;
-        }
-
-        .metric-value.positive {
-            color: #00ff88;
-        }
-
-        .metric-value.negative {
-            color: #ff3366;
         }
 
         .metric-label {
@@ -166,6 +131,8 @@
             font-size: 1.6em;
             font-weight: bold;
             color: #ffffff;
+            position: relative;
+            z-index: 3;
         }
 
         .metric-value.positive {
@@ -648,6 +615,112 @@
             flex-wrap: wrap;
         }
 
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: #111111;
+            border: 1px solid #333333;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 1.8em;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: #ff3366;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #bbbbbb;
+            margin-bottom: 8px;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            background: #0b0b0b;
+            color: #ffffff;
+            font-size: 0.95em;
+        }
+
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-select {
+            cursor: pointer;
+            color-scheme: dark;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: rgba(139, 92, 246, 0.45);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
         @media (max-width: 768px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -655,6 +728,10 @@
 
             .metrics-dashboard {
                 grid-template-columns: repeat(2, 1fr);
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -761,40 +838,36 @@
             <div class="stats-content" id="statsContent">
                 <div class="stats-filters">
                     <div class="filter-group">
-                        <span class="filter-label">Weekly Bias (Primary)</span>
-                        <select class="filter-select" id="weeklyBiasFilter" onchange="updateStatsFilter()">
-                            <option value="all">All Weekly Bias</option>
-                            <option value="bullish">Bullish</option>
-                            <option value="bearish">Bearish</option>
-                            <option value="neutral">Neutral</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <span class="filter-label">Daily Bias (Secondary)</span>
-                        <select class="filter-select" id="dailyBiasFilter" onchange="updateStatsFilter()">
-                            <option value="all">All Daily Bias</option>
-                            <option value="bullish">Bullish</option>
-                            <option value="bearish">Bearish</option>
-                            <option value="neutral">Neutral</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <span class="filter-label">Filter by Asset</span>
+                        <span class="filter-label">Asset</span>
                         <select class="filter-select" id="assetFilter" onchange="updateStatsFilter()">
                             <option value="all">All Assets</option>
                         </select>
                     </div>
                     <div class="filter-group">
-                        <span class="filter-label">Filter by Side</span>
-                        <select class="filter-select" id="sideFilter" onchange="updateStatsFilter()">
-                            <option value="all">All (Long + Short)</option>
-                            <option value="long">Long Only</option>
-                            <option value="short">Short Only</option>
+                        <span class="filter-label">Bias W</span>
+                        <select class="filter-select" id="weeklyBiasFilter" onchange="updateStatsFilter()">
+                            <option value="all">All</option>
+                            <option value="bullish">Bullish</option>
+                            <option value="bearish">Bearish</option>
+                            <option value="neutral">Neutral</option>
                         </select>
                     </div>
                     <div class="filter-group">
-                        <span class="filter-label">Actions</span>
-                        <button class="btn btn-secondary" style="padding: 8px 12px;" onclick="bulkFillBias()">Fill Missing Bias</button>
+                        <span class="filter-label">Bias D</span>
+                        <select class="filter-select" id="dailyBiasFilter" onchange="updateStatsFilter()">
+                            <option value="all">All</option>
+                            <option value="bullish">Bullish</option>
+                            <option value="bearish">Bearish</option>
+                            <option value="neutral">Neutral</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <span class="filter-label">Side</span>
+                        <select class="filter-select" id="sideFilter" onchange="updateStatsFilter()">
+                            <option value="all">All</option>
+                            <option value="long">Long</option>
+                            <option value="short">Short</option>
+                        </select>
                     </div>
                 </div>
 
@@ -813,6 +886,87 @@
                     <div class="stat-list" id="modelsStats"></div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Edit Trade Modal -->
+    <div class="modal-overlay" id="editTradeModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Trade</h3>
+                <button class="modal-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <form id="editTradeForm" onsubmit="saveTradeEdit(event)">
+                <input type="hidden" id="editTradeId">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Asset</label>
+                        <input type="text" class="form-input" id="editAsset" required readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Side</label>
+                        <select class="form-select" id="editSide" required disabled>
+                            <option value="long">Long</option>
+                            <option value="short">Short</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Weekly Bias</label>
+                        <select class="form-select" id="editWeeklyBias" required>
+                            <option value="bullish">Bullish</option>
+                            <option value="bearish">Bearish</option>
+                            <option value="neutral">Neutral</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Daily Bias</label>
+                        <select class="form-select" id="editDailyBias" required>
+                            <option value="bullish">Bullish</option>
+                            <option value="bearish">Bearish</option>
+                            <option value="neutral">Neutral</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Key Level</label>
+                    <input type="text" class="form-input" id="editKeyLevel" placeholder="e.g., 50000">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Key Level Type</label>
+                    <input type="text" class="form-input" id="editKeyLevelType" placeholder="e.g., Support, Resistance, FVG">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Confirmation</label>
+                    <input type="text" class="form-input" id="editConfirmation" placeholder="e.g., Breakout, Retest, Volume">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Model</label>
+                    <input type="text" class="form-input" id="editModel" placeholder="e.g., Power of 3, AMD, ICT">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Screenshot URL</label>
+                    <input type="url" class="form-input" id="editScreenshot" placeholder="https://...">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-textarea" id="editNotes" placeholder="Add your trade notes..."></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -895,6 +1049,7 @@
                 calendar.render();
             } catch (error) {
                 console.error('Error loading calendar:', error);
+                alert('Error loading calendar data');
             }
         }
 
@@ -966,6 +1121,7 @@
                 
             } catch (error) {
                 console.error('Error loading trades:', error);
+                alert('Error loading trades');
             }
         }
 
@@ -1001,7 +1157,6 @@
             document.getElementById('avgLoss').textContent = '$' + stats.avg_loss.toFixed(2);
             document.getElementById('profitFactor').textContent = stats.profit_factor.toFixed(2);
             
-            // Update Win Rate Chart with thinner line
             updateWinRateChart(stats.win_rate);
         }
 
@@ -1013,12 +1168,11 @@
             
             winRateValue.textContent = winRate + '%';
             
-            // Color based on performance
             let color;
-            if (winRate >= 60) color = '#00ff88'; // Excellent - Green
-            else if (winRate >= 50) color = '#3b82f6'; // Good - Blue
-            else if (winRate >= 40) color = '#f59e0b'; // Average - Orange
-            else color = '#ff3366'; // Poor - Red
+            if (winRate >= 60) color = '#00ff88';
+            else if (winRate >= 50) color = '#3b82f6';
+            else if (winRate >= 40) color = '#f59e0b';
+            else color = '#ff3366';
             
             if (winRateChart) {
                 winRateChart.destroy();
@@ -1036,9 +1190,9 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: '88%', // Very thin ring for arch effect
-                    rotation: -90, // Start from top
-                    circumference: 180, // Half circle (arch)
+                    cutout: '88%',
+                    rotation: -90,
+                    circumference: 180,
                     plugins: {
                         legend: { display: false },
                         tooltip: { enabled: false }
@@ -1056,11 +1210,11 @@
             
             container.innerHTML = trades.map(trade => {
                 const currentPnl = trade.side === 'long' 
-                    ? (trade.entry_price * trade.quantity * 0.02) // Placeholder
+                    ? (trade.entry_price * trade.quantity * 0.02)
                     : -(trade.entry_price * trade.quantity * 0.02);
                 
                 return `
-                    <div class="trade-card open">
+                    <div class="trade-card open" onclick="editTrade(${trade.id})">
                         <div class="trade-header">
                             <span class="trade-asset">
                                 ${trade.asset} ${trade.side.toUpperCase()}
@@ -1088,7 +1242,7 @@
             }
             
             container.innerHTML = trades.map(trade => `
-                <div class="trade-card ${(trade.pnl || 0) > 0 ? 'profit' : 'loss'}">
+                <div class="trade-card ${(trade.pnl || 0) > 0 ? 'profit' : 'loss'}" onclick="editTrade(${trade.id})">
                     <div class="trade-header">
                         <span class="trade-asset">
                             ${trade.asset} ${trade.side.toUpperCase()}
@@ -1118,9 +1272,82 @@
                 }
 
                 displayClosedTrades(data.trades);
-                document.querySelector('.trades-section').scrollIntoView({ behavior: 'smooth' });
+                document.querySelector('.closed-trades').scrollIntoView({ behavior: 'smooth' });
             } catch (error) {
                 console.error('Error loading day trades:', error);
+                alert('Error loading trades for this day');
+            }
+        }
+
+        async function editTrade(tradeId) {
+            try {
+                const response = await fetch(`/api/trades/${tradeId}`);
+                const trade = await response.json();
+                
+                document.getElementById('editTradeId').value = trade.id;
+                document.getElementById('editAsset').value = trade.asset;
+                document.getElementById('editSide').value = trade.side;
+                document.getElementById('editWeeklyBias').value = trade.weekly_bias || 'neutral';
+                document.getElementById('editDailyBias').value = trade.daily_bias || 'neutral';
+                document.getElementById('editKeyLevel').value = trade.key_level || '';
+                document.getElementById('editKeyLevelType').value = trade.key_level_type || '';
+                document.getElementById('editConfirmation').value = trade.confirmation || '';
+                document.getElementById('editModel').value = trade.model || '';
+                document.getElementById('editScreenshot').value = trade.screenshot_url || '';
+                document.getElementById('editNotes').value = trade.notes || '';
+                
+                document.getElementById('editTradeModal').classList.add('active');
+            } catch (error) {
+                console.error('Error loading trade:', error);
+                alert('Error loading trade details');
+            }
+        }
+
+        function closeEditModal() {
+            document.getElementById('editTradeModal').classList.remove('active');
+        }
+
+        async function saveTradeEdit(event) {
+            event.preventDefault();
+            
+            const tradeId = document.getElementById('editTradeId').value;
+            
+            try {
+                const originalResponse = await fetch(`/api/trades/${tradeId}`);
+                const originalTrade = await originalResponse.json();
+                
+                const updatedTrade = {
+                    ...originalTrade,
+                    weekly_bias: document.getElementById('editWeeklyBias').value,
+                    daily_bias: document.getElementById('editDailyBias').value,
+                    key_level: document.getElementById('editKeyLevel').value,
+                    key_level_type: document.getElementById('editKeyLevelType').value,
+                    confirmation: document.getElementById('editConfirmation').value,
+                    model: document.getElementById('editModel').value,
+                    screenshot_url: document.getElementById('editScreenshot').value,
+                    notes: document.getElementById('editNotes').value
+                };
+                
+                const response = await fetch(`/api/trades/${tradeId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedTrade)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    closeEditModal();
+                    loadTrades();
+                    loadOpenTrades();
+                    loadCalendarData();
+                    alert('Trade updated successfully!');
+                } else {
+                    alert('Error updating trade');
+                }
+            } catch (error) {
+                console.error('Error saving trade:', error);
+                alert('Error saving trade changes');
             }
         }
 
@@ -1130,20 +1357,16 @@
             statsFilter.asset = document.getElementById('assetFilter').value;
             statsFilter.side = document.getElementById('sideFilter').value;
 
-            // Filter trades based on all criteria
             let filteredTrades = allTrades;
 
-            // Filter by asset
             if (statsFilter.asset !== 'all') {
                 filteredTrades = filteredTrades.filter(t => t.asset === statsFilter.asset);
             }
 
-            // Filter by side
             if (statsFilter.side !== 'all') {
                 filteredTrades = filteredTrades.filter(t => t.side.toLowerCase() === statsFilter.side);
             }
 
-            // Filter by weekly bias
             if (statsFilter.weeklyBias !== 'all') {
                 filteredTrades = filteredTrades.filter(t => {
                     const weekly = (t.weekly_bias || 'neutral').toLowerCase();
@@ -1151,7 +1374,6 @@
                 });
             }
 
-            // Filter by daily bias
             if (statsFilter.dailyBias !== 'all') {
                 filteredTrades = filteredTrades.filter(t => {
                     const daily = (t.daily_bias || 'neutral').toLowerCase();
@@ -1159,7 +1381,6 @@
                 });
             }
 
-            // Calculate and display statistics
             const keyLevelStats = calculatePerformanceStats(filteredTrades, 'key_level_type');
             document.getElementById('keyLevelsStats').innerHTML = formatPerformanceStats(keyLevelStats);
             
@@ -1195,7 +1416,6 @@
                     stats[key].wins++;
                 }
 
-                // Check if trade was with or against weekly bias (primary)
                 const weekly = (trade.weekly_bias || 'neutral').toLowerCase();
                 const side = trade.side.toLowerCase();
 
@@ -1213,7 +1433,6 @@
                 }
             });
             
-            // Calculate win rates
             Object.keys(stats).forEach(key => {
                 const s = stats[key];
                 s.winRate = s.total > 0 ? (s.wins / s.total * 100).toFixed(1) : 0;
@@ -1231,21 +1450,17 @@
                 return '<p style="color: #bbbbbb; text-align: center; padding: 20px;">No data for current filters</p>';
             }
             
-            // Sort by overall win rate
             entries.sort((a, b) => parseFloat(b[1].winRate) - parseFloat(a[1].winRate));
             
             return entries.map(([key, data]) => {
                 const wrClass = data.winRate >= 60 ? 'good' : data.winRate >= 50 ? 'average' : 'poor';
                 const displayName = key.replace(/_/g, ' ');
                 
-                // Build bias indicators
                 let biasInfo = '';
                 if (data.withWinRate !== null) {
-                    const withClass = data.withWinRate >= 60 ? 'good' : data.withWinRate >= 50 ? 'average' : 'poor';
                     biasInfo += `<span class="stat-bias-indicator with" title="WITH bias">WITH ${data.withWinRate}% (${data.with_bias})</span>`;
                 }
                 if (data.againstWinRate !== null) {
-                    const againstClass = data.againstWinRate >= 60 ? 'good' : data.againstWinRate >= 50 ? 'average' : 'poor';
                     biasInfo += `<span class="stat-bias-indicator against" title="AGAINST bias">VS ${data.againstWinRate}% (${data.against_bias})</span>`;
                 }
                 
@@ -1306,6 +1521,7 @@
                 }
             } catch (error) {
                 console.error('Error saving credentials:', error);
+                alert('Error saving credentials');
             }
         }
 
@@ -1343,26 +1559,6 @@
             } catch (error) {
                 console.error('Error cleaning duplicates:', error);
                 alert('Error cleaning duplicates.');
-            }
-        }
-
-        async function bulkFillBias() {
-            if (!confirm('Fill all missing bias values with "neutral"?')) return;
-            
-            try {
-                const response = await fetch('/api/bulk_fill_bias', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ weekly_bias: 'neutral', daily_bias: 'neutral' })
-                });
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert(`Updated ${result.weekly_updated + result.daily_updated} bias values`);
-                    loadTrades();
-                }
-            } catch (error) {
-                console.error('Error:', error);
             }
         }
 
