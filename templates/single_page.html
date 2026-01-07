@@ -273,7 +273,48 @@
         }
 
         .fc .fc-col-header-cell {
-            background: #0b0b0b !important;
+            background: #111111 !important;
+            border: none !important;
+        }
+
+        .fc .fc-col-header-cell-cushion {
+            color: #ffffff !important;
+        }
+
+        .fc .fc-scrollgrid-section-body > td,
+        .fc .fc-scrollgrid-section-body table,
+        .fc .fc-scrollgrid-sync-table {
+            border: none !important;
+        }
+
+        .fc .fc-daygrid-day-frame {
+            border-color: transparent !important;
+        }
+
+        .fc td, .fc th {
+            border-color: transparent !important;
+            border-right: none !important;
+            border-left: none !important;
+        }
+
+        .fc .fc-scrollgrid {
+            border: none !important;
+        }
+
+        .fc-theme-standard td:last-child,
+        .fc-theme-standard th:last-child {
+            border-right: none !important;
+        }
+
+        .fc .fc-col-header {
+            background: #111111 !important;
+        }
+
+        .fc-scrollgrid-section-header > * {
+            border: none !important;
+        }
+
+        .fc .fc-scrollgrid-section-header td {
             border: none !important;
         }
 
@@ -802,29 +843,25 @@
                     <option value="testnet">Testnet</option>
                 </select>
                 <label class="remember-me">
-                    <input type="checkbox" id="rememberMe">
+                    <input type="checkbox" id="rememberMe" checked>
                     <span>Remember Me</span>
                 </label>
                 <button class="btn btn-primary" onclick="saveApiCredentials()">Save</button>
                 <button class="btn btn-success" onclick="syncBybitTrades()">Sync Trades</button>
-                <button class="btn btn-secondary" onclick="cleanDuplicates()">Clean Duplicates</button>
             </div>
         </div>
 
         <div class="main-content">
             <div class="calendar-section">
-                <h2>Trading Calendar</h2>
                 <div id="calendar"></div>
             </div>
 
             <div class="trades-container">
                 <div class="trades-section open-trades">
-                    <h3>Open Trades</h3>
                     <div class="trades-list open-list" id="openTradesList"></div>
                 </div>
 
                 <div class="trades-section closed-trades">
-                    <h3>Recent Closed Trades</h3>
                     <div class="trades-list" id="closedTradesList"></div>
                 </div>
             </div>
@@ -998,6 +1035,7 @@
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 height: 'auto',
+                firstDay: 1,
                 headerToolbar: {
                     left: 'prev,next',
                     center: 'title',
