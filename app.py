@@ -6,12 +6,14 @@ if sys.platform == 'win32':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request, jsonify, session, send_from_directory
 from flask_cors import CORS
+from werkzeug.utils import secure_filename
 import sqlite3
 from datetime import datetime, timedelta
 import os
 import json
+import uuid
 
 try:
     from pybit.unified_trading import HTTP as BybitHTTP
@@ -25,24 +27,51 @@ app = Flask(__name__)
 app.secret_key = 'your-secret-key-here-change-in-production'
 CORS(app)
 
+# Screenshot upload configuration
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'screenshots')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+# Create screenshots folder if it doesn't exist
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 # ================== DATABASE INITIALIZATION ==================
 def init_db():
     """Initialize database with all required tables"""
     conn = sqlite3.connect('trading_journal.db')
     cursor = conn.cursor()
 
+    # Users table for multi-user support
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        email TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+
     # Trades table
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS trades (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER DEFAULT 1,
         asset TEXT NOT NULL,
         side TEXT NOT NULL,
         entry_price REAL NOT NULL,
         exit_price REAL,
+        stop_loss REAL,
+        take_profit REAL,
         quantity REAL NOT NULL,
         entry_time TEXT NOT NULL,
         exit_time TEXT,
         pnl REAL,
+        risk_reward_ratio REAL,
+        position_size_pct REAL,
         key_level TEXT,
         key_level_type TEXT,
         confirmation TEXT,
@@ -54,7 +83,8 @@ def init_db():
         external_id TEXT,
         status TEXT DEFAULT 'open',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(external_id)
+        UNIQUE(user_id, external_id),
+        FOREIGN KEY (user_id) REFERENCES users(id)
     )
     ''')
 
@@ -62,14 +92,20 @@ def init_db():
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS api_credentials (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER DEFAULT 1,
         exchange TEXT NOT NULL,
         api_key TEXT,
         api_secret TEXT,
         network TEXT DEFAULT 'mainnet',
         remember_me INTEGER DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
     )
     ''')
+
+    # Create default user if doesn't exist
+    cursor.execute('INSERT OR IGNORE INTO users (id, username) VALUES (1, "default")')
+    conn.commit()
 
     # Account balances table
     cursor.execute('''
@@ -132,6 +168,34 @@ def init_db():
     )
     ''')
 
+    # Add new columns if they don't exist (migration)
+    try:
+        cursor.execute("ALTER TABLE trades ADD COLUMN user_id INTEGER DEFAULT 1")
+    except:
+        pass
+    try:
+        cursor.execute("ALTER TABLE trades ADD COLUMN stop_loss REAL")
+    except:
+        pass
+    try:
+        cursor.execute("ALTER TABLE trades ADD COLUMN take_profit REAL")
+    except:
+        pass
+    try:
+        cursor.execute("ALTER TABLE trades ADD COLUMN risk_reward_ratio REAL")
+    except:
+        pass
+    try:
+        cursor.execute("ALTER TABLE trades ADD COLUMN position_size_pct REAL")
+    except:
+        pass
+
+    # Add user_id column to api_credentials if it doesn't exist
+    try:
+        cursor.execute("ALTER TABLE api_credentials ADD COLUMN user_id INTEGER DEFAULT 1")
+    except:
+        pass
+
     conn.commit()
     conn.close()
 
@@ -146,6 +210,97 @@ def get_db_connection():
     return conn
 
 
+def get_current_user_id():
+    """Get current user ID from session, default to 1"""
+    return session.get('user_id', 1)
+
+
+def set_current_user(user_id):
+    """Set current user in session"""
+    session['user_id'] = user_id
+
+
+def calculate_risk_reward_ratio(entry_price, stop_loss, take_profit, side):
+    """Calculate risk/reward ratio for a trade"""
+    if not entry_price or not stop_loss or not take_profit:
+        return None
+
+    entry_price = float(entry_price)
+    stop_loss = float(stop_loss)
+    take_profit = float(take_profit)
+
+    if side.lower() == 'long':
+        risk = entry_price - stop_loss
+        reward = take_profit - entry_price
+    else:  # short
+        risk = stop_loss - entry_price
+        reward = entry_price - take_profit
+
+    if risk <= 0:
+        return None
+
+    rr_ratio = reward / risk
+    return round(rr_ratio, 2)
+
+
+# ================== USER MANAGEMENT ==================
+@app.route('/api/users', methods=['GET'])
+def get_users():
+    """Get all users"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT id, username, email FROM users ORDER BY id')
+    users = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+
+    current_user_id = get_current_user_id()
+    return jsonify({'users': users, 'current_user_id': current_user_id})
+
+
+@app.route('/api/users', methods=['POST'])
+def create_user():
+    """Create a new user"""
+    data = request.json
+    username = data.get('username')
+    email = data.get('email', '')
+
+    if not username:
+        return jsonify({'success': False, 'error': 'Username required'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute('INSERT INTO users (username, email) VALUES (?, ?)', (username, email))
+        user_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+
+        # Automatically switch to new user
+        set_current_user(user_id)
+
+        return jsonify({'success': True, 'user_id': user_id, 'username': username})
+    except sqlite3.IntegrityError:
+        conn.close()
+        return jsonify({'success': False, 'error': 'Username already exists'}), 400
+
+
+@app.route('/api/switch_user/<int:user_id>', methods=['POST'])
+def switch_user(user_id):
+    """Switch to a different user"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT id, username FROM users WHERE id = ?', (user_id,))
+    user = cursor.fetchone()
+    conn.close()
+
+    if not user:
+        return jsonify({'success': False, 'error': 'User not found'}), 404
+
+    set_current_user(user_id)
+    return jsonify({'success': True, 'user_id': user_id, 'username': user['username']})
+
+
 # ================== BASIC ROUTES ==================
 @app.route('/')
 def index():
@@ -155,10 +310,11 @@ def index():
 
 # ================== BYBIT INTEGRATION ==================
 def _get_saved_bybit_credentials():
-    """Retrieve saved Bybit credentials"""
+    """Retrieve saved Bybit credentials for current user"""
+    user_id = get_current_user_id()
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM api_credentials LIMIT 1')
+    cursor.execute('SELECT * FROM api_credentials WHERE user_id = ? LIMIT 1', (user_id,))
     creds = cursor.fetchone()
     conn.close()
     return dict(creds) if creds else None
@@ -436,6 +592,8 @@ def get_open_orders():
 @app.route('/api/sync/bybit', methods=['POST'])
 def sync_bybit_trades():
     """Sync closed trades from Bybit"""
+    user_id = get_current_user_id()
+
     # Write to both terminal AND file for debugging
     log_file = open('sync_debug.txt', 'w', encoding='utf-8')
 
@@ -445,7 +603,7 @@ def sync_bybit_trades():
         log_file.flush()
 
     log("\n" + "=" * 60)
-    log("BYBIT SYNC STARTED")
+    log(f"BYBIT SYNC STARTED (User ID: {user_id})")
     log("=" * 60)
     sys.stdout.flush()
 
@@ -565,8 +723,8 @@ def sync_bybit_trades():
                     f"{item.get('symbol')}_{item.get('side')}_{item.get('createdTime')}"
                 )
 
-                # Check if already exists
-                cursor.execute('SELECT 1 FROM trades WHERE external_id = ? LIMIT 1', (external_id,))
+                # Check if already exists for this user
+                cursor.execute('SELECT 1 FROM trades WHERE user_id = ? AND external_id = ? LIMIT 1', (user_id, external_id))
                 if cursor.fetchone():
                     log(f"  Skipping duplicate: {external_id}")
                     skipped += 1
@@ -619,12 +777,12 @@ def sync_bybit_trades():
                 # Insert trade - include ALL required NOT NULL columns
                 cursor.execute('''
                     INSERT INTO trades (
-                        symbol, asset, side, entry_price, exit_price, quantity,
+                        user_id, symbol, asset, side, entry_price, exit_price, quantity,
                         entry_time, exit_time, pnl, pnl_percentage, weekly_bias, daily_bias,
                         notes, status, external_id, created_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
-                    symbol, symbol, side, entry_price, exit_price, qty,
+                    user_id, symbol, symbol, side, entry_price, exit_price, qty,
                     entry_time, exit_time, pnl, pnl_percentage, 'neutral', 'neutral',
                     f'Imported from Bybit ({network})', 'closed', external_id, created_at
                 ))
@@ -671,33 +829,39 @@ def sync_bybit_trades():
 @app.route('/api/save_bybit_credentials', methods=['POST'])
 def save_bybit_credentials():
     """Save Bybit API credentials - always remembers credentials"""
-    data = request.json
-    api_key = data.get('api_key')
-    api_secret = data.get('api_secret')
-    network = (data.get('network') or 'mainnet').strip().lower()
-    remember_me = data.get('remember_me', True)  # Default to True
+    try:
+        user_id = get_current_user_id()
+        data = request.json
+        api_key = data.get('api_key')
+        api_secret = data.get('api_secret')
+        network = (data.get('network') or 'mainnet').strip().lower()
+        remember_me = data.get('remember_me', True)  # Default to True
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
+        conn = get_db_connection()
+        cursor = conn.cursor()
 
-    cursor.execute('DELETE FROM api_credentials')
-    cursor.execute(
-        'INSERT INTO api_credentials (exchange, api_key, api_secret, network, remember_me) VALUES (?, ?, ?, ?, ?)',
-        ('bybit', api_key, api_secret, network, 1 if remember_me else 0)
-    )
+        cursor.execute('DELETE FROM api_credentials WHERE user_id = ?', (user_id,))
+        cursor.execute(
+            'INSERT INTO api_credentials (user_id, exchange, api_key, api_secret, network, remember_me) VALUES (?, ?, ?, ?, ?, ?)',
+            (user_id, 'bybit', api_key, api_secret, network, 1 if remember_me else 0)
+        )
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+        conn.close()
 
-    return jsonify({'success': True, 'message': 'Credentials saved and will be remembered'})
+        return jsonify({'success': True, 'message': 'Credentials saved and will be remembered'})
+    except Exception as e:
+        print(f"Error saving credentials: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/api/get_bybit_credentials', methods=['GET'])
 def get_bybit_credentials():
-    """Get saved Bybit credentials"""
+    """Get saved Bybit credentials for current user"""
+    user_id = get_current_user_id()
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM api_credentials ORDER BY created_at DESC LIMIT 1')
+    cursor.execute('SELECT * FROM api_credentials WHERE user_id = ? ORDER BY created_at DESC LIMIT 1', (user_id,))
     creds = cursor.fetchone()
     conn.close()
 
@@ -712,6 +876,56 @@ def get_bybit_credentials():
             'remember_me': bool(creds_dict.get('remember_me', 0))
         })
     return jsonify({'connected': False})
+
+
+@app.route('/api/bybit/balance', methods=['GET'])
+def get_bybit_balance():
+    """Get Bybit account balance"""
+    try:
+        creds = _get_saved_bybit_credentials()
+        if not creds or not creds.get('api_key'):
+            return jsonify({'success': False, 'balance': 0, 'message': 'No credentials'})
+
+        network = (creds.get('network') or 'mainnet').strip().lower()
+        client = _create_bybit_client(creds['api_key'], creds['api_secret'], network)
+
+        # Get wallet balance for Unified Trading Account
+        response = client.get_wallet_balance(accountType='UNIFIED')
+
+        if response and response.get('retCode') == 0:
+            result = response.get('result', {})
+            account_list = result.get('list', [])
+
+            total_balance = 0
+            if account_list:
+                # Get USDT balance (most common for futures trading)
+                for account in account_list:
+                    coins = account.get('coin', [])
+                    for coin in coins:
+                        if coin.get('coin') == 'USDT':
+                            # Use equity (total value including unrealized PnL)
+                            total_balance = float(coin.get('equity', 0))
+                            break
+                    if total_balance > 0:
+                        break
+
+            return jsonify({
+                'success': True,
+                'balance': total_balance
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'balance': 0,
+                'message': response.get('retMsg', 'API error')
+            })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'balance': 0,
+            'message': str(e)
+        })
 
 
 # ================== DEBUG ENDPOINT ==================
@@ -798,25 +1012,27 @@ def debug_sync():
 @app.route('/api/calendar_data', methods=['GET'])
 def get_calendar_data():
     """Get calendar data with daily P&L"""
+    user_id = get_current_user_id()
+
     # Check if Bybit is connected
     creds = _get_saved_bybit_credentials()
     if not creds or not creds.get('api_key'):
         return jsonify([])
-    
+
     conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute('''
-        SELECT 
+        SELECT
             DATE(entry_time) as trade_date,
             SUM(pnl) as daily_pnl,
             COUNT(*) as trade_count,
             SUM(CASE WHEN pnl > 0 THEN 1 ELSE 0 END) as winning_trades
-        FROM trades 
-        WHERE status = 'closed' AND pnl IS NOT NULL
+        FROM trades
+        WHERE user_id = ? AND status = 'closed' AND pnl IS NOT NULL
         GROUP BY DATE(entry_time)
         ORDER BY trade_date
-    ''')
+    ''', (user_id,))
 
     rows = cursor.fetchall()
     conn.close()
@@ -846,15 +1062,16 @@ def get_calendar_data():
 @app.route('/api/trades_by_date', methods=['GET'])
 def get_trades_by_date():
     """Get trades for a specific date"""
+    user_id = get_current_user_id()
     date_str = request.args.get('date')
     conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute('''
-        SELECT * FROM trades 
-        WHERE DATE(entry_time) = ? AND status = 'closed'
+        SELECT * FROM trades
+        WHERE user_id = ? AND DATE(entry_time) = ? AND status = 'closed'
         ORDER BY entry_time DESC
-    ''', (date_str,))
+    ''', (user_id, date_str))
 
     trades = [dict(row) for row in cursor.fetchall()]
 
@@ -880,6 +1097,8 @@ def get_trades_by_date():
 @app.route('/api/trades', methods=['GET'])
 def get_trades():
     """Get trades with statistics"""
+    user_id = get_current_user_id()
+
     # Check if Bybit is connected
     creds = _get_saved_bybit_credentials()
     if not creds or not creds.get('api_key'):
@@ -888,7 +1107,7 @@ def get_trades():
             'statistics': {},
             'message': 'No Bybit connection - please connect your API first'
         })
-    
+
     period = request.args.get('period', 'all')
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
@@ -897,8 +1116,8 @@ def get_trades():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    query = "SELECT * FROM trades WHERE status = ?"
-    params = [status]
+    query = "SELECT * FROM trades WHERE user_id = ? AND status = ?"
+    params = [user_id, status]
 
     if start_date and end_date:
         query += " AND DATE(entry_time) BETWEEN ? AND ?"
@@ -1002,31 +1221,43 @@ def manage_trade(trade_id):
 def create_trade():
     """Create a new trade"""
     data = request.json
+    user_id = get_current_user_id()
 
     # Calculate P&L if trade is closed
     pnl = None
     status = data.get('status', 'closed')
-    
+
     if status == 'closed' and data.get('exit_price'):
         if data['side'] == 'long':
             pnl = (float(data['exit_price']) - float(data['entry_price'])) * float(data['quantity'])
         else:
             pnl = (float(data['entry_price']) - float(data['exit_price'])) * float(data['quantity'])
 
+    # Calculate R:R ratio
+    rr_ratio = calculate_risk_reward_ratio(
+        data.get('entry_price'),
+        data.get('stop_loss'),
+        data.get('take_profit'),
+        data['side']
+    )
+
     conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute('''
-        INSERT INTO trades (asset, side, entry_price, exit_price, quantity, entry_time, 
-                          exit_time, pnl, key_level, key_level_type, confirmation, model, 
+        INSERT INTO trades (user_id, asset, side, entry_price, exit_price, stop_loss, take_profit,
+                          quantity, entry_time, exit_time, pnl, risk_reward_ratio, position_size_pct,
+                          key_level, key_level_type, confirmation, model,
                           weekly_bias, daily_bias, notes, screenshot_url, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
-        data['asset'], data['side'], data['entry_price'], data.get('exit_price'),
-        data['quantity'], data['entry_time'], data.get('exit_time'), pnl,
+        user_id, data['asset'], data['side'], data['entry_price'], data.get('exit_price'),
+        data.get('stop_loss'), data.get('take_profit'),
+        data['quantity'], data['entry_time'], data.get('exit_time'), pnl, rr_ratio,
+        data.get('position_size_pct'),
         data.get('key_level'), data.get('key_level_type'), data.get('confirmation'),
-        data.get('model'), data.get('weekly_bias', 'neutral'), 
-        data.get('daily_bias', 'neutral'), data.get('notes'), 
+        data.get('model'), data.get('weekly_bias', 'neutral'),
+        data.get('daily_bias', 'neutral'), data.get('notes'),
         data.get('screenshot_url'), status
     ))
 
@@ -1035,6 +1266,198 @@ def create_trade():
     conn.close()
 
     return jsonify({'success': True, 'id': trade_id})
+
+
+@app.route('/api/risk_metrics', methods=['GET'])
+def get_risk_metrics():
+    """Calculate advanced risk metrics"""
+    user_id = get_current_user_id()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT pnl, entry_time, risk_reward_ratio
+        FROM trades
+        WHERE user_id = ? AND status = 'closed' AND pnl IS NOT NULL
+        ORDER BY entry_time ASC
+    ''', (user_id,))
+
+    trades = cursor.fetchall()
+    conn.close()
+
+    if not trades:
+        return jsonify({
+            'max_drawdown': 0,
+            'max_drawdown_pct': 0,
+            'expectancy': 0,
+            'avg_rr_ratio': 0,
+            'consecutive_wins': 0,
+            'consecutive_losses': 0,
+            'largest_win': 0,
+            'largest_loss': 0
+        })
+
+    # Calculate cumulative P&L and max drawdown
+    cumulative_pnl = 0
+    peak = 0
+    max_drawdown = 0
+    max_drawdown_pct = 0
+
+    for trade in trades:
+        cumulative_pnl += trade['pnl']
+        if cumulative_pnl > peak:
+            peak = cumulative_pnl
+        drawdown = peak - cumulative_pnl
+        if drawdown > max_drawdown:
+            max_drawdown = drawdown
+            max_drawdown_pct = (drawdown / peak * 100) if peak > 0 else 0
+
+    # Calculate expectancy
+    wins = [t['pnl'] for t in trades if t['pnl'] > 0]
+    losses = [t['pnl'] for t in trades if t['pnl'] < 0]
+
+    total_trades = len(trades)
+    win_rate = len(wins) / total_trades if total_trades > 0 else 0
+    avg_win = sum(wins) / len(wins) if wins else 0
+    avg_loss = abs(sum(losses) / len(losses)) if losses else 0
+
+    expectancy = (win_rate * avg_win) - ((1 - win_rate) * avg_loss)
+
+    # Calculate avg R:R ratio
+    rr_ratios = [t['risk_reward_ratio'] for t in trades if t['risk_reward_ratio']]
+    avg_rr_ratio = sum(rr_ratios) / len(rr_ratios) if rr_ratios else 0
+
+    # Calculate consecutive wins/losses
+    current_streak = 0
+    max_win_streak = 0
+    max_loss_streak = 0
+
+    for trade in trades:
+        if trade['pnl'] > 0:
+            if current_streak >= 0:
+                current_streak += 1
+            else:
+                current_streak = 1
+            max_win_streak = max(max_win_streak, current_streak)
+        else:
+            if current_streak <= 0:
+                current_streak -= 1
+            else:
+                current_streak = -1
+            max_loss_streak = max(max_loss_streak, abs(current_streak))
+
+    # Largest win/loss
+    largest_win = max(wins) if wins else 0
+    largest_loss = min(losses) if losses else 0
+
+    return jsonify({
+        'max_drawdown': round(max_drawdown, 2),
+        'max_drawdown_pct': round(max_drawdown_pct, 2),
+        'expectancy': round(expectancy, 2),
+        'avg_rr_ratio': round(avg_rr_ratio, 2),
+        'consecutive_wins': max_win_streak,
+        'consecutive_losses': max_loss_streak,
+        'largest_win': round(largest_win, 2),
+        'largest_loss': round(largest_loss, 2)
+    })
+
+
+@app.route('/api/time_analytics', methods=['GET'])
+def get_time_analytics():
+    """Get performance by hour and day of week"""
+    user_id = get_current_user_id()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT entry_time, pnl
+        FROM trades
+        WHERE user_id = ? AND status = 'closed' AND pnl IS NOT NULL
+    ''', (user_id,))
+
+    trades = cursor.fetchall()
+    conn.close()
+
+    # Initialize hour and day stats
+    hour_stats = {str(i): {'total_pnl': 0, 'count': 0, 'wins': 0} for i in range(24)}
+    day_stats = {str(i): {'total_pnl': 0, 'count': 0, 'wins': 0} for i in range(7)}  # 0=Monday, 6=Sunday
+
+    for trade in trades:
+        try:
+            dt = datetime.fromisoformat(trade['entry_time'].replace('Z', '+00:00'))
+            hour = str(dt.hour)
+            day = str(dt.weekday())
+
+            pnl = trade['pnl']
+
+            # Hour stats
+            hour_stats[hour]['total_pnl'] += pnl
+            hour_stats[hour]['count'] += 1
+            if pnl > 0:
+                hour_stats[hour]['wins'] += 1
+
+            # Day stats
+            day_stats[day]['total_pnl'] += pnl
+            day_stats[day]['count'] += 1
+            if pnl > 0:
+                day_stats[day]['wins'] += 1
+        except:
+            continue
+
+    # Calculate win rates and averages
+    for hour in hour_stats:
+        if hour_stats[hour]['count'] > 0:
+            hour_stats[hour]['avg_pnl'] = round(hour_stats[hour]['total_pnl'] / hour_stats[hour]['count'], 2)
+            hour_stats[hour]['win_rate'] = round(hour_stats[hour]['wins'] / hour_stats[hour]['count'] * 100, 1)
+        else:
+            hour_stats[hour]['avg_pnl'] = 0
+            hour_stats[hour]['win_rate'] = 0
+
+    for day in day_stats:
+        if day_stats[day]['count'] > 0:
+            day_stats[day]['avg_pnl'] = round(day_stats[day]['total_pnl'] / day_stats[day]['count'], 2)
+            day_stats[day]['win_rate'] = round(day_stats[day]['wins'] / day_stats[day]['count'] * 100, 1)
+        else:
+            day_stats[day]['avg_pnl'] = 0
+            day_stats[day]['win_rate'] = 0
+
+    return jsonify({
+        'by_hour': hour_stats,
+        'by_day': day_stats
+    })
+
+
+@app.route('/api/upload_screenshot', methods=['POST'])
+def upload_screenshot():
+    """Upload a screenshot for a trade"""
+    if 'screenshot' not in request.files:
+        return jsonify({'success': False, 'error': 'No file provided'}), 400
+
+    file = request.files['screenshot']
+
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'No file selected'}), 400
+
+    if file and allowed_file(file.filename):
+        # Generate unique filename
+        ext = file.filename.rsplit('.', 1)[1].lower()
+        filename = f"{uuid.uuid4().hex}.{ext}"
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+        # Save file
+        file.save(filepath)
+
+        # Return the URL path
+        screenshot_url = f"/screenshots/{filename}"
+        return jsonify({'success': True, 'url': screenshot_url})
+
+    return jsonify({'success': False, 'error': 'Invalid file type'}), 400
+
+
+@app.route('/screenshots/<filename>')
+def serve_screenshot(filename):
+    """Serve uploaded screenshots"""
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 
 # ================== RUN APPLICATION ==================

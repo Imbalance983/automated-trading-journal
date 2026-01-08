@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Journal Pro</title>
+    <title>ImbLedger</title>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -36,18 +36,79 @@
             background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%), #0b0b0b;
             color: white;
             padding: 15px 20px;
-            text-align: center;
             border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            text-align: left;
         }
 
         .header h1 {
             font-size: 1.6em;
-            margin-bottom: 4px;
+            margin: 0 0 4px 0;
         }
 
         .header p {
             font-size: 0.85em;
             color: #9ca3af;
+            margin: 0;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .user-switcher {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .user-label {
+            font-size: 0.75em;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .user-select {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 0.9em;
+            cursor: pointer;
+            outline: none;
+            padding: 2px;
+        }
+
+        .user-select option {
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        .btn-add-user {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #999;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.2s;
+        }
+
+        .btn-add-user:hover {
+            border-color: #00ff88;
+            color: #00ff88;
         }
 
         .period-filter {
@@ -60,26 +121,27 @@
         }
 
         .period-tab {
-            padding: 6px 12px;
+            padding: 4px 10px;
             border: 1px solid rgba(255,255,255,0.10);
-            border-radius: 6px;
+            border-radius: 4px;
             background: rgba(255,255,255,0.03);
             color: #e5e7eb;
             cursor: pointer;
             font-weight: 500;
-            font-size: 0.85em;
+            font-size: 0.75em;
             transition: all 0.3s;
             user-select: none;
         }
 
         .period-tab:hover {
-            border-color: rgba(139, 92, 246, 0.45);
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(255,255,255,0.15);
         }
 
         .period-tab.active {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(139, 92, 246, 0.18));
+            background: rgba(255,255,255,0.06);
             color: #ffffff;
-            border-color: rgba(139, 92, 246, 0.75);
+            border-color: rgba(255,255,255,0.2);
         }
 
         .metrics-dashboard {
@@ -143,49 +205,221 @@
             color: #ff3366;
         }
 
-        .api-section {
-            padding: 20px 25px;
+        /* Risk Metrics Section */
+        .risk-metrics-section {
+            padding: 25px;
             background: #0b0b0b;
             border-bottom: 1px solid #333333;
+        }
+
+        .section-header {
+            margin-bottom: 15px;
+        }
+
+        .section-header h3 {
+            font-size: 1.2em;
+            color: #ffffff;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .risk-metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .risk-card {
+            background: #111111;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .risk-label {
+            font-size: 0.75em;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .risk-value {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .risk-sub {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        /* Time Analytics Section */
+        .pnl-and-time-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .pnl-chart-left {
+            flex: 2;
+            min-width: 0;
+        }
+
+        .time-analytics-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .heatmap-container {
+            width: 100%;
+        }
+
+        .heatmap-container h4 {
+            font-size: 0.75em;
+            color: #666;
+            margin: 0 0 8px 0;
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .heatmap {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .heatmap-row {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .heatmap-label {
+            width: 40px;
+            font-size: 0.65em;
+            color: #666;
+            text-align: right;
+            padding-right: 6px;
+        }
+
+        .heatmap-cell {
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+            background: rgba(255,255,255,0.03);
+            cursor: pointer;
+            transition: all 0.15s;
+            position: relative;
+        }
+
+        .heatmap-cell:hover {
+            transform: scale(1.3);
+            z-index: 10;
+        }
+
+        .heatmap-cell.empty {
+            background: rgba(255,255,255,0.03);
+        }
+
+        .heatmap-cell.profit-low {
+            background: rgba(0, 255, 136, 0.2);
+        }
+
+        .heatmap-cell.profit-med {
+            background: rgba(0, 255, 136, 0.5);
+        }
+
+        .heatmap-cell.profit-high {
+            background: rgba(0, 255, 136, 0.8);
+        }
+
+        .heatmap-cell.loss-low {
+            background: rgba(255, 51, 102, 0.2);
+        }
+
+        .heatmap-cell.loss-med {
+            background: rgba(255, 51, 102, 0.5);
+        }
+
+        .heatmap-cell.loss-high {
+            background: rgba(255, 51, 102, 0.8);
+        }
+
+        .heatmap-cell[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.95);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7em;
+            white-space: nowrap;
+            margin-bottom: 4px;
+            z-index: 100;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .api-section {
+            padding: 12px 20px;
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            justify-content: flex-end;
         }
 
         .api-container {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
             flex-wrap: wrap;
         }
 
         .api-status {
-            font-weight: 600;
-            padding: 8px 15px;
-            border-radius: 20px;
-            background: #111111;
-            border: 1px solid #333333;
+            font-size: 0.75em;
+            padding: 4px 10px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .api-status.connected {
+            color: #00ff88;
+            border-color: rgba(0,255,136,0.3);
+            background: rgba(0,255,136,0.05);
         }
 
         .api-input {
             flex: 1;
-            min-width: 200px;
-            padding: 10px 15px;
-            border: 1px solid #333333;
-            border-radius: 8px;
-            font-size: 0.95em;
-            background: #111111;
+            min-width: 160px;
+            padding: 6px 12px;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 6px;
+            font-size: 0.85em;
+            background: rgba(255,255,255,0.02);
             color: #ffffff;
         }
 
-        .remember-me {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            white-space: nowrap;
+        .api-input:focus {
+            outline: none;
+            border-color: rgba(0,255,136,0.3);
         }
 
-        .remember-me input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
+        .api-input::placeholder {
+            color: #666;
         }
 
         .btn {
@@ -198,25 +432,25 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(139, 92, 246, 0.18));
+            background: rgba(255,255,255,0.04);
             color: #ffffff;
-            border: 1px solid rgba(139, 92, 246, 0.45);
+            border: 1px solid rgba(255,255,255,0.12);
         }
 
         .btn-primary:hover {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(139, 92, 246, 0.25));
-            border-color: rgba(139, 92, 246, 0.75);
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.2);
         }
 
         .btn-success {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(139, 92, 246, 0.18));
+            background: rgba(255,255,255,0.04);
             color: #ffffff;
-            border: 1px solid rgba(139, 92, 246, 0.45);
+            border: 1px solid rgba(255,255,255,0.12);
         }
 
         .btn-success:hover {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(139, 92, 246, 0.25));
-            border-color: rgba(139, 92, 246, 0.75);
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.2);
         }
 
         .btn-secondary {
@@ -256,6 +490,11 @@
         .fc-day-loss {
             background-color: rgba(255, 51, 102, 0.12) !important;
             border-radius: 10px;
+        }
+
+        /* Subtle current day highlight */
+        .fc .fc-day-today {
+            background-color: rgba(255, 255, 255, 0.03) !important;
         }
 
         .fc .fc-scrollgrid,
@@ -337,6 +576,16 @@
             width: calc(100% - 14px);
         }
 
+        .moon-phase {
+            position: absolute;
+            top: 3px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8em;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
         .day-pnl.positive {
             color: #8ff5c6;
         }
@@ -375,6 +624,26 @@
         .trades-list {
             max-height: 300px;
             overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: #333 transparent;
+        }
+
+        .trades-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .trades-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .trades-list::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+
+        .trades-list::-webkit-scrollbar-thumb:hover {
+            background: #444;
         }
 
         .trades-list.open-list {
@@ -383,12 +652,13 @@
 
         .trade-card {
             background: #0b0b0b;
-            padding: 10px;
+            padding: 8px 10px;
             border-radius: 8px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             border-left: 4px solid #007bff;
             cursor: pointer;
             transition: all 0.2s;
+            font-size: 0.9em;
         }
 
         .trade-card:hover {
@@ -410,7 +680,7 @@
         .trade-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
         }
 
         .trade-asset {
@@ -420,6 +690,7 @@
 
         .trade-pnl {
             font-weight: bold;
+            font-size: 0.92em;
         }
 
         .trade-pnl.positive {
@@ -431,8 +702,9 @@
         }
 
         .trade-details {
-            font-size: 0.8em;
+            font-size: 0.78em;
             color: #bbbbbb;
+            line-height: 1.4;
         }
 
         .bias-badge {
@@ -638,7 +910,7 @@
             background: #111111;
             border-radius: 12px;
             padding: 20px;
-            height: 220px;
+            height: 280px;
         }
 
         .pnl-chart-title {
@@ -780,17 +1052,35 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>ImbAlance Trading Journal</h1>
-            <p>Performance Statistics</p>
+            <div class="header-left">
+                <h1>ImbLedger</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-switcher">
+                    <span class="user-label">User</span>
+                    <select class="user-select" id="userSelect" onchange="switchUser()">
+                        <option value="1">Default</option>
+                    </select>
+                </div>
+                <button class="btn-add-user" onclick="showAddUserDialog()">+ New User</button>
+            </div>
+        </div>
+
+        <div class="api-section">
+            <div class="api-container">
+                <div class="api-status" id="apiStatus">Not Connected</div>
+                <input type="text" class="api-input" id="apiKey" placeholder="API Key" style="max-width: 200px;">
+                <input type="password" class="api-input" id="apiSecret" placeholder="API Secret" style="max-width: 200px;">
+                <button class="btn btn-primary" onclick="saveApiCredentials()" style="padding: 6px 16px; font-size: 0.85em;">Save</button>
+                <button class="btn btn-success" onclick="syncBybitTrades()" style="padding: 6px 16px; font-size: 0.85em;">Sync</button>
+            </div>
         </div>
 
         <div class="metrics-dashboard" id="metricsDashboard">
+            <!-- ROW 1: Account Overview - General Performance -->
             <div class="metric-card">
-                <div class="metric-label">Win Rate</div>
-                <div class="metric-value" id="winRateValue">0%</div>
-                <div class="chart-container">
-                    <canvas id="winRateChart"></canvas>
-                </div>
+                <div class="metric-label">Balance</div>
+                <div class="metric-value" id="accountBalance">$0</div>
             </div>
             <div class="metric-card">
                 <div class="metric-label">Total P&L</div>
@@ -801,6 +1091,23 @@
                 <div class="metric-value" id="totalTrades">0</div>
             </div>
             <div class="metric-card">
+                <div class="metric-label">Win Rate</div>
+                <div class="metric-value" id="winRateValue">0%</div>
+                <div class="chart-container">
+                    <canvas id="winRateChart"></canvas>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Profit Factor</div>
+                <div class="metric-value" id="profitFactor">0.00</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Expectancy</div>
+                <div class="metric-value" id="expectancy">$0</div>
+            </div>
+
+            <!-- ROW 2: Win/Loss Analysis -->
+            <div class="metric-card">
                 <div class="metric-label">Avg Win</div>
                 <div class="metric-value positive" id="avgWin">$0</div>
             </div>
@@ -809,45 +1116,79 @@
                 <div class="metric-value negative" id="avgLoss">$0</div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">Profit Factor</div>
-                <div class="metric-value" id="profitFactor">0.00</div>
+                <div class="metric-label">Largest Win</div>
+                <div class="metric-value positive" id="largestWin">$0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Largest Loss</div>
+                <div class="metric-value negative" id="largestLoss">$0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Avg R:R Ratio</div>
+                <div class="metric-value" id="avgRRRatio">0:1</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Avg Hold Period</div>
+                <div class="metric-value" id="avgHoldPeriod">-</div>
+            </div>
+
+            <!-- ROW 3: Risk & Strategy Performance -->
+            <div class="metric-card">
+                <div class="metric-label">Max Drawdown</div>
+                <div class="metric-value" id="maxDrawdown">$0</div>
+                <div class="metric-sub" id="maxDrawdownPct">0%</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Win Streak</div>
+                <div class="metric-value" id="maxWinStreak">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Loss Streak</div>
+                <div class="metric-value" id="maxLossStreak">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Best Key Level</div>
+                <div class="metric-value" id="bestKeyLevel" style="font-size: 0.85em;">-</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Best Model</div>
+                <div class="metric-value" id="bestModel" style="font-size: 0.85em;">-</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Best Confirmation</div>
+                <div class="metric-value" id="bestConfirmation" style="font-size: 0.85em;">-</div>
             </div>
         </div>
 
         <div class="pnl-chart-section">
-            <div class="period-filter">
-                <div class="period-tab active" data-period="all" onclick="changePeriod('all')">All Time</div>
-                <div class="period-tab" data-period="month" onclick="changePeriod('month')">This Month</div>
-                <div class="period-tab" data-period="week" onclick="changePeriod('week')">This Week</div>
-                <div class="period-tab" data-period="today" onclick="changePeriod('today')">Today</div>
-                <div class="period-tab" data-period="custom" onclick="changePeriod('custom')">Custom</div>
-            </div>
-            <div id="customRange">
-                <input type="date" id="customStart" class="api-input" style="max-width: 170px;" />
-                <input type="date" id="customEnd" class="api-input" style="max-width: 170px;" />
-                <button class="btn btn-primary" style="padding: 8px 14px;" onclick="applyCustomRange()">Apply</button>
-            </div>
-            <div class="pnl-chart-container">
-                <div class="pnl-chart-title">Cumulative P&L Over Time</div>
-                <canvas id="pnlChart" style="height: 180px;"></canvas>
-            </div>
-        </div>
-
-        <div class="api-section">
-            <div class="api-container">
-                <div class="api-status" id="apiStatus">Not Connected</div>
-                <input type="text" class="api-input" id="apiKey" placeholder="Bybit API Key">
-                <input type="password" class="api-input" id="apiSecret" placeholder="API Secret">
-                <select class="api-input" id="bybitNetwork" style="max-width: 160px;">
-                    <option value="mainnet">Mainnet</option>
-                    <option value="testnet">Testnet</option>
-                </select>
-                <label class="remember-me">
-                    <input type="checkbox" id="rememberMe" checked>
-                    <span>Remember Me</span>
-                </label>
-                <button class="btn btn-primary" onclick="saveApiCredentials()">Save</button>
-                <button class="btn btn-success" onclick="syncBybitTrades()">Sync Trades</button>
+            <div class="pnl-and-time-container">
+                <div class="pnl-chart-left">
+                    <div class="period-filter">
+                        <div class="period-tab active" data-period="all" onclick="changePeriod('all')">All Time</div>
+                        <div class="period-tab" data-period="month" onclick="changePeriod('month')">This Month</div>
+                        <div class="period-tab" data-period="week" onclick="changePeriod('week')">This Week</div>
+                        <div class="period-tab" data-period="today" onclick="changePeriod('today')">Today</div>
+                        <div class="period-tab" data-period="custom" onclick="changePeriod('custom')">Custom</div>
+                    </div>
+                    <div id="customRange">
+                        <input type="date" id="customStart" class="api-input" style="max-width: 170px;" />
+                        <input type="date" id="customEnd" class="api-input" style="max-width: 170px;" />
+                        <button class="btn btn-primary" style="padding: 8px 14px;" onclick="applyCustomRange()">Apply</button>
+                    </div>
+                    <div class="pnl-chart-container">
+                        <canvas id="pnlChart" style="height: 240px;"></canvas>
+                    </div>
+                </div>
+                <div class="time-analytics-right">
+                    <div class="heatmap-container">
+                        <h4>Performance by Day of Week</h4>
+                        <div class="heatmap" id="dayHeatmap"></div>
+                    </div>
+                    <div class="heatmap-container">
+                        <h4>Performance by Hour (UTC)</h4>
+                        <div class="heatmap" id="hourHeatmap"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1023,17 +1364,149 @@
             side: 'all'
         };
 
+        // Moon phases (Full Moon 🌕 and New Moon 🌑) - Dublin Time (UTC+0/+1)
+        const moonPhases = {
+            // 2025
+            '2025-01-03': 'full',
+            '2025-01-18': 'new',
+            '2025-02-01': 'full',
+            '2025-02-17': 'new',
+            '2025-03-03': 'full',
+            '2025-03-18': 'new',
+            '2025-04-01': 'full',
+            '2025-04-16': 'new',
+            '2025-05-01': 'full',
+            '2025-05-16': 'new',
+            '2025-05-30': 'full',
+            '2025-06-14': 'new',
+            '2025-06-29': 'full',
+            '2025-07-14': 'new',
+            '2025-07-28': 'full',
+            '2025-08-12': 'new',
+            '2025-08-27': 'full',
+            '2025-09-11': 'new',
+            '2025-09-25': 'full',
+            '2025-10-10': 'new',
+            '2025-10-25': 'full',
+            '2025-11-09': 'new',
+            '2025-11-23': 'full',
+            '2025-12-08': 'new',
+            '2025-12-23': 'full',
+            // 2026
+            '2026-01-03': 'full',
+            '2026-01-18': 'new',
+            '2026-02-01': 'full',
+            '2026-02-17': 'new',
+            '2026-03-03': 'full',
+            '2026-03-18': 'new',
+            '2026-04-01': 'full',
+            '2026-04-16': 'new',
+            '2026-05-01': 'full',
+            '2026-05-16': 'new',
+            '2026-05-30': 'full',
+            '2026-06-14': 'new',
+            '2026-06-29': 'full',
+            '2026-07-14': 'new',
+            '2026-07-28': 'full',
+            '2026-08-12': 'new',
+            '2026-08-27': 'full',
+            '2026-09-11': 'new',
+            '2026-09-25': 'full',
+            '2026-10-10': 'new',
+            '2026-10-25': 'full',
+            '2026-11-09': 'new',
+            '2026-11-23': 'full',
+            '2026-12-08': 'new',
+            '2026-12-23': 'full'
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
+            loadUsers();
             initCalendar();
             loadTrades();
             loadOpenTrades();
             loadApiCredentials();
+            loadRiskMetrics();
+            loadTimeAnalytics();
         });
+
+        // ================== USER MANAGEMENT ==================
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/users');
+                const data = await response.json();
+
+                const userSelect = document.getElementById('userSelect');
+                userSelect.innerHTML = '';
+
+                data.users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = user.username;
+                    if (user.id === data.current_user_id) {
+                        option.selected = true;
+                    }
+                    userSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+
+        async function switchUser() {
+            const userId = document.getElementById('userSelect').value;
+
+            try {
+                const response = await fetch(`/api/switch_user/${userId}`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    // Reload all data for new user
+                    location.reload();
+                } else {
+                    alert('Error switching user: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error switching user:', error);
+                alert('Error switching user');
+            }
+        }
+
+        function showAddUserDialog() {
+            const username = prompt('Enter username for new user:');
+            if (!username || username.trim() === '') return;
+
+            createUser(username.trim());
+        }
+
+        async function createUser(username) {
+            try {
+                const response = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    // Reload to switch to new user
+                    location.reload();
+                } else {
+                    alert('Error creating user: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error creating user:', error);
+                alert('Error creating user');
+            }
+        }
 
         function initCalendar() {
             const calendarEl = document.getElementById('calendar');
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
+                initialDate: new Date(), // Always start with current month
                 height: 'auto',
                 firstDay: 1,
                 headerToolbar: {
@@ -1043,15 +1516,21 @@
                 },
                 dayCellDidMount: function(info) {
                     const dateStr = info.date.toISOString().split('T')[0];
+
+                    // Add moon phase indicator
+                    if (moonPhases[dateStr]) {
+                        const moonDiv = document.createElement('div');
+                        moonDiv.className = 'moon-phase';
+                        moonDiv.textContent = moonPhases[dateStr] === 'full' ? '🌕' : '🌑';
+                        moonDiv.title = moonPhases[dateStr] === 'full' ? 'Full Moon' : 'New Moon';
+                        info.el.appendChild(moonDiv);
+                    }
+
                     if (calendarDates[dateStr]) {
                         const dayData = calendarDates[dateStr];
-                        
-                        if (dayData.pnl > 0) {
-                            info.el.classList.add('fc-day-profit');
-                        } else if (dayData.pnl < 0) {
-                            info.el.classList.add('fc-day-loss');
-                        }
-                        
+
+                        // Removed background color coding - P&L color is enough
+
                         const statsDiv = document.createElement('div');
                         statsDiv.className = 'day-stats';
                         statsDiv.innerHTML = `
@@ -1074,7 +1553,7 @@
             try {
                 const response = await fetch('/api/calendar_data');
                 const events = await response.json();
-                
+
                 calendarDates = {};
                 events.forEach(event => {
                     calendarDates[event.start] = {
@@ -1083,8 +1562,30 @@
                         winRate: event.extendedProps.win_rate
                     };
                 });
-                
-                calendar.render();
+
+                // Re-render all day cells with updated data
+                if (calendar) {
+                    const allDayCells = document.querySelectorAll('.fc-daygrid-day');
+                    allDayCells.forEach(dayCell => {
+                        const dateStr = dayCell.getAttribute('data-date');
+                        if (dateStr && calendarDates[dateStr]) {
+                            // Remove old stats if exists
+                            const oldStats = dayCell.querySelector('.day-stats');
+                            if (oldStats) oldStats.remove();
+
+                            // Add new stats
+                            const dayData = calendarDates[dateStr];
+                            const statsDiv = document.createElement('div');
+                            statsDiv.className = 'day-stats';
+                            statsDiv.innerHTML = `
+                                <div class="day-trades">${dayData.count} trade${dayData.count > 1 ? 's' : ''}</div>
+                                <div class="day-pnl ${dayData.pnl >= 0 ? 'positive' : 'negative'}">${dayData.pnl >= 0 ? '+' : ''}${dayData.pnl.toFixed(0)}</div>
+                                <div class="day-wr">${dayData.winRate.toFixed(0)}% WR</div>
+                            `;
+                            dayCell.querySelector('.fc-daygrid-day-frame').appendChild(statsDiv);
+                        }
+                    });
+                }
             } catch (error) {
                 console.error('Error loading calendar:', error);
                 alert('Error loading calendar data');
@@ -1189,13 +1690,242 @@
         function updateMetrics(stats) {
             document.getElementById('totalPnl').textContent = '$' + stats.total_pnl.toFixed(2);
             document.getElementById('totalPnl').className = 'metric-value ' + (stats.total_pnl >= 0 ? 'positive' : 'negative');
-            
+
             document.getElementById('totalTrades').textContent = stats.total_trades;
+
+            // Fetch and display account balance
+            fetchAccountBalance();
+
             document.getElementById('avgWin').textContent = '$' + stats.avg_win.toFixed(2);
             document.getElementById('avgLoss').textContent = '$' + stats.avg_loss.toFixed(2);
             document.getElementById('profitFactor').textContent = stats.profit_factor.toFixed(2);
-            
+
+            // Update best performers (will be calculated from allTrades)
+            updateBestPerformers();
+
             updateWinRateChart(stats.win_rate);
+        }
+
+        function updateBestPerformers() {
+            if (!allTrades || allTrades.length === 0) {
+                document.getElementById('bestKeyLevel').textContent = '-';
+                document.getElementById('bestModel').textContent = '-';
+                document.getElementById('bestConfirmation').textContent = '-';
+                document.getElementById('avgHoldPeriod').textContent = '-';
+                return;
+            }
+
+            // Calculate key level performance
+            const keyLevelStats = calculatePerformanceStats(allTrades, 'key_level');
+            const bestKeyLevel = Object.entries(keyLevelStats)
+                .filter(([name]) => name && name !== 'null' && name !== '')
+                .sort((a, b) => b[1].winRate - a[1].winRate)[0];
+
+            if (bestKeyLevel && bestKeyLevel[1].count >= 3) {
+                document.getElementById('bestKeyLevel').textContent =
+                    `${bestKeyLevel[0]} (${bestKeyLevel[1].winRate}%)`;
+            } else {
+                document.getElementById('bestKeyLevel').textContent = '-';
+            }
+
+            // Calculate model performance
+            const modelStats = calculatePerformanceStats(allTrades, 'model');
+            const bestModel = Object.entries(modelStats)
+                .filter(([name]) => name && name !== 'null' && name !== '')
+                .sort((a, b) => b[1].winRate - a[1].winRate)[0];
+
+            if (bestModel && bestModel[1].count >= 3) {
+                document.getElementById('bestModel').textContent =
+                    `${bestModel[0]} (${bestModel[1].winRate}%)`;
+            } else {
+                document.getElementById('bestModel').textContent = '-';
+            }
+
+            // Calculate confirmation performance
+            const confirmationStats = calculatePerformanceStats(allTrades, 'confirmation');
+            const bestConfirmation = Object.entries(confirmationStats)
+                .filter(([name]) => name && name !== 'null' && name !== '')
+                .sort((a, b) => b[1].winRate - a[1].winRate)[0];
+
+            if (bestConfirmation && bestConfirmation[1].count >= 3) {
+                document.getElementById('bestConfirmation').textContent =
+                    `${bestConfirmation[0]} (${bestConfirmation[1].winRate}%)`;
+            } else {
+                document.getElementById('bestConfirmation').textContent = '-';
+            }
+
+            // Calculate average hold period
+            let totalHoldTime = 0;
+            let validTrades = 0;
+
+            allTrades.forEach(trade => {
+                if (trade.entry_time && trade.exit_time) {
+                    const entryTime = new Date(trade.entry_time);
+                    const exitTime = new Date(trade.exit_time);
+                    const holdTime = exitTime - entryTime;
+                    if (holdTime > 0) {
+                        totalHoldTime += holdTime;
+                        validTrades++;
+                    }
+                }
+            });
+
+            if (validTrades > 0) {
+                const avgHoldTimeMs = totalHoldTime / validTrades;
+                const hours = avgHoldTimeMs / (1000 * 60 * 60);
+
+                let displayText;
+                if (hours < 1) {
+                    const minutes = Math.round(hours * 60);
+                    displayText = `${minutes}m`;
+                } else if (hours < 24) {
+                    displayText = `${hours.toFixed(1)}h`;
+                } else {
+                    const days = hours / 24;
+                    displayText = `${days.toFixed(1)}d`;
+                }
+
+                document.getElementById('avgHoldPeriod').textContent = displayText;
+            } else {
+                document.getElementById('avgHoldPeriod').textContent = '-';
+            }
+        }
+
+        async function fetchAccountBalance() {
+            try {
+                const response = await fetch('/api/bybit/balance');
+                const data = await response.json();
+
+                if (data.success && data.balance !== undefined) {
+                    document.getElementById('accountBalance').textContent = '$' + data.balance.toFixed(2);
+                } else {
+                    document.getElementById('accountBalance').textContent = '$0';
+                }
+            } catch (error) {
+                console.error('Error fetching balance:', error);
+                document.getElementById('accountBalance').textContent = '$0';
+            }
+        }
+
+        // ================== RISK METRICS ==================
+        async function loadRiskMetrics() {
+            try {
+                const response = await fetch('/api/risk_metrics');
+                const data = await response.json();
+
+                document.getElementById('maxDrawdown').textContent = '$' + Math.abs(data.max_drawdown).toFixed(2);
+                document.getElementById('maxDrawdownPct').textContent = data.max_drawdown_pct.toFixed(1) + '%';
+
+                const expectancyEl = document.getElementById('expectancy');
+                expectancyEl.textContent = '$' + data.expectancy.toFixed(2);
+                expectancyEl.className = 'risk-value ' + (data.expectancy >= 0 ? 'positive' : 'negative');
+
+                document.getElementById('avgRRRatio').textContent = data.avg_rr_ratio.toFixed(2) + ':1';
+                document.getElementById('maxWinStreak').textContent = data.consecutive_wins;
+                document.getElementById('maxLossStreak').textContent = data.consecutive_losses;
+                document.getElementById('largestWin').textContent = '$' + data.largest_win.toFixed(2);
+                document.getElementById('largestLoss').textContent = '$' + Math.abs(data.largest_loss).toFixed(2);
+            } catch (error) {
+                console.error('Error loading risk metrics:', error);
+            }
+        }
+
+        // ================== TIME ANALYTICS ==================
+        async function loadTimeAnalytics() {
+            try {
+                const response = await fetch('/api/time_analytics');
+                const data = await response.json();
+
+                renderHourHeatmap(data.by_hour);
+                renderDayHeatmap(data.by_day);
+            } catch (error) {
+                console.error('Error loading time analytics:', error);
+            }
+        }
+
+        function renderHourHeatmap(hourStats) {
+            const container = document.getElementById('hourHeatmap');
+            container.innerHTML = '';
+
+            // Calculate max absolute P&L for intensity scaling
+            let maxPnl = 0;
+            Object.values(hourStats).forEach(stats => {
+                if (Math.abs(stats.total_pnl) > maxPnl) maxPnl = Math.abs(stats.total_pnl);
+            });
+
+            // Create all 24 hours
+            for (let hour = 0; hour < 24; hour++) {
+                const stats = hourStats[hour.toString()] || { count: 0, total_pnl: 0, win_rate: 0 };
+
+                const cell = document.createElement('div');
+                cell.className = 'heatmap-cell';
+
+                if (stats.count === 0) {
+                    cell.classList.add('empty');
+                    cell.title = `${hour.toString().padStart(2, '0')}:00 - No trades`;
+                } else {
+                    const intensity = maxPnl > 0 ? Math.abs(stats.total_pnl) / maxPnl : 0;
+
+                    if (stats.total_pnl > 0) {
+                        if (intensity < 0.33) cell.classList.add('profit-low');
+                        else if (intensity < 0.66) cell.classList.add('profit-med');
+                        else cell.classList.add('profit-high');
+                    } else if (stats.total_pnl < 0) {
+                        if (intensity < 0.33) cell.classList.add('loss-low');
+                        else if (intensity < 0.66) cell.classList.add('loss-med');
+                        else cell.classList.add('loss-high');
+                    } else {
+                        cell.classList.add('empty');
+                    }
+
+                    cell.title = `${hour.toString().padStart(2, '0')}:00 - ${stats.count} trades | $${stats.total_pnl.toFixed(2)} | ${stats.win_rate}% WR`;
+                }
+
+                container.appendChild(cell);
+            }
+        }
+
+        function renderDayHeatmap(dayStats) {
+            const container = document.getElementById('dayHeatmap');
+            container.innerHTML = '';
+
+            const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+            // Calculate max absolute P&L for intensity scaling
+            let maxPnl = 0;
+            Object.values(dayStats).forEach(stats => {
+                if (Math.abs(stats.total_pnl) > maxPnl) maxPnl = Math.abs(stats.total_pnl);
+            });
+
+            for (let i = 0; i < 7; i++) {
+                const stats = dayStats[i.toString()] || { count: 0, total_pnl: 0, win_rate: 0 };
+
+                const cell = document.createElement('div');
+                cell.className = 'heatmap-cell';
+
+                if (stats.count === 0) {
+                    cell.classList.add('empty');
+                    cell.title = `${dayNames[i]} - No trades`;
+                } else {
+                    const intensity = maxPnl > 0 ? Math.abs(stats.total_pnl) / maxPnl : 0;
+
+                    if (stats.total_pnl > 0) {
+                        if (intensity < 0.33) cell.classList.add('profit-low');
+                        else if (intensity < 0.66) cell.classList.add('profit-med');
+                        else cell.classList.add('profit-high');
+                    } else if (stats.total_pnl < 0) {
+                        if (intensity < 0.33) cell.classList.add('loss-low');
+                        else if (intensity < 0.66) cell.classList.add('loss-med');
+                        else cell.classList.add('loss-high');
+                    } else {
+                        cell.classList.add('empty');
+                    }
+
+                    cell.title = `${dayNames[i]} - ${stats.count} trades | $${stats.total_pnl.toFixed(2)} | ${stats.win_rate}% WR`;
+                }
+
+                container.appendChild(cell);
+            }
         }
 
         let winRateChart = null;
@@ -1520,16 +2250,15 @@
                 const response = await fetch('/api/get_bybit_credentials');
                 const data = await response.json();
                 
+                const statusEl = document.getElementById('apiStatus');
                 if (data.connected) {
                     document.getElementById('apiKey').value = data.api_key;
                     document.getElementById('apiSecret').value = data.api_secret;
-                    document.getElementById('rememberMe').checked = data.remember_me;
-                    document.getElementById('bybitNetwork').value = data.network;
-                    document.getElementById('apiStatus').textContent = 'Connected';
-                    document.getElementById('apiStatus').style.borderColor = '#28a745';
+                    statusEl.textContent = 'Connected';
+                    statusEl.classList.add('connected');
                 } else {
-                    document.getElementById('apiStatus').textContent = 'Not Connected';
-                    document.getElementById('apiStatus').style.borderColor = '#dc3545';
+                    statusEl.textContent = 'Not Connected';
+                    statusEl.classList.remove('connected');
                 }
             } catch (error) {
                 console.error('Error loading credentials:', error);
@@ -1540,8 +2269,8 @@
             const data = {
                 api_key: document.getElementById('apiKey').value,
                 api_secret: document.getElementById('apiSecret').value,
-                network: document.getElementById('bybitNetwork').value,
-                remember_me: document.getElementById('rememberMe').checked
+                network: 'mainnet',
+                remember_me: true
             };
 
             try {
@@ -1553,13 +2282,17 @@
 
                 const result = await response.json();
                 if (result.success) {
+                    const statusEl = document.getElementById('apiStatus');
+                    statusEl.textContent = 'Connected';
+                    statusEl.classList.add('connected');
                     alert('API credentials saved!');
-                    document.getElementById('apiStatus').textContent = 'Connected';
-                    document.getElementById('apiStatus').style.borderColor = '#28a745';
+                } else {
+                    console.error('Error from server:', result.error);
+                    alert('Error saving credentials: ' + (result.error || 'Unknown error'));
                 }
             } catch (error) {
                 console.error('Error saving credentials:', error);
-                alert('Error saving credentials');
+                alert('Error saving credentials: ' + error.message);
             }
         }
 
@@ -1574,6 +2307,8 @@
                 if (result.success && result.trades_synced > 0) {
                     loadTrades();
                     loadCalendarData();
+                    loadRiskMetrics();
+                    loadTimeAnalytics();
                 }
             } catch (error) {
                 console.error('Error syncing trades:', error);
@@ -1636,6 +2371,14 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                top: 20,
+                                right: 20,
+                                bottom: 10,
+                                left: 10
+                            }
+                        },
                         plugins: {
                             legend: { display: false },
                             tooltip: {
@@ -1647,7 +2390,7 @@
                         scales: {
                             x: {
                                 grid: { display: false },
-                                ticks: { color: '#aaa', maxRotation: 0, autoSkip: true }
+                                ticks: { color: '#aaa', maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }
                             },
                             y: {
                                 grid: { display: false },
