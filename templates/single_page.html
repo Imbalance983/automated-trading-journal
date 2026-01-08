@@ -1194,18 +1194,6 @@
                 <div class="metric-label">Loss Streak</div>
                 <div class="metric-value" id="maxLossStreak">0</div>
             </div>
-            <div class="metric-card">
-                <div class="metric-label">Best Key Level</div>
-                <div class="metric-value" id="bestKeyLevel" style="font-size: 0.85em;">-</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Best Model</div>
-                <div class="metric-value" id="bestModel" style="font-size: 0.85em;">-</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Best Confirmation</div>
-                <div class="metric-value" id="bestConfirmation" style="font-size: 0.85em;">-</div>
-            </div>
         </div>
 
         <div class="pnl-chart-section">
@@ -1776,50 +1764,8 @@
 
         function updateBestPerformers() {
             if (!allTrades || allTrades.length === 0) {
-                document.getElementById('bestKeyLevel').textContent = '-';
-                document.getElementById('bestModel').textContent = '-';
-                document.getElementById('bestConfirmation').textContent = '-';
                 document.getElementById('avgHoldPeriod').textContent = '-';
                 return;
-            }
-
-            // Calculate key level performance
-            const keyLevelStats = calculatePerformanceStats(allTrades, 'key_level');
-            const bestKeyLevel = Object.entries(keyLevelStats)
-                .filter(([name]) => name && name !== 'null' && name !== '')
-                .sort((a, b) => b[1].winRate - a[1].winRate)[0];
-
-            if (bestKeyLevel && bestKeyLevel[1].count >= 3) {
-                document.getElementById('bestKeyLevel').textContent =
-                    `${bestKeyLevel[0]} (${bestKeyLevel[1].winRate}%)`;
-            } else {
-                document.getElementById('bestKeyLevel').textContent = '-';
-            }
-
-            // Calculate model performance
-            const modelStats = calculatePerformanceStats(allTrades, 'model');
-            const bestModel = Object.entries(modelStats)
-                .filter(([name]) => name && name !== 'null' && name !== '')
-                .sort((a, b) => b[1].winRate - a[1].winRate)[0];
-
-            if (bestModel && bestModel[1].count >= 3) {
-                document.getElementById('bestModel').textContent =
-                    `${bestModel[0]} (${bestModel[1].winRate}%)`;
-            } else {
-                document.getElementById('bestModel').textContent = '-';
-            }
-
-            // Calculate confirmation performance
-            const confirmationStats = calculatePerformanceStats(allTrades, 'confirmation');
-            const bestConfirmation = Object.entries(confirmationStats)
-                .filter(([name]) => name && name !== 'null' && name !== '')
-                .sort((a, b) => b[1].winRate - a[1].winRate)[0];
-
-            if (bestConfirmation && bestConfirmation[1].count >= 3) {
-                document.getElementById('bestConfirmation').textContent =
-                    `${bestConfirmation[0]} (${bestConfirmation[1].winRate}%)`;
-            } else {
-                document.getElementById('bestConfirmation').textContent = '-';
             }
 
             // Calculate average hold period
