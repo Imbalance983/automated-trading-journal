@@ -196,6 +196,12 @@ def init_db():
     except:
         pass
 
+    # Add entry column to trades table
+    try:
+        cursor.execute("ALTER TABLE trades ADD COLUMN entry TEXT")
+    except:
+        pass
+
     conn.commit()
     conn.close()
 
@@ -1247,16 +1253,16 @@ def create_trade():
     cursor.execute('''
         INSERT INTO trades (user_id, asset, side, entry_price, exit_price, stop_loss, take_profit,
                           quantity, entry_time, exit_time, pnl, risk_reward_ratio, position_size_pct,
-                          key_level, key_level_type, confirmation, model,
+                          key_level, key_level_type, confirmation, entry, model,
                           weekly_bias, daily_bias, notes, screenshot_url, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         user_id, data['asset'], data['side'], data['entry_price'], data.get('exit_price'),
         data.get('stop_loss'), data.get('take_profit'),
         data['quantity'], data['entry_time'], data.get('exit_time'), pnl, rr_ratio,
         data.get('position_size_pct'),
         data.get('key_level'), data.get('key_level_type'), data.get('confirmation'),
-        data.get('model'), data.get('weekly_bias', 'neutral'),
+        data.get('entry'), data.get('model'), data.get('weekly_bias', 'neutral'),
         data.get('daily_bias', 'neutral'), data.get('notes'),
         data.get('screenshot_url'), status
     ))
