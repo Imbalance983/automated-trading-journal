@@ -212,6 +212,24 @@ def get_db_connection():
     """Get database connection with row factory"""
     conn = sqlite3.connect('trading_journal.db')
     conn.row_factory = sqlite3.Row
+
+    # Ensure api_credentials table exists (migration for old databases)
+    cursor = conn.cursor()
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS api_credentials (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER DEFAULT 1,
+        exchange TEXT NOT NULL,
+        api_key TEXT,
+        api_secret TEXT,
+        network TEXT DEFAULT 'mainnet',
+        remember_me INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+    ''')
+    conn.commit()
+
     return conn
 
 
@@ -1102,15 +1120,6 @@ def get_trades_by_date():
 def get_trades():
     """Get trades with statistics"""
     user_id = get_current_user_id()
-
-    # Check if Bybit is connected
-    creds = _get_saved_bybit_credentials()
-    if not creds or not creds.get('api_key'):
-        return jsonify({
-            'trades': [],
-            'statistics': {},
-            'message': 'No Bybit connection - please connect your API first'
-        })
 
     period = request.args.get('period', 'all')
     start_date = request.args.get('start_date')

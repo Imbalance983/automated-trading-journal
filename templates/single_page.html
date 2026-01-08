@@ -176,11 +176,11 @@
         }
 
         .metric-card-small .metric-label {
-            font-size: 0.7em;
+            font-size: 0.8em;
         }
 
         .metric-card-small .metric-value {
-            font-size: 1.1em;
+            font-size: 1.6em;
         }
 
         .chart-container {
@@ -199,6 +199,8 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 8px;
+            position: relative;
+            z-index: 2;
         }
 
         .metric-value {
@@ -1380,13 +1382,13 @@
                     <label class="form-label">Screenshot</label>
                     <input type="file" id="editScreenshotFile" accept="image/*" style="display: none;">
                     <input type="url" class="form-input" id="editScreenshot" placeholder="Upload screenshot or paste URL..." style="display: none;">
-                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('editScreenshotFile').click()" style="width: 100%; padding: 10px;">
-                        📷 Upload Screenshot
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('editScreenshotFile').click()" style="width: 100%; padding: 8px; font-size: 0.9em;">
+                        Upload Screenshot
                     </button>
                     <div id="screenshotPreview" style="margin-top: 8px; display: none;">
                         <img id="screenshotImg" style="max-width: 100%; max-height: 150px; border-radius: 6px;">
-                        <button type="button" class="btn btn-secondary" onclick="removeScreenshot()" style="margin-top: 4px; width: 100%; padding: 6px; font-size: 0.8em;">
-                            ❌ Remove
+                        <button type="button" class="btn btn-secondary" onclick="removeScreenshot()" style="margin-top: 4px; width: 100%; padding: 6px; font-size: 0.85em;">
+                            Remove
                         </button>
                     </div>
                 </div>
@@ -2039,12 +2041,6 @@
                         ${new Date(trade.entry_time).toLocaleDateString()} •
                         Entry: $${trade.entry_price} → Exit: $${trade.exit_price || 0}
                     </div>
-                    <div class="trade-actions">
-                        <button class="btn-entry-type" onclick="event.stopPropagation(); setEntryType(${trade.id}, 'Market Entry')" title="Set as Market Entry">M</button>
-                        <button class="btn-entry-type" onclick="event.stopPropagation(); setEntryType(${trade.id}, 'Limit Entry')" title="Set as Limit Entry">L</button>
-                        <button class="btn-entry-type" onclick="event.stopPropagation(); setEntryType(${trade.id}, 'Stop Entry')" title="Set as Stop Entry">S</button>
-                        ${trade.entry_type ? `<span class="entry-type-badge">${trade.entry_type}</span>` : ''}
-                    </div>
                 </div>
             `).join('');
         }
@@ -2284,16 +2280,15 @@
         }
 
         function calculateEntryPerformanceStats(trades) {
-            const stats = {
-                'Market Entry': { total: 0, wins: 0, with_bias: 0, with_wins: 0, against_bias: 0, against_wins: 0 },
-                'Limit Entry': { total: 0, wins: 0, with_bias: 0, with_wins: 0, against_bias: 0, against_wins: 0 },
-                'Stop Entry': { total: 0, wins: 0, with_bias: 0, with_wins: 0, against_bias: 0, against_wins: 0 }
-            };
+            const stats = {};
 
             trades.forEach(trade => {
-                // Determine entry type based on entry_price field
-                // If no specific entry type field exists, categorize as Market Entry
-                const entryType = trade.entry_type || 'Market Entry';
+                // Only process trades that have an entry field set
+                const entryType = trade.entry;
+                if (!entryType || entryType.trim() === '') {
+                    return; // Skip trades without entry type
+                }
+
                 const key = entryType;
 
                 if (!stats[key]) {
