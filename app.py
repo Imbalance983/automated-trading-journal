@@ -49,8 +49,7 @@ def init_db():
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        email TEXT,
+        name TEXT UNIQUE NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     ''')
@@ -104,7 +103,7 @@ def init_db():
     ''')
 
     # Create default user if doesn't exist
-    cursor.execute('INSERT OR IGNORE INTO users (id, username) VALUES (1, "default")')
+    cursor.execute('INSERT OR IGNORE INTO users (id, name) VALUES (1, "default")')
     conn.commit()
 
     # Account balances table
