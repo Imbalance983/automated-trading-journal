@@ -171,6 +171,18 @@
             transform: translateY(-5px);
         }
 
+        .metric-card-small {
+            padding: 10px 12px;
+        }
+
+        .metric-card-small .metric-label {
+            font-size: 0.7em;
+        }
+
+        .metric-card-small .metric-value {
+            font-size: 1.1em;
+        }
+
         .chart-container {
             position: absolute;
             width: 130px;
@@ -681,6 +693,42 @@
             display: flex;
             justify-content: space-between;
             margin-bottom: 5px;
+            cursor: pointer;
+        }
+
+        .trade-actions {
+            display: flex;
+            gap: 4px;
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            align-items: center;
+        }
+
+        .btn-entry-type {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #aaa;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-entry-type:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .entry-type-badge {
+            background: rgba(0,123,255,0.2);
+            color: #007bff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            margin-left: auto;
         }
 
         .trade-asset {
@@ -1107,23 +1155,23 @@
             </div>
 
             <!-- ROW 2: Win/Loss Analysis -->
-            <div class="metric-card">
+            <div class="metric-card metric-card-small">
                 <div class="metric-label">Avg Win</div>
                 <div class="metric-value positive" id="avgWin">$0</div>
             </div>
-            <div class="metric-card">
+            <div class="metric-card metric-card-small">
                 <div class="metric-label">Avg Loss</div>
                 <div class="metric-value negative" id="avgLoss">$0</div>
             </div>
-            <div class="metric-card">
+            <div class="metric-card metric-card-small">
                 <div class="metric-label">Largest Win</div>
                 <div class="metric-value positive" id="largestWin">$0</div>
             </div>
-            <div class="metric-card">
+            <div class="metric-card metric-card-small">
                 <div class="metric-label">Largest Loss</div>
                 <div class="metric-value negative" id="largestLoss">$0</div>
             </div>
-            <div class="metric-card">
+            <div class="metric-card metric-card-small">
                 <div class="metric-label">Avg R:R Ratio</div>
                 <div class="metric-value" id="avgRRRatio">0:1</div>
             </div>
@@ -1138,11 +1186,11 @@
                 <div class="metric-value" id="maxDrawdown">$0</div>
                 <div class="metric-sub" id="maxDrawdownPct">0%</div>
             </div>
-            <div class="metric-card">
+            <div class="metric-card metric-card-small">
                 <div class="metric-label">Win Streak</div>
                 <div class="metric-value" id="maxWinStreak">0</div>
             </div>
-            <div class="metric-card">
+            <div class="metric-card metric-card-small">
                 <div class="metric-label">Loss Streak</div>
                 <div class="metric-value" id="maxLossStreak">0</div>
             </div>
@@ -1257,6 +1305,11 @@
                 <div class="stat-box stat-confirmations">
                     <div class="stat-title">Confirmations Performance</div>
                     <div class="stat-list" id="confirmationsStats"></div>
+                </div>
+
+                <div class="stat-box stat-entry">
+                    <div class="stat-title">Entry Performance</div>
+                    <div class="stat-list" id="entryStats"></div>
                 </div>
 
                 <div class="stat-box stat-models">
@@ -2025,8 +2078,8 @@
             }
             
             container.innerHTML = trades.map(trade => `
-                <div class="trade-card ${(trade.pnl || 0) > 0 ? 'profit' : 'loss'}" onclick="editTrade(${trade.id})">
-                    <div class="trade-header">
+                <div class="trade-card ${(trade.pnl || 0) > 0 ? 'profit' : 'loss'}">
+                    <div class="trade-header" onclick="editTrade(${trade.id})">
                         <span class="trade-asset">
                             ${trade.asset} ${trade.side.toUpperCase()}
                             <span class="bias-badge ${trade.weekly_bias}">${trade.weekly_bias[0].toUpperCase()}</span>
@@ -2036,9 +2089,15 @@
                             ${(trade.pnl || 0) >= 0 ? '+' : ''}$${(trade.pnl || 0).toFixed(2)}
                         </span>
                     </div>
-                    <div class="trade-details">
-                        ${new Date(trade.entry_time).toLocaleDateString()} • 
+                    <div class="trade-details" onclick="editTrade(${trade.id})">
+                        ${new Date(trade.entry_time).toLocaleDateString()} •
                         Entry: $${trade.entry_price} → Exit: $${trade.exit_price || 0}
+                    </div>
+                    <div class="trade-actions">
+                        <button class="btn-entry-type" onclick="event.stopPropagation(); setEntryType(${trade.id}, 'Market Entry')" title="Set as Market Entry">M</button>
+                        <button class="btn-entry-type" onclick="event.stopPropagation(); setEntryType(${trade.id}, 'Limit Entry')" title="Set as Limit Entry">L</button>
+                        <button class="btn-entry-type" onclick="event.stopPropagation(); setEntryType(${trade.id}, 'Stop Entry')" title="Set as Stop Entry">S</button>
+                        ${trade.entry_type ? `<span class="entry-type-badge">${trade.entry_type}</span>` : ''}
                     </div>
                 </div>
             `).join('');
@@ -2060,6 +2119,46 @@
                 console.error('Error loading day trades:', error);
                 alert('Error loading trades for this day');
             }
+        }
+
+        async function setEntryType(tradeId, entryType) {
+            try {
+                const response = await fetch(`/api/trades/${tradeId}/entry_type`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ entry_type: entryType })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    await loadTrades();
+                    showNotification(`Entry type set to: ${entryType}`, 'success');
+                } else {
+                    alert('Failed to set entry type: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error setting entry type:', error);
+                alert('Error setting entry type');
+            }
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#00ff88' : '#ff3366'};
+                color: #000;
+                padding: 12px 20px;
+                border-radius: 8px;
+                z-index: 10000;
+                font-weight: 500;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 2000);
         }
 
         async function editTrade(tradeId) {
@@ -2175,10 +2274,13 @@
 
             const keyLevelStats = calculatePerformanceStats(filteredTrades, 'key_level_type');
             document.getElementById('keyLevelsStats').innerHTML = formatPerformanceStats(keyLevelStats);
-            
+
             const confirmationStats = calculatePerformanceStats(filteredTrades, 'confirmation');
             document.getElementById('confirmationsStats').innerHTML = formatPerformanceStats(confirmationStats);
-            
+
+            const entryStats = calculateEntryPerformanceStats(filteredTrades);
+            document.getElementById('entryStats').innerHTML = formatPerformanceStats(entryStats);
+
             const modelStats = calculatePerformanceStats(filteredTrades, 'model');
             document.getElementById('modelsStats').innerHTML = formatPerformanceStats(modelStats);
         }
@@ -2232,6 +2334,53 @@
                 s.againstWinRate = s.against_bias > 0 ? (s.against_wins / s.against_bias * 100).toFixed(1) : null;
             });
             
+            return stats;
+        }
+
+        function calculateEntryPerformanceStats(trades) {
+            const stats = {
+                'Market Entry': { total: 0, wins: 0, with_bias: 0, with_wins: 0, against_bias: 0, against_wins: 0 },
+                'Limit Entry': { total: 0, wins: 0, with_bias: 0, with_wins: 0, against_bias: 0, against_wins: 0 },
+                'Stop Entry': { total: 0, wins: 0, with_bias: 0, with_wins: 0, against_bias: 0, against_wins: 0 }
+            };
+
+            trades.forEach(trade => {
+                // Determine entry type based on entry_price field
+                // If no specific entry type field exists, categorize as Market Entry
+                const entryType = trade.entry_type || 'Market Entry';
+                const key = entryType;
+
+                if (!stats[key]) {
+                    stats[key] = { total: 0, wins: 0, with_bias: 0, with_wins: 0, against_bias: 0, against_wins: 0 };
+                }
+
+                stats[key].total++;
+                const pnl = parseFloat(trade.pnl) || 0;
+                if (pnl > 0) stats[key].wins++;
+
+                const weekly = (trade.weekly_bias || '').toLowerCase();
+                const daily = (trade.daily_bias || '').toLowerCase();
+                const side = (trade.side || '').toLowerCase();
+
+                const withWeekly = (weekly === 'bullish' && side === 'long') || (weekly === 'bearish' && side === 'short');
+                const againstWeekly = (weekly === 'bullish' && side === 'short') || (weekly === 'bearish' && side === 'long');
+
+                if (withWeekly) {
+                    stats[key].with_bias++;
+                    if (pnl > 0) stats[key].with_wins++;
+                } else if (againstWeekly) {
+                    stats[key].against_bias++;
+                    if (pnl > 0) stats[key].against_wins++;
+                }
+            });
+
+            Object.keys(stats).forEach(key => {
+                const s = stats[key];
+                s.winRate = s.total > 0 ? (s.wins / s.total * 100).toFixed(1) : 0;
+                s.withWinRate = s.with_bias > 0 ? (s.with_wins / s.with_bias * 100).toFixed(1) : null;
+                s.againstWinRate = s.against_bias > 0 ? (s.against_wins / s.against_bias * 100).toFixed(1) : null;
+            });
+
             return stats;
         }
 

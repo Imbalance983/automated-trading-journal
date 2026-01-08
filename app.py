@@ -254,7 +254,7 @@ def get_users():
     """Get all users"""
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT id, username, email FROM users ORDER BY id')
+    cursor.execute('SELECT id, name, created_at FROM users ORDER BY id')
     users = [dict(row) for row in cursor.fetchall()]
     conn.close()
 
@@ -266,17 +266,16 @@ def get_users():
 def create_user():
     """Create a new user"""
     data = request.json
-    username = data.get('username')
-    email = data.get('email', '')
+    name = data.get('name')
 
-    if not username:
-        return jsonify({'success': False, 'error': 'Username required'}), 400
+    if not name:
+        return jsonify({'success': False, 'error': 'Name required'}), 400
 
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
-        cursor.execute('INSERT INTO users (username, email) VALUES (?, ?)', (username, email))
+        cursor.execute('INSERT INTO users (name) VALUES (?)', (name,))
         user_id = cursor.lastrowid
         conn.commit()
         conn.close()
@@ -284,10 +283,10 @@ def create_user():
         # Automatically switch to new user
         set_current_user(user_id)
 
-        return jsonify({'success': True, 'user_id': user_id, 'username': username})
+        return jsonify({'success': True, 'user_id': user_id, 'name': name})
     except sqlite3.IntegrityError:
         conn.close()
-        return jsonify({'success': False, 'error': 'Username already exists'}), 400
+        return jsonify({'success': False, 'error': 'Name already exists'}), 400
 
 
 @app.route('/api/switch_user/<int:user_id>', methods=['POST'])
@@ -295,7 +294,7 @@ def switch_user(user_id):
     """Switch to a different user"""
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT id, username FROM users WHERE id = ?', (user_id,))
+    cursor.execute('SELECT id, name FROM users WHERE id = ?', (user_id,))
     user = cursor.fetchone()
     conn.close()
 
@@ -303,7 +302,7 @@ def switch_user(user_id):
         return jsonify({'success': False, 'error': 'User not found'}), 404
 
     set_current_user(user_id)
-    return jsonify({'success': True, 'user_id': user_id, 'username': user['username']})
+    return jsonify({'success': True, 'user_id': user_id, 'name': user['name']})
 
 
 # ================== BASIC ROUTES ==================
@@ -1220,6 +1219,28 @@ def manage_trade(trade_id):
         conn.commit()
         conn.close()
         return jsonify({'success': True})
+
+
+@app.route('/api/trades/<int:trade_id>/entry_type', methods=['POST'])
+def set_entry_type(trade_id):
+    """Set entry type for a trade"""
+    data = request.json
+    entry_type = data.get('entry_type')
+
+    if not entry_type:
+        return jsonify({'success': False, 'error': 'entry_type required'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute('UPDATE trades SET entry_type = ? WHERE id = ?', (entry_type, trade_id))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        conn.close()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/api/trades', methods=['POST'])
