@@ -46,3 +46,13 @@ temp/
 
 # Backup files
 backup_old_files/
+*.zip
+MAIN_BACKUP*.zip
+backup*.zip
+
+# Debug files
+sync_debug.txt
+nul
+
+# Claude
+.claude/
