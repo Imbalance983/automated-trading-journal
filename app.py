@@ -28,7 +28,7 @@ except Exception:
         BybitHTTP = None
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-here-change-in-production'
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'your-secret-key-here-change-in-production')
 CORS(app)
 
 # Screenshot upload configuration
@@ -401,6 +401,9 @@ def sync_extended_data():
         now_iso = datetime.now().isoformat()
         sync_id = int(datetime.now().timestamp())
         
+        # Initialize counters to prevent UnboundLocalError
+        balances_saved = positions_saved = orders_saved = 0
+        
         # 1. WALLET BALANCES (most important)
         print("  Fetching wallet balances...")
         try:
@@ -487,7 +490,7 @@ def sync_extended_data():
                             INSERT OR REPLACE INTO open_orders 
                             (sync_timestamp, symbol, category, order_id, order_link_id, side, order_type,
                              qty, price, trigger_price, status, created_time, updated_time, sync_id)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         ''', (
                             now_iso, order.get('symbol', ''), 'linear',
                             order.get('orderId', ''), order.get('orderLinkId', ''),
@@ -585,8 +588,8 @@ def get_positions():
     
     cursor.execute('''
         SELECT * FROM positions 
-        WHERE sync_timestamp = (
-            SELECT MAX(sync_timestamp) FROM positions
+        WHERE sync_id = (
+            SELECT MAX(sync_id) FROM positions
         )
         ORDER BY symbol
     ''')
@@ -613,8 +616,8 @@ def get_open_orders():
     
     cursor.execute('''
         SELECT * FROM open_orders 
-        WHERE sync_timestamp = (
-            SELECT MAX(sync_timestamp) FROM open_orders
+        WHERE sync_id = (
+            SELECT MAX(sync_id) FROM open_orders
         )
         ORDER BY created_time DESC
     ''')
@@ -769,7 +772,7 @@ def sync_bybit_trades():
                     continue
 
                 # Extract data - be flexible with field names
-                symbol = item.get('symbol', '').upper()
+                asset = item.get('symbol', '').upper()
                 side = 'long' if item.get('side', '').lower() == 'buy' else 'short'
                 qty = float(item.get('qty') or item.get('size') or item.get('closedSize') or 0)
 
@@ -778,11 +781,11 @@ def sync_bybit_trades():
                 exit_price = float(item.get('avgExitPrice') or item.get('exitPrice') or item.get('avgPrice') or 0)
                 pnl = float(item.get('closedPnl') or item.get('pnl') or 0)
 
-                log(f"\n  Processing: {symbol} | side={side} | qty={qty} | entry={entry_price} | exit={exit_price} | pnl={pnl}")
+                log(f"\n  Processing: {asset} | side={side} | qty={qty} | entry={entry_price} | exit={exit_price} | pnl={pnl}")
 
-                # Less strict validation - only require symbol and pnl
-                if not symbol or pnl == 0:
-                    log(f"  REJECTED: symbol={symbol!r} pnl={pnl}")
+                # Less strict validation - only require asset and pnl
+                if not asset or pnl == 0:
+                    log(f"  REJECTED: asset={asset!r} pnl={pnl}")
                     skipped += 1
                     continue
 
@@ -807,7 +810,7 @@ def sync_bybit_trades():
                 # Calculate pnl_percentage
                 pnl_percentage = (pnl / (entry_price * qty) * 100) if (entry_price > 0 and qty > 0) else 0
 
-                log(f"  Attempting database insert with symbol={symbol}, pnl%={pnl_percentage:.2f}")
+                log(f"  Attempting database insert with asset={asset}, pnl%={pnl_percentage:.2f}")
 
                 # Get current timestamp
                 created_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -815,17 +818,18 @@ def sync_bybit_trades():
                 # Insert trade - include ALL required NOT NULL columns
                 cursor.execute('''
                     INSERT INTO trades (
-                        user_id, symbol, asset, side, entry_price, exit_price, quantity,
+                        user_id, asset, side, entry_price, exit_price, quantity,
                         entry_time, exit_time, pnl, pnl_percentage, weekly_bias, daily_bias,
                         notes, status, external_id, created_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
-                    user_id, symbol, symbol, side, entry_price, exit_price, qty,
+                    user_id, asset, side, entry_price, exit_price, qty,
                     entry_time, exit_time, pnl, pnl_percentage, 'neutral', 'neutral',
                     f'Imported from Bybit ({network})', 'closed', external_id, created_at
                 ))
 
                 inserted += 1
+                log(f"  Successfully inserted trade!")
                 log(f"  ✓ Successfully inserted trade!")
 
             except Exception as e:
@@ -899,7 +903,7 @@ def get_bybit_credentials():
     user_id = get_current_user_id()
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM api_credentials WHERE user_id = ? ORDER BY created_at DESC LIMIT 1', (user_id,))
+    cursor.execute('SELECT * FROM api_credentials WHERE user_id = ? AND exchange = ? ORDER BY created_at DESC LIMIT 1', (user_id, 'bybit'))
     creds = cursor.fetchone()
     conn.close()
 
@@ -908,8 +912,7 @@ def get_bybit_credentials():
         creds_dict = dict(creds)
         return jsonify({
             'connected': True,
-            'api_key': creds_dict['api_key'],
-            'api_secret': creds_dict['api_secret'],
+            'api_key_last4': creds_dict['api_key'][:4],
             'network': creds_dict.get('network', 'mainnet'),
             'remember_me': bool(creds_dict.get('remember_me', 0))
         })
