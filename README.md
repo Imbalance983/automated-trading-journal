@@ -367,8 +367,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Your Name**
 - GitHub: [@Imbalance983](https://github.com/Imbalance983)
-- LinkedIn: [Your LinkedIn]()
-- Portfolio: [Your Website]()
 
 ## 🙏 Acknowledgments
 
