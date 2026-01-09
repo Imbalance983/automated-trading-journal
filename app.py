@@ -1065,11 +1065,13 @@ def debug_sync():
 def get_calendar_data():
     """Get calendar data with daily P&L"""
     user_id = get_current_user_id()
-
-    # Check if Bybit is connected
-    creds = _get_saved_bybit_credentials()
-    if not creds or not creds.get('api_key'):
-        return jsonify([])
+    
+    # Check if user is logged in
+    if not user_id:
+        return jsonify({
+            'error': 'not_logged_in',
+            'message': ' Please log in to view your calendar data'
+        }), 401
 
     conn = get_db_connection()
     cursor = conn.cursor()
