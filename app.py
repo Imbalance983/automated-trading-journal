@@ -922,7 +922,12 @@ def get_bybit_balance():
     try:
         creds = _get_saved_bybit_credentials()
         if not creds or not creds.get('api_key'):
-            return jsonify({'success': False, 'balance': 0, 'message': 'No credentials'})
+            return jsonify({
+                'success': False,
+                'balance': 0,
+                'error': 'BYBIT_API_ERROR',
+                'details': 'No credentials'
+            }), 500
 
         network = (creds.get('network') or 'mainnet').strip().lower()
         
@@ -967,8 +972,9 @@ def get_bybit_balance():
         return jsonify({
             'success': False,
             'balance': 0,
-            'message': str(e)
-        })
+            'error': 'BYBIT_API_ERROR',
+            'details': str(e)
+        }), 500
 
 
 # ================== DEBUG ENDPOINT ==================
