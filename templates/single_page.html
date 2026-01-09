@@ -1196,6 +1196,21 @@
                 <div class="metric-label">Loss Streak</div>
                 <div class="metric-value" id="maxLossStreak">0</div>
             </div>
+            
+            <!-- Position Size Calculator -->
+            <div class="metric-card position-calculator">
+                <div class="metric-label">Position Calculator</div>
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <input type="number" id="riskAmount" placeholder="Risk" style="width: 60px; padding: 4px; background: #1a1a1a; border: 1px solid #333; color: white; font-size: 12px;">
+                    <select id="riskType" style="width: 50px; padding: 4px; background: #1a1a1a; border: 1px solid #333; color: white; font-size: 12px;">
+                        <option value="usdt">USDT</option>
+                        <option value="percent">%</option>
+                    </select>
+                    <input type="number" id="stopLoss" placeholder="Stop %" step="0.01" style="width: 60px; padding: 4px; background: #1a1a1a; border: 1px solid #333; color: white; font-size: 12px;">
+                </div>
+                <div class="metric-value" id="positionSize" style="font-size: 16px; color: #10b981;">$0</div>
+                <div class="metric-sub" style="font-size: 9px; color: #666;">Position Size (USDT)</div>
+            </div>
         </div>
 
         <div class="pnl-chart-section">
@@ -2522,6 +2537,38 @@
                 pnlChart.data.datasets[0].borderColor = lineColor;
                 pnlChart.update();
             }
+        }
+
+        // Position Size Calculator
+        document.getElementById('riskAmount').addEventListener('input', calculatePosition);
+        document.getElementById('riskType').addEventListener('change', calculatePosition);
+        document.getElementById('stopLoss').addEventListener('input', calculatePosition);
+
+        function calculatePosition() {
+            const riskAmount = parseFloat(document.getElementById('riskAmount').value) || 0;
+            const riskType = document.getElementById('riskType').value;
+            const stopLoss = parseFloat(document.getElementById('stopLoss').value) || 0;
+            const fees = 0.00075; // Bybit taker fees (0.075%)
+            
+            if (riskAmount <= 0 || stopLoss <= 0) {
+                document.getElementById('positionSize').textContent = '$0';
+                return;
+            }
+            
+            let actualRisk = riskAmount;
+            
+            // If risk is percentage, get it from balance or use default
+            if (riskType === 'percent') {
+                const balanceText = document.getElementById('accountBalance').textContent;
+                const balance = parseFloat(balanceText.replace(/[$,]/g, '')) || 1000; // Default $1000 if no balance
+                actualRisk = (riskAmount / 100) * balance;
+            }
+            
+            // Core Formula: Position = Risk ÷ (Stop Loss % + Fees %)
+            const totalLossPercent = (stopLoss / 100) + fees;
+            const positionSize = actualRisk / totalLossPercent;
+            
+            document.getElementById('positionSize').textContent = '$' + positionSize.toFixed(0);
         }
     </script>
 </body>
