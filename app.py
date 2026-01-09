@@ -955,15 +955,16 @@ def get_bybit_balance():
             result = response.get('result', {})
             account_list = result.get('list', [])
 
-            # Sum all coin balances for total balance
-            total_balance = 0
+            # USDT Equity Only (matches trader expectations)
+            total_balance = 0.0
             if account_list:
                 for account in account_list:
                     coins = account.get('coin', [])
                     for coin in coins:
-                        coin_balance = float(coin.get('equity', 0))
-                        total_balance += coin_balance
-                        print(f"DEBUG: Coin {coin.get('coin')}: {coin_balance}")
+                        if coin.get('coin') == 'USDT':
+                            usdt_equity = float(coin.get('equity', 0))
+                            total_balance += usdt_equity
+                            print(f"DEBUG: USDT Equity: {usdt_equity}")
 
             # Add warning for zero balance
             if total_balance == 0:
