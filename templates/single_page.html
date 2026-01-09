@@ -2132,19 +2132,25 @@
                 container.innerHTML = '<p style="text-align: center; color: #bbbbbb; padding: 20px;">No open trades</p>';
                 return;
             }
-            
+
             container.innerHTML = trades.map(trade => {
-                const currentPnl = trade.side === 'long' 
+                const currentPnl = trade.side === 'long'
                     ? (trade.entry_price * trade.quantity * 0.02)
                     : -(trade.entry_price * trade.quantity * 0.02);
-                
+
                 return `
                     <div class="trade-card open" onclick="editTrade(${trade.id})">
                         <div class="trade-header">
-                            <span class="trade-asset">
-                                ${trade.asset} ${trade.side.toUpperCase()}
-                                <span class="bias-badge ${trade.weekly_bias}">${trade.weekly_bias[0].toUpperCase()}</span>
-                                <span class="bias-badge ${trade.daily_bias}">${trade.daily_bias[0].toUpperCase()}</span>
+                            <span class="trade-asset" style="display: flex; align-items: center; gap: 8px;">
+                                <img src="${getCryptoLogo(trade.asset)}"
+                                     alt="${trade.asset}"
+                                     style="width: 24px; height: 24px; border-radius: 50%;"
+                                     onerror="this.style.display='none'">
+                                <span>
+                                    ${trade.asset} ${trade.side.toUpperCase()}
+                                    <span class="bias-badge ${trade.weekly_bias}">${trade.weekly_bias[0].toUpperCase()}</span>
+                                    <span class="bias-badge ${trade.daily_bias}">${trade.daily_bias[0].toUpperCase()}</span>
+                                </span>
                             </span>
                             <span class="trade-pnl ${currentPnl >= 0 ? 'positive' : 'negative'}">
                                 ${currentPnl >= 0 ? '+' : ''}$${currentPnl.toFixed(2)}
@@ -2159,20 +2165,33 @@
             }).join('');
         }
 
+        function getCryptoLogo(symbol) {
+            // Extract base symbol (remove USDT, PERP, etc.)
+            const baseSymbol = symbol.replace(/USDT|PERP|USD|-.*$/gi, '').toLowerCase();
+            // Use CoinGecko API for crypto logos (free, no API key needed)
+            return `https://assets.coincap.io/assets/icons/${baseSymbol}@2x.png`;
+        }
+
         function displayClosedTrades(trades) {
             const container = document.getElementById('closedTradesList');
             if (trades.length === 0) {
                 container.innerHTML = '<p style="text-align: center; color: #bbbbbb; padding: 20px;">No trades for this period</p>';
                 return;
             }
-            
+
             container.innerHTML = trades.map(trade => `
                 <div class="trade-card ${(trade.pnl || 0) > 0 ? 'profit' : 'loss'}">
                     <div class="trade-header" onclick="editTrade(${trade.id})">
-                        <span class="trade-asset">
-                            ${trade.asset} ${trade.side.toUpperCase()}
-                            <span class="bias-badge ${trade.weekly_bias}">${trade.weekly_bias[0].toUpperCase()}</span>
-                            <span class="bias-badge ${trade.daily_bias}">${trade.daily_bias[0].toUpperCase()}</span>
+                        <span class="trade-asset" style="display: flex; align-items: center; gap: 8px;">
+                            <img src="${getCryptoLogo(trade.asset)}"
+                                 alt="${trade.asset}"
+                                 style="width: 24px; height: 24px; border-radius: 50%;"
+                                 onerror="this.style.display='none'">
+                            <span>
+                                ${trade.asset} ${trade.side.toUpperCase()}
+                                <span class="bias-badge ${trade.weekly_bias}">${trade.weekly_bias[0].toUpperCase()}</span>
+                                <span class="bias-badge ${trade.daily_bias}">${trade.daily_bias[0].toUpperCase()}</span>
+                            </span>
                         </span>
                         <span class="trade-pnl ${(trade.pnl || 0) >= 0 ? 'positive' : 'negative'}">
                             ${(trade.pnl || 0) >= 0 ? '+' : ''}$${(trade.pnl || 0).toFixed(2)}
