@@ -1118,11 +1118,11 @@
 
         <div class="api-section">
             <div class="api-container">
-                <div class="api-status" id="apiStatus">Not Connected</div>
-                <input type="text" class="api-input" id="apiKey" placeholder="API Key" style="max-width: 200px;">
-                <input type="password" class="api-input" id="apiSecret" placeholder="API Secret" style="max-width: 200px;">
-                <button class="btn btn-primary" onclick="saveApiCredentials()" style="padding: 6px 16px; font-size: 0.85em;">Save</button>
-                <button class="btn btn-success" onclick="syncBybitTrades()" style="padding: 6px 16px; font-size: 0.85em;">Sync</button>
+                <div class="api-status" id="apiStatus">Loading...</div>
+                <input type="text" class="api-input" id="apiKey" placeholder="API Key" style="max-width: 200px; display: none;">
+                <input type="password" class="api-input" id="apiSecret" placeholder="API Secret" style="max-width: 200px; display: none;">
+                <button class="btn btn-primary" onclick="saveApiCredentials()" style="padding: 6px 16px; font-size: 0.85em; display: none;">Save</button>
+                <button class="btn btn-success" onclick="syncBybitTrades()" style="padding: 6px 16px; font-size: 0.85em; display: none;">Sync</button>
             </div>
         </div>
 
@@ -1493,14 +1493,126 @@
             '2026-12-23': 'full'
         };
 
-        document.addEventListener('DOMContentLoaded', function() {
+        function clearLoading() {
+            console.log('[UI] Clearing loading state');
+            const statusEl = document.getElementById('apiStatus');
+            if (statusEl) {
+                // Clear "Loading..." text
+                if (statusEl.textContent === 'Loading...') {
+                    statusEl.textContent = '';
+                }
+                // Remove any loading class if present
+                statusEl.classList.remove('loading');
+            }
+        }
+
+        function renderConnected(data) {
+            console.log('[UI] renderConnected called with:', data);
+
+            // CRITICAL: Always clear loading state first
+            clearLoading();
+
+            // Hide API inputs when connected
+            const apiKey = document.getElementById('apiKey');
+            const apiSecret = document.getElementById('apiSecret');
+            const saveBtn = document.querySelector('button[onclick="saveApiCredentials()"]');
+            const syncBtn = document.querySelector('button[onclick="syncBybitTrades()"]');
+            const statusEl = document.getElementById('apiStatus');
+
+            if (apiKey) apiKey.style.display = 'none';
+            if (apiSecret) apiSecret.style.display = 'none';
+            if (saveBtn) saveBtn.style.display = 'none';
+
+            // Show sync button only when connected
+            if (syncBtn) syncBtn.style.display = 'block';
+
+            if (statusEl) {
+                statusEl.textContent = `Connected to Bybit (**${data.api_key_last4})`;
+                statusEl.classList.add('connected');
+            }
+
+            // Load all the data
+            syncAllBybitData();
             loadUsers();
             initCalendar();
             loadTrades();
             loadOpenTrades();
-            loadApiCredentials();
             loadRiskMetrics();
             loadTimeAnalytics();
+        }
+
+        function renderDisconnected() {
+            console.log('[UI] renderDisconnected called');
+
+            // CRITICAL: Always clear loading state first
+            clearLoading();
+
+            // Show API inputs when not connected
+            const apiKey = document.getElementById('apiKey');
+            const apiSecret = document.getElementById('apiSecret');
+            const saveBtn = document.querySelector('button[onclick="saveApiCredentials()"]');
+            const syncBtn = document.querySelector('button[onclick="syncBybitTrades()"]');
+            const statusEl = document.getElementById('apiStatus');
+
+            if (apiKey) apiKey.style.display = 'block';
+            if (apiSecret) apiSecret.style.display = 'block';
+            if (saveBtn) saveBtn.style.display = 'block';
+
+            // Hide sync button when not connected
+            if (syncBtn) syncBtn.style.display = 'none';
+
+            if (statusEl) {
+                statusEl.textContent = 'Not Connected';
+                statusEl.classList.remove('connected');
+            }
+
+            // Still load basic data
+            loadUsers();
+            initCalendar();
+            loadTrades();
+            loadOpenTrades();
+            loadRiskMetrics();
+            loadTimeAnalytics();
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('[UI] Page loaded');
+
+            // Fail-safe timeout: ensure UI never hangs forever
+            let loadingComplete = false;
+            setTimeout(() => {
+                if (!loadingComplete) {
+                    console.warn('[UI] Loading timeout fallback - forcing disconnected state');
+                    clearLoading();
+                    renderDisconnected();
+                }
+            }, 5000);
+
+            try {
+                console.log('[UI] Fetching credentials...');
+                const res = await fetch('/api/get_bybit_credentials');
+                console.log('[UI] Response status:', res.status);
+
+                const data = await res.json();
+                console.log('[UI] Response data:', data);
+
+                if (data.connected) {
+                    clearLoading();
+                    console.log('[UI] Rendering CONNECTED');
+                    renderConnected(data);
+                    loadingComplete = true;
+                } else {
+                    clearLoading();
+                    console.log('[UI] Rendering DISCONNECTED');
+                    renderDisconnected();
+                    loadingComplete = true;
+                }
+            } catch (err) {
+                console.error('[UI] Fatal error:', err);
+                clearLoading();
+                renderDisconnected();
+                loadingComplete = true;
+            }
         });
 
         // ================== USER MANAGEMENT ==================
@@ -1827,18 +1939,28 @@
                 const response = await fetch('/api/bybit/balance');
                 const data = await response.json();
 
+                const balanceEl = document.getElementById('accountBalance');
+
                 if (data.success && data.balance !== undefined) {
-                    document.getElementById('accountBalance').textContent = '$' + data.balance.toFixed(2);
+                    balanceEl.textContent = '$' + data.balance.toFixed(2);
+                    balanceEl.style.color = '';
+                    balanceEl.classList.remove('disconnected');
                 } else {
-                    document.getElementById('accountBalance').textContent = '$0';
+                    balanceEl.textContent = '$0';
+                    balanceEl.style.color = '#999';
+                    balanceEl.classList.add('disconnected');
                 }
             } catch (error) {
                 console.error('Error fetching balance:', error);
-                document.getElementById('accountBalance').textContent = '$0';
+                const balanceEl = document.getElementById('accountBalance');
+                if (balanceEl) {
+                    balanceEl.textContent = '$0';
+                    balanceEl.style.color = '#999';
+                    balanceEl.classList.add('disconnected');
+                }
             }
         }
 
-        // ================== RISK METRICS ==================
         async function loadRiskMetrics() {
             try {
                 const response = await fetch('/api/risk_metrics');
@@ -2374,6 +2496,21 @@
             }).join('');
         }
 
+        function showApiConnectForm() {
+            // Show API inputs when not connected
+            document.getElementById('apiKey').style.display = 'block';
+            document.getElementById('apiSecret').style.display = 'block';
+            document.querySelector('button[onclick="saveApiCredentials()"]').style.display = 'block';
+            
+            const statusEl = document.getElementById('apiStatus');
+            statusEl.textContent = 'Not Connected';
+            statusEl.classList.remove('connected');
+        }
+
+        function syncAllBybitData() {
+            fetchAccountBalance();
+        }
+
         async function loadApiCredentials() {
             try {
                 const response = await fetch('/api/get_bybit_credentials');
@@ -2381,11 +2518,22 @@
                 
                 const statusEl = document.getElementById('apiStatus');
                 if (data.connected) {
-                    document.getElementById('apiKey').value = data.api_key;
-                    document.getElementById('apiSecret').value = data.api_secret;
-                    statusEl.textContent = 'Connected';
+                    // Hide API inputs when connected
+                    document.getElementById('apiKey').style.display = 'none';
+                    document.getElementById('apiSecret').style.display = 'none';
+                    document.querySelector('button[onclick="saveApiCredentials()"]').style.display = 'none';
+                    
+                    statusEl.textContent = `Connected to Bybit (**${data.api_key_last4})`;
                     statusEl.classList.add('connected');
+                    
+                    // Load balance on page load
+                    fetchAccountBalance();
                 } else {
+                    // Show API inputs when not connected
+                    document.getElementById('apiKey').style.display = 'block';
+                    document.getElementById('apiSecret').style.display = 'block';
+                    document.querySelector('button[onclick="saveApiCredentials()"]').style.display = 'block';
+                    
                     statusEl.textContent = 'Not Connected';
                     statusEl.classList.remove('connected');
                 }
@@ -2411,10 +2559,11 @@
 
                 const result = await response.json();
                 if (result.success) {
-                    const statusEl = document.getElementById('apiStatus');
-                    statusEl.textContent = 'Connected';
-                    statusEl.classList.add('connected');
-                    alert('API credentials saved!');
+                    // Switch to connected UI immediately
+                    renderConnected({
+                        connected: true,
+                        api_key_last4: data.api_key.slice(-4)
+                    });
                 } else {
                     console.error('Error from server:', result.error);
                     alert('Error saving credentials: ' + (result.error || 'Unknown error'));
@@ -2429,11 +2578,11 @@
             if (!confirm('Sync trades from Bybit? This may take a moment.')) return;
 
             try {
-                const response = await fetch('/api/sync_bybit_trades', { method: 'POST' });
-                const result = await response.json();
+                const resp = await fetch('/api/sync_bybit_trades', { method: 'POST' });
+                const syncResult = await resp.json();
 
-                alert(result.message);
-                if (result.success && result.trades_synced > 0) {
+                alert(syncResult.message);
+                if (syncResult.success && syncResult.trades_synced > 0) {
                     loadTrades();
                     loadCalendarData();
                     loadRiskMetrics();
@@ -2442,25 +2591,6 @@
             } catch (error) {
                 console.error('Error syncing trades:', error);
                 alert('Sync error. Check console.');
-            }
-        }
-
-        async function cleanDuplicates() {
-            if (!confirm('Remove all duplicate trades? This will keep only the first occurrence of each trade.')) return;
-
-            try {
-                const response = await fetch('/api/clean_duplicates', { method: 'POST' });
-                const result = await response.json();
-
-                alert(result.message);
-                if (result.success) {
-                    loadTrades();
-                    loadOpenTrades();
-                    loadCalendarData();
-                }
-            } catch (error) {
-                console.error('Error cleaning duplicates:', error);
-                alert('Error cleaning duplicates.');
             }
         }
 

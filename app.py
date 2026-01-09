@@ -173,15 +173,22 @@ def init_db():
 
     # Add new columns if they don't exist (migration)
     try:
-        cursor.execute("ALTER TABLE trades ADD COLUMN user_id INTEGER DEFAULT 1")
+        cursor.execute("ALTER TABLE trades ADD COLUMN pnl_percentage REAL DEFAULT 0")
+        print("✅ Added pnl_percentage column")
+    except:
+        print("⚠️ pnl_percentage column already exists or migration failed")
+    
+    try:
+        cursor.execute("ALTER TABLE trades ADD COLUMN entry_type TEXT")
+        print("✅ Added entry_type column")
+    except:
+        print("⚠️ entry_type column already exists or migration failed")
+    try:
+        cursor.execute("ALTER TABLE trades ADD COLUMN take_profit REAL")
     except:
         pass
     try:
         cursor.execute("ALTER TABLE trades ADD COLUMN stop_loss REAL")
-    except:
-        pass
-    try:
-        cursor.execute("ALTER TABLE trades ADD COLUMN take_profit REAL")
     except:
         pass
     try:
@@ -479,7 +486,7 @@ def sync_extended_data():
         # 3. OPEN ORDERS (optional but useful)
         print("  Fetching open orders...")
         try:
-            orders_resp = client.get_open_orders(category="linear", limit=100)
+            orders_resp = client.get_open_orders(category="linear", limit=100, accountType='UNIFIED')
             if orders_resp and orders_resp.get('retCode') == 0 and orders_resp.get('result'):
                 order_list = orders_resp['result']['list']
                 orders_saved = 0
@@ -870,7 +877,7 @@ def sync_bybit_trades():
 # ================== API ENDPOINTS FOR ORIGINAL TRADES ==================
 @app.route('/api/save_bybit_credentials', methods=['POST'])
 def save_bybit_credentials():
-    """Save Bybit API credentials - always remembers credentials"""
+    """Save Bybit API credentials - preserves existing credentials"""
     try:
         user_id = get_current_user_id()
         data = request.json
@@ -882,12 +889,13 @@ def save_bybit_credentials():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        cursor.execute('DELETE FROM api_credentials WHERE user_id = ?', (user_id,))
-        cursor.execute(
-            'INSERT INTO api_credentials (user_id, exchange, api_key, api_secret, network, remember_me) VALUES (?, ?, ?, ?, ?, ?)',
-            (user_id, 'bybit', api_key, api_secret, network, 1 if remember_me else 0)
-        )
-
+        # Update existing credentials instead of deleting them
+        cursor.execute('''
+            INSERT OR REPLACE INTO api_credentials 
+            (user_id, exchange, api_key, api_secret, network, remember_me) 
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (user_id, 'bybit', api_key, api_secret, network, 1 if remember_me else 0))
+        
         conn.commit()
         conn.close()
 
@@ -930,7 +938,7 @@ def get_bybit_balance():
                 'balance': 0,
                 'error': 'BYBIT_API_ERROR',
                 'details': 'No credentials'
-            }), 500
+            }), 200
 
         network = (creds.get('network') or 'mainnet').strip().lower()
         
@@ -947,18 +955,24 @@ def get_bybit_balance():
             result = response.get('result', {})
             account_list = result.get('list', [])
 
+            # Sum all coin balances for total balance
             total_balance = 0
             if account_list:
-                # Get USDT balance (most common for futures trading)
                 for account in account_list:
                     coins = account.get('coin', [])
                     for coin in coins:
-                        if coin.get('coin') == 'USDT':
-                            # Use equity (total value including unrealized PnL)
-                            total_balance = float(coin.get('equity', 0))
-                            break
-                    if total_balance > 0:
-                        break
+                        coin_balance = float(coin.get('equity', 0))
+                        total_balance += coin_balance
+                        print(f"DEBUG: Coin {coin.get('coin')}: {coin_balance}")
+
+            # Add warning for zero balance
+            if total_balance == 0:
+                print("WARNING: Balance computed as 0 — check permissions or account type")
+                return jsonify({
+                    'success': True,
+                    'balance': total_balance,
+                    'warning': 'Zero balance detected'
+                })
 
             return jsonify({
                 'success': True,
@@ -977,7 +991,7 @@ def get_bybit_balance():
             'balance': 0,
             'error': 'BYBIT_API_ERROR',
             'details': str(e)
-        }), 500
+        }), 200
 
 
 # ================== DEBUG ENDPOINT ==================
@@ -1018,7 +1032,7 @@ def debug_sync():
 
         # 2. Try get_executions (actual trade fills)
         try:
-            resp = client.get_executions(category='linear', limit=10)
+            resp = client.get_executions(category='linear', limit=10, accountType='UNIFIED')
             results['executions_linear'] = {
                 'retCode': resp.get('retCode'),
                 'retMsg': resp.get('retMsg'),
@@ -1030,7 +1044,7 @@ def debug_sync():
 
         # 3. Try order history
         try:
-            resp = client.get_order_history(category='linear', limit=10)
+            resp = client.get_order_history(category='linear', limit=10, accountType='UNIFIED')
             results['order_history_linear'] = {
                 'retCode': resp.get('retCode'),
                 'retMsg': resp.get('retMsg'),
