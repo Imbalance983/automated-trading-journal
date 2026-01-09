@@ -56,3 +56,10 @@ nul
 
 # Claude
 .claude/
+
+# Screenshots (user private data)
+screenshots/*
+!screenshots/.gitkeep
+
+# Journal database (contains user data)
+journal.db
