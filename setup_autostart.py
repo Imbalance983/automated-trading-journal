@@ -27,9 +27,9 @@ pause
     try:
         with open(batch_path, 'w') as f:
             f.write(batch_content)
-        print(f"✅ Created batch file: {batch_path}")
+        print(f"[OK] Created batch file: {batch_path}")
     except Exception as e:
-        print(f"❌ Failed to create batch file: {e}")
+        print(f"[ERROR] Failed to create batch file: {e}")
         return False
 
     # 2. Create shortcut in Startup folder
@@ -37,7 +37,7 @@ pause
 
     # Verify startup folder exists
     if not os.path.exists(startup_folder):
-        print(f"❌ Startup folder not found: {startup_folder}")
+        print(f"[ERROR] Startup folder not found: {startup_folder}")
         return False
 
     print(f"Startup Folder: {startup_folder}")
@@ -61,59 +61,52 @@ oLink.Save
         result = os.system(f'cscript //nologo "{vbs_path}"')
 
         if result == 0:
-            print(f"✅ Shortcut created in Startup folder")
+            print(f"[OK] Shortcut created in Startup folder")
         else:
-            print(f"⚠️ VBS script ran but returned code: {result}")
+            print(f"[WARNING] VBS script ran but returned code: {result}")
 
         # Clean up VBS file
         if os.path.exists(vbs_path):
             os.remove(vbs_path)
-            print(f"✅ Cleaned up temporary VBS file")
+            print(f"[OK] Cleaned up temporary VBS file")
 
     except Exception as e:
-        print(f"❌ Failed to create shortcut: {e}")
+        print(f"[ERROR] Failed to create shortcut: {e}")
         return False
 
     # 3. Success message
     print("\n" + "="*60)
-    print("✅ AUTO-START SETUP COMPLETE!")
+    print("[SUCCESS] AUTO-START SETUP COMPLETE!")
     print("="*60 + "\n")
 
-    print("🎯 What happens now:")
+    print("What happens now:")
     print("   1. App will auto-start when you login to Windows")
     print("   2. A command window will open automatically")
     print("   3. Access the app at: http://localhost:5000")
     print("   4. Close command window to stop the app\n")
 
-    print("📝 Files created:")
-    print(f"   • {batch_path}")
-    print(f"   • {startup_folder}\\Trading Journal.lnk\n")
+    print("Files created:")
+    print(f"   - {batch_path}")
+    print(f"   - {startup_folder}\\Trading Journal.lnk\n")
 
-    print("🔧 To disable auto-start:")
-    print(f"   • Delete: {startup_folder}\\Trading Journal.lnk\n")
+    print("To disable auto-start:")
+    print(f"   - Delete: {startup_folder}\\Trading Journal.lnk\n")
 
-    print("💡 To test now:")
-    print(f"   • Double-click: {batch_path}")
-    print("   • Or run: python app.py\n")
+    print("To test now:")
+    print(f"   - Double-click: {batch_path}")
+    print("   - Or run: python app.py\n")
 
     return True
 
 if __name__ == "__main__":
     try:
         success = setup_autostart()
-        if success:
-            print("Press Enter to exit...")
-            input()
-        else:
-            print("\n❌ Setup failed. Please check the errors above.")
-            print("Press Enter to exit...")
-            input()
+        if not success:
+            print("\n[ERROR] Setup failed. Please check the errors above.")
             sys.exit(1)
     except KeyboardInterrupt:
-        print("\n\n⚠️ Setup cancelled by user.")
+        print("\n\n[WARNING] Setup cancelled by user.")
         sys.exit(1)
     except Exception as e:
-        print(f"\n❌ Unexpected error: {e}")
-        print("Press Enter to exit...")
-        input()
+        print(f"\n[ERROR] Unexpected error: {e}")
         sys.exit(1)
