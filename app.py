@@ -17,9 +17,13 @@ import uuid
 
 try:
     from pybit.unified_trading import HTTP as BybitHTTP
+    # Enforce unified trading usage
+    if 'unified_trading' not in BybitHTTP.__module__:
+        raise RuntimeError('Unified Trading client not available - please upgrade pybit')
 except Exception:
     try:
         from pybit import HTTP as BybitHTTP
+        raise RuntimeError('Old pybit version detected - please upgrade: pip install --upgrade pybit')
     except Exception:
         BybitHTTP = None
 
@@ -336,7 +340,7 @@ def _get_saved_bybit_credentials():
     user_id = get_current_user_id()
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM api_credentials WHERE user_id = ? LIMIT 1', (user_id,))
+    cursor.execute('SELECT * FROM api_credentials WHERE user_id = ? AND exchange = ? LIMIT 1', (user_id, 'bybit'))
     creds = cursor.fetchone()
     conn.close()
     return dict(creds) if creds else None
@@ -347,13 +351,25 @@ def _create_bybit_client(api_key, api_secret, network):
     if BybitHTTP is None:
         raise RuntimeError('pybit is not installed')
 
-    is_testnet = str(network or 'mainnet').strip().lower() == 'testnet'
+    # Harden network detection
+    network = str(network or '').lower()
+    is_testnet = 'test' in network
 
     try:
-        return BybitHTTP(testnet=is_testnet, api_key=api_key, api_secret=api_secret)
+        return BybitHTTP(
+            testnet=is_testnet, 
+            api_key=api_key, 
+            api_secret=api_secret,
+            recv_window=5000
+        )
     except TypeError:
         endpoint = 'https://api-testnet.bybit.com' if is_testnet else 'https://api.bybit.com'
-        return BybitHTTP(endpoint=endpoint, api_key=api_key, api_secret=api_secret)
+        return BybitHTTP(
+            endpoint=endpoint, 
+            api_key=api_key, 
+            api_secret=api_secret,
+            recv_window=5000
+        )
 
 
 # ================== EXTENDED DATA SYNC ==================
@@ -909,6 +925,11 @@ def get_bybit_balance():
             return jsonify({'success': False, 'balance': 0, 'message': 'No credentials'})
 
         network = (creds.get('network') or 'mainnet').strip().lower()
+        
+        # Debug logging to identify credential issues
+        print(f"DEBUG: Using Bybit key: {creds['api_key'][:6]}... network: {network}")
+        print(f"DEBUG: pybit module: {BybitHTTP.__module__}")
+        
         client = _create_bybit_client(creds['api_key'], creds['api_secret'], network)
 
         # Get wallet balance for Unified Trading Account
