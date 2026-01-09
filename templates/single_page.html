@@ -183,6 +183,10 @@
             font-size: 1.6em;
         }
 
+        .metric-card-double {
+            grid-column: span 2;
+        }
+
         .chart-container {
             position: absolute;
             width: 130px;
@@ -1198,18 +1202,18 @@
             </div>
             
             <!-- Position Size Calculator -->
-            <div class="metric-card position-calculator">
+            <div class="metric-card metric-card-double position-calculator">
                 <div class="metric-label">Position Calculator</div>
-                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                    <input type="number" id="riskAmount" placeholder="Risk" style="width: 60px; padding: 4px; background: #1a1a1a; border: 1px solid #333; color: white; font-size: 12px;">
-                    <select id="riskType" style="width: 50px; padding: 4px; background: #1a1a1a; border: 1px solid #333; color: white; font-size: 12px;">
+                <div style="display: flex; gap: 12px; margin-bottom: 12px; width: 100%; justify-content: center;">
+                    <input type="number" id="riskAmount" placeholder="Risk Amount" style="width: 120px; padding: 8px; background: #1a1a1a; border: 1px solid #333; color: white; font-size: 14px; border-radius: 4px;">
+                    <select id="riskType" style="width: 80px; padding: 8px; background: #1a1a1a; border: 1px solid #333; color: white; font-size: 14px; border-radius: 4px;">
                         <option value="usdt">USDT</option>
                         <option value="percent">%</option>
                     </select>
-                    <input type="number" id="stopLoss" placeholder="Stop %" step="0.01" style="width: 60px; padding: 4px; background: #1a1a1a; border: 1px solid #333; color: white; font-size: 12px;">
+                    <input type="number" id="stopLoss" placeholder="Stop Loss %" step="0.01" style="width: 120px; padding: 8px; background: #1a1a1a; border: 1px solid #333; color: white; font-size: 14px; border-radius: 4px;">
                 </div>
-                <div class="metric-value" id="positionSize" style="font-size: 16px; color: #10b981;">$0</div>
-                <div class="metric-sub" style="font-size: 9px; color: #666;">Position Size (USDT)</div>
+                <div class="metric-value" id="positionSize" style="font-size: 20px; color: #10b981; margin-top: 8px;">$0</div>
+                <div class="metric-sub" style="font-size: 11px; color: #666;">Position Size (USDT)</div>
             </div>
         </div>
 
