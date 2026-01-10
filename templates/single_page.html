@@ -1341,9 +1341,9 @@
         <div class="stats-section">
             <div class="stats-header" onclick="toggleStats()">
                 <h2>Performance Statistics</h2>
-                <span class="stats-toggle" id="statsToggle">▼</span>
+                <span class="stats-toggle open" id="statsToggle">▼</span>
             </div>
-            <div class="stats-content" id="statsContent">
+            <div class="stats-content open" id="statsContent">
                 <div class="stats-filters">
                     <div class="filter-group">
                         <span class="filter-label">Asset</span>
@@ -1472,8 +1472,17 @@
                 <div class="form-group">
                     <label class="form-label">Screenshots</label>
                     <input type="file" id="editScreenshotFile" accept="image/*" style="display: none;" onchange="handleScreenshotUpload(event)">
-                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('editScreenshotFile').click()" style="width: 100%; padding: 8px; font-size: 0.9em;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('editScreenshotFile').click()" style="width: 100%; padding: 8px; font-size: 0.9em; margin-bottom: 8px;">
                         Upload Screenshot
+                    </button>
+                    <input
+                        type="text"
+                        id="screenshotUrlInput"
+                        placeholder="Paste image URL (TradingView, Imgur, etc)"
+                        style="width: 100%; padding: 8px; font-size: 0.9em; margin-bottom: 8px; border: 1px solid #444; background: #2a2a2a; color: #fff; border-radius: 4px;"
+                    />
+                    <button type="button" class="btn btn-secondary" onclick="addScreenshotUrl()" style="width: 100%; padding: 8px; font-size: 0.9em; margin-bottom: 8px;">
+                        Add Screenshot URL
                     </button>
                     <div id="screenshotGallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; margin-top: 8px;">
                         <!-- Screenshots will be inserted here -->
@@ -1501,7 +1510,7 @@
         let currentPeriod = 'all';
         let customStartDate = '';
         let customEndDate = '';
-        let statsOpen = false;
+        let statsOpen = true; // 🔥 FIX: Start with stats section OPEN so performance data is visible
         let calendarDates = {};
         let allTrades = [];
         let pnlChart = null;
@@ -1614,6 +1623,7 @@
             loadOpenTrades();
             loadRiskMetrics();
             loadTimeAnalytics();
+            loadPerformanceStats();
         }
 
         function renderDisconnected() {
@@ -1917,6 +1927,9 @@
                 populateAssetFilter(data.trades);
                 updateStatsFilter();
                 updatePnlChart(data.trades);
+                
+                // Load performance stats from backend
+                loadPerformanceStats();
                 
             } catch (error) {
                 console.error('Error loading trades:', error);
@@ -2392,6 +2405,34 @@
             event.target.value = '';
         }
 
+        async function addScreenshotUrl() {
+            const url = document.getElementById("screenshotUrlInput").value.trim();
+            if (!url) return;
+
+            const tradeId = document.getElementById('editTradeId').value;
+            
+            try {
+                const response = await fetch(`/api/trades/${tradeId}/screenshots/url`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ url })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    currentScreenshots.push(url);
+                    renderScreenshots();
+                    document.getElementById("screenshotUrlInput").value = "";
+                    showNotification('Screenshot URL added successfully', 'success');
+                } else {
+                    alert('Failed to add screenshot URL');
+                }
+            } catch (error) {
+                console.error('Error adding screenshot URL:', error);
+                alert('Error adding screenshot URL');
+            }
+        }
+
         function removeScreenshotFromList(url) {
             currentScreenshots = currentScreenshots.filter(s => s !== url);
             renderScreenshots();
@@ -2478,45 +2519,65 @@
                 const originalResponse = await fetch(`/api/trades/${tradeId}`);
                 const originalTrade = await originalResponse.json();
 
-                // Gather tag values from containers
-                const key_levels = getTagValues('keyLevelsContainer');
-                const confirmations = getTagValues('confirmationsContainer');
-                const entries = getTagValues('entriesContainer');
-                const models = getTagValues('modelsContainer');
+                // Split saving into 3 separate calls
+                await saveTradeCore(tradeId, originalTrade);
+                await saveTradeDetails(tradeId);
+                // Screenshots are handled separately via upload and URL endpoints
 
-                const updatedTrade = {
-                    ...originalTrade,
-                    weekly_bias: document.getElementById('editWeeklyBias').value,
-                    daily_bias: document.getElementById('editDailyBias').value,
-                    notes: document.getElementById('editNotes').value,
-                    // New array fields
-                    key_levels: key_levels,
-                    confirmations: confirmations,
-                    entries: entries,
-                    models: models,
-                    screenshots: currentScreenshots
-                };
-
-                const response = await fetch(`/api/trades/${tradeId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(updatedTrade)
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    closeEditModal();
-                    loadTrades();
-                    loadOpenTrades();
-                    loadCalendarData();
-                    showNotification('Trade updated successfully!', 'success');
-                } else {
-                    alert('Error updating trade');
-                }
+                closeEditModal();
+                loadTrades();
+                loadOpenTrades();
+                loadCalendarData();
+                showNotification('Trade updated successfully!', 'success');
             } catch (error) {
                 console.error('Error saving trade:', error);
                 alert('Error saving trade changes');
+            }
+        }
+
+        async function saveTradeCore(tradeId, originalTrade) {
+            const coreTradePayload = {
+                ...originalTrade,
+                weekly_bias: document.getElementById('editWeeklyBias').value,
+                daily_bias: document.getElementById('editDailyBias').value,
+                notes: document.getElementById('editNotes').value
+            };
+
+            const response = await fetch(`/api/trades/${tradeId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(coreTradePayload)
+            });
+
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error('Failed to save core trade data');
+            }
+        }
+
+        async function saveTradeDetails(tradeId) {
+            // Gather tag values from containers
+            const key_levels = getTagValues('keyLevelsContainer');
+            const confirmations = getTagValues('confirmationsContainer');
+            const entries = getTagValues('entriesContainer');
+            const models = getTagValues('modelsContainer');
+
+            const statsPayload = {
+                key_levels: key_levels,
+                confirmations: confirmations,
+                entries: entries,
+                models: models
+            };
+
+            const response = await fetch(`/api/trades/${tradeId}/details`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(statsPayload)
+            });
+
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error('Failed to save trade details');
             }
         }
 
@@ -2556,93 +2617,163 @@
             statsFilter.asset = document.getElementById('assetFilter').value;
             statsFilter.side = document.getElementById('sideFilter').value;
 
-            let filteredTrades = allTrades;
+            // Load performance stats from backend APIs
+            loadPerformanceStats();
+        }
+
+        async function loadPerformanceStats() {
+            console.log("🔥 loadPerformanceStats START");
+            try {
+                console.log("🔥 Fetching from backend APIs...");
+
+                // Build query parameters from filters
+                const params = new URLSearchParams({
+                    asset: statsFilter.asset,
+                    weekly_bias: statsFilter.weeklyBias,
+                    daily_bias: statsFilter.dailyBias,
+                    side: statsFilter.side
+                });
+
+                const [modelsResponse, confirmationsResponse, entriesResponse, keyLevelsResponse] = await Promise.all([
+                    fetch(`/api/analytics/by_model?${params}`),
+                    fetch(`/api/analytics/by_confirmation?${params}`),
+                    fetch(`/api/analytics/by_entry?${params}`),
+                    fetch(`/api/analytics/by_key_level?${params}`)
+                ]);
+
+                console.log("🔥 Raw API responses received");
+
+                const modelsData = await modelsResponse.json();
+                const confirmationsData = await confirmationsResponse.json();
+                const entriesData = await entriesResponse.json();
+                const keyLevelsData = await keyLevelsResponse.json();
+
+                console.log("🔥 RAW MODEL DATA FROM API:", modelsData);
+                console.log("🔥 RAW CONFIRMATION DATA FROM API:", confirmationsData);
+                console.log("🔥 RAW ENTRY DATA FROM API:", entriesData);
+                console.log("🔥 RAW KEY LEVEL DATA FROM API:", keyLevelsData);
+
+                // Apply filters and update UI
+                const filteredModels = applyFiltersToStats(modelsData.models || []);
+                const filteredConfirmations = applyFiltersToStats(confirmationsData.confirmations || []);
+                const filteredEntries = applyFiltersToStats(entriesData.entries || []);
+                const filteredKeyLevels = applyFiltersToStats(keyLevelsData.key_levels || []);
+
+                console.log("🔥 FILTERED DATA:");
+                console.log("  Models:", filteredModels, "Length:", filteredModels.length);
+                console.log("  Confirmations:", filteredConfirmations, "Length:", filteredConfirmations.length);
+                console.log("  Entries:", filteredEntries, "Length:", filteredEntries.length);
+                console.log("  Key levels:", filteredKeyLevels, "Length:", filteredKeyLevels.length);
+
+                // 🔥 STEP 2: Verify render function runs
+                console.log("🎨 About to render stats...");
+
+                const modelsHTML = formatBackendPerformanceStats(filteredModels);
+                const confirmationsHTML = formatBackendPerformanceStats(filteredConfirmations);
+                const entriesHTML = formatBackendPerformanceStats(filteredEntries);
+                const keyLevelsHTML = formatBackendPerformanceStats(filteredKeyLevels);
+
+                console.log("🎨 Generated HTML:");
+                console.log("  Models HTML length:", modelsHTML.length);
+                console.log("  Confirmations HTML length:", confirmationsHTML.length);
+                console.log("  Entries HTML length:", entriesHTML.length);
+                console.log("  Key levels HTML length:", keyLevelsHTML.length);
+
+                // 🔥 STEP 3: DOM ID verification
+                const modelsEl = document.getElementById('modelsStats');
+                const confirmationsEl = document.getElementById('confirmationsStats');
+                const entriesEl = document.getElementById('entryStats');
+                const keyLevelsEl = document.getElementById('keyLevelsStats');
+
+                console.log("🔥 DOM ELEMENTS:");
+                console.log("  modelsStats element:", modelsEl);
+                console.log("  confirmationsStats element:", confirmationsEl);
+                console.log("  entryStats element:", entriesEl);
+                console.log("  keyLevelsStats element:", keyLevelsEl);
+
+                if (!modelsEl) console.error("❌ modelsStats element NOT FOUND");
+                if (!confirmationsEl) console.error("❌ confirmationsStats element NOT FOUND");
+                if (!entriesEl) console.error("❌ entryStats element NOT FOUND");
+                if (!keyLevelsEl) console.error("❌ keyLevelsStats element NOT FOUND");
+
+                // Render to DOM
+                modelsEl.innerHTML = modelsHTML;
+                confirmationsEl.innerHTML = confirmationsHTML;
+                entriesEl.innerHTML = entriesHTML;
+                keyLevelsEl.innerHTML = keyLevelsHTML;
+
+                console.log("🔥 RENDER COMPLETE - checking DOM content:");
+                console.log("  modelsStats.innerHTML:", modelsEl.innerHTML.substring(0, 100));
+                console.log("  confirmationsStats.innerHTML:", confirmationsEl.innerHTML.substring(0, 100));
+                console.log("  entryStats.innerHTML:", entriesEl.innerHTML.substring(0, 100));
+                console.log("  keyLevelsStats.innerHTML:", keyLevelsEl.innerHTML.substring(0, 100));
+
+            } catch (error) {
+                console.error('❌ ERROR in loadPerformanceStats:', error);
+                console.error('❌ Stack trace:', error.stack);
+            }
+        }
+
+        function applyFiltersToStats(stats) {
+            console.log("🔍 applyFiltersToStats called");
+            console.log("  Input stats:", stats);
+            console.log("  Current statsFilter:", statsFilter);
+
+            let filtered = stats;
 
             if (statsFilter.asset !== 'all') {
-                filteredTrades = filteredTrades.filter(t => t.asset === statsFilter.asset);
+                console.log("  Asset filter active:", statsFilter.asset);
+                // Backend already filters by asset, so this might not be needed
+                // but keeping for consistency
             }
 
             if (statsFilter.side !== 'all') {
-                filteredTrades = filteredTrades.filter(t => t.side.toLowerCase() === statsFilter.side);
+                console.log("  Side filter active:", statsFilter.side);
+                // Backend analytics don't filter by side, but we could add this
             }
 
-            if (statsFilter.weeklyBias !== 'all') {
-                filteredTrades = filteredTrades.filter(t => {
-                    const weekly = (t.weekly_bias || 'neutral').toLowerCase();
-                    return weekly === statsFilter.weeklyBias;
-                });
-            }
-
-            if (statsFilter.dailyBias !== 'all') {
-                filteredTrades = filteredTrades.filter(t => {
-                    const daily = (t.daily_bias || 'neutral').toLowerCase();
-                    return daily === statsFilter.dailyBias;
-                });
-            }
-
-            const keyLevelStats = calculatePerformanceStats(filteredTrades, 'key_level_type');
-            document.getElementById('keyLevelsStats').innerHTML = formatPerformanceStats(keyLevelStats);
-
-            const confirmationStats = calculatePerformanceStats(filteredTrades, 'confirmation');
-            document.getElementById('confirmationsStats').innerHTML = formatPerformanceStats(confirmationStats);
-
-            const entryStats = calculateEntryPerformanceStats(filteredTrades);
-            document.getElementById('entryStats').innerHTML = formatPerformanceStats(entryStats);
-
-            const modelStats = calculatePerformanceStats(filteredTrades, 'model');
-            document.getElementById('modelsStats').innerHTML = formatPerformanceStats(modelStats);
+            console.log("  Returning filtered stats:", filtered);
+            return filtered;
         }
 
-        function calculatePerformanceStats(trades, field) {
-            const stats = {};
-            
-            trades.forEach(trade => {
-                const key = trade[field];
-                if (!key || key === '') return;
-                
-                if (!stats[key]) {
-                    stats[key] = {
-                        total: 0,
-                        wins: 0,
-                        with_bias: 0,
-                        with_wins: 0,
-                        against_bias: 0,
-                        against_wins: 0
-                    };
-                }
-                
-                stats[key].total++;
-                
-                const pnl = trade.pnl || 0;
-                if (pnl > 0) {
-                    stats[key].wins++;
+        function formatBackendPerformanceStats(stats) {
+            console.log("🎨 formatBackendPerformanceStats CALLED with:", stats);
+
+            if (!stats || stats.length === 0) {
+                console.warn("❌ No data passed to formatBackendPerformanceStats");
+                return '<p style="color: #bbbbbb; text-align: center; padding: 20px;">No data for current filters</p>';
+            }
+
+            console.log("🎨 Formatting", stats.length, "items");
+
+            const html = stats.map(item => {
+                // Sanity check for invalid win rates
+                if (item.win_rate > 100) {
+                    console.warn("Invalid win rate detected", item);
                 }
 
-                const weekly = (trade.weekly_bias || 'neutral').toLowerCase();
-                const side = trade.side.toLowerCase();
+                const wrClass = item.win_rate >= 60 ? 'good' : item.win_rate >= 50 ? 'average' : 'poor';
 
-                const withWeekly = (weekly === 'bullish' && side === 'long') || 
-                                  (weekly === 'bearish' && side === 'short');
-                const againstWeekly = (weekly === 'bullish' && side === 'short') || 
-                                     (weekly === 'bearish' && side === 'long');
+                // Handle different field names from different endpoints
+                const label = item.model || item.confirmation || item.entry || item.level || 'Unknown';
+                const displayName = label.replace(/_/g, ' ');
 
-                if (withWeekly) {
-                    stats[key].with_bias++;
-                    if (pnl > 0) stats[key].with_wins++;
-                } else if (againstWeekly) {
-                    stats[key].against_bias++;
-                    if (pnl > 0) stats[key].against_wins++;
-                }
-            });
-            
-            Object.keys(stats).forEach(key => {
-                const s = stats[key];
-                s.winRate = s.total > 0 ? (s.wins / s.total * 100).toFixed(1) : 0;
-                s.withWinRate = s.with_bias > 0 ? (s.with_wins / s.with_bias * 100).toFixed(1) : null;
-                s.againstWinRate = s.against_bias > 0 ? (s.against_wins / s.against_bias * 100).toFixed(1) : null;
-            });
-            
-            return stats;
+                console.log("🎨 Rendering item:", { label, displayName, trade_count: item.trade_count, win_rate: item.win_rate, total_pnl: item.total_pnl });
+
+                return `
+                    <div class="stat-item">
+                        <span class="stat-name">${displayName}</span>
+                        <div class="stat-metrics">
+                            <span class="stat-count">${item.trade_count}</span>
+                            <span class="stat-wr ${wrClass}">${item.win_rate}%</span>
+                            <span class="stat-pnl">${item.total_pnl >= 0 ? '+' : ''}$${item.total_pnl}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            console.log("🎨 Generated HTML length:", html.length, "First 200 chars:", html.substring(0, 200));
+            return html;
         }
 
         function calculateEntryPerformanceStats(trades) {

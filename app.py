@@ -212,6 +212,61 @@ def init_db():
     except:
         pass
 
+    # Create child tables with UNIQUE constraints
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS trade_key_levels (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        trade_id INTEGER NOT NULL,
+        level TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (trade_id) REFERENCES trades(id) ON DELETE CASCADE,
+        UNIQUE(trade_id, level)
+    )
+    ''')
+
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS trade_confirmations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        trade_id INTEGER NOT NULL,
+        confirmation TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (trade_id) REFERENCES trades(id) ON DELETE CASCADE,
+        UNIQUE(trade_id, confirmation)
+    )
+    ''')
+
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS trade_entries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        trade_id INTEGER NOT NULL,
+        entry TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (trade_id) REFERENCES trades(id) ON DELETE CASCADE,
+        UNIQUE(trade_id, entry)
+    )
+    ''')
+
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS trade_models (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        trade_id INTEGER NOT NULL,
+        model TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (trade_id) REFERENCES trades(id) ON DELETE CASCADE,
+        UNIQUE(trade_id, model)
+    )
+    ''')
+
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS trade_screenshots (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        trade_id INTEGER NOT NULL,
+        screenshot_url TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (trade_id) REFERENCES trades(id) ON DELETE CASCADE
+    )
+    ''')
+
     conn.commit()
     conn.close()
 
@@ -436,6 +491,11 @@ def switch_user(user_id):
 
 
 # ================== BASIC ROUTES ==================
+@app.route('/test')
+def test():
+    """Test route"""
+    return "Working!"
+
 @app.route('/')
 def index():
     """Render main application page"""
@@ -1361,8 +1421,9 @@ def manage_trade(trade_id):
 
     elif request.method == 'PUT':
         data = request.json
+        print(f"DEBUG: PUT data received: {data}")  # Debug output
 
-        # Update basic trade info (keeping core fields only)
+        # Update only core trade fields
         cursor.execute('''
             UPDATE trades SET
                 asset = ?, side = ?, entry_price = ?, exit_price = ?, quantity = ?,
@@ -1381,16 +1442,6 @@ def manage_trade(trade_id):
             data.get('risk_reward_ratio'), data.get('position_size_pct'),
             trade_id
         ))
-
-        # Update related details (arrays)
-        save_trade_details(
-            trade_id,
-            key_levels=data.get('key_levels', []),
-            confirmations=data.get('confirmations', []),
-            entries=data.get('entries', []),
-            models=data.get('models', []),
-            screenshots=data.get('screenshots', [])
-        )
 
         conn.commit()
         conn.close()
@@ -1435,6 +1486,16 @@ def manage_trade_details(trade_id):
 
     elif request.method == 'POST':
         data = request.json
+
+        # Validate that trade is closed before allowing stats to be saved
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT status FROM trades WHERE id = ?', (trade_id,))
+        trade = cursor.fetchone()
+        conn.close()
+
+        if not trade or trade['status'] != 'closed':
+            return jsonify({'success': False, 'error': 'Stats can only be saved for closed trades'}), 400
 
         try:
             save_trade_details(
@@ -1613,23 +1674,49 @@ def get_risk_metrics():
 def get_analytics_by_model():
     """Get performance analytics aggregated by trading model"""
     user_id = get_current_user_id()
+
+    # Get filter parameters
+    asset = request.args.get('asset', 'all')
+    weekly_bias = request.args.get('weekly_bias', 'all')
+    daily_bias = request.args.get('daily_bias', 'all')
+    side = request.args.get('side', 'all')
+
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute('''
+    # Build dynamic WHERE clause
+    where_conditions = ['t.user_id = ?', 't.status = ?', 't.pnl IS NOT NULL', 't.is_deleted = 0']
+    params = [user_id, 'closed']
+
+    if asset != 'all':
+        where_conditions.append('t.asset = ?')
+        params.append(asset)
+    if weekly_bias != 'all':
+        where_conditions.append('t.weekly_bias = ?')
+        params.append(weekly_bias)
+    if daily_bias != 'all':
+        where_conditions.append('t.daily_bias = ?')
+        params.append(daily_bias)
+    if side != 'all':
+        where_conditions.append('t.side = ?')
+        params.append(side)
+
+    where_clause = ' AND '.join(where_conditions)
+
+    cursor.execute(f'''
         SELECT
             tm.model,
             COUNT(DISTINCT t.id) as trade_count,
             SUM(t.pnl) as total_pnl,
             AVG(t.pnl) as avg_pnl,
-            SUM(CASE WHEN t.pnl > 0 THEN 1 ELSE 0 END) as wins,
-            SUM(CASE WHEN t.pnl < 0 THEN 1 ELSE 0 END) as losses
+            COUNT(DISTINCT CASE WHEN t.pnl > 0 THEN t.id END) as wins,
+            COUNT(DISTINCT CASE WHEN t.pnl < 0 THEN t.id END) as losses
         FROM trades t
         JOIN trade_models tm ON t.id = tm.trade_id
-        WHERE t.user_id = ? AND t.status = 'closed' AND t.pnl IS NOT NULL AND t.is_deleted = 0
+        WHERE {where_clause}
         GROUP BY tm.model
         ORDER BY total_pnl DESC
-    ''', (user_id,))
+    ''', params)
 
     models = cursor.fetchall()
     conn.close()
@@ -1655,23 +1742,49 @@ def get_analytics_by_model():
 def get_analytics_by_confirmation():
     """Get performance analytics aggregated by confirmation type"""
     user_id = get_current_user_id()
+
+    # Get filter parameters
+    asset = request.args.get('asset', 'all')
+    weekly_bias = request.args.get('weekly_bias', 'all')
+    daily_bias = request.args.get('daily_bias', 'all')
+    side = request.args.get('side', 'all')
+
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute('''
+    # Build dynamic WHERE clause
+    where_conditions = ['t.user_id = ?', 't.status = ?', 't.pnl IS NOT NULL', 't.is_deleted = 0']
+    params = [user_id, 'closed']
+
+    if asset != 'all':
+        where_conditions.append('t.asset = ?')
+        params.append(asset)
+    if weekly_bias != 'all':
+        where_conditions.append('t.weekly_bias = ?')
+        params.append(weekly_bias)
+    if daily_bias != 'all':
+        where_conditions.append('t.daily_bias = ?')
+        params.append(daily_bias)
+    if side != 'all':
+        where_conditions.append('t.side = ?')
+        params.append(side)
+
+    where_clause = ' AND '.join(where_conditions)
+
+    cursor.execute(f'''
         SELECT
             tc.confirmation,
             COUNT(DISTINCT t.id) as trade_count,
             SUM(t.pnl) as total_pnl,
             AVG(t.pnl) as avg_pnl,
-            SUM(CASE WHEN t.pnl > 0 THEN 1 ELSE 0 END) as wins,
-            SUM(CASE WHEN t.pnl < 0 THEN 1 ELSE 0 END) as losses
+            COUNT(DISTINCT CASE WHEN t.pnl > 0 THEN t.id END) as wins,
+            COUNT(DISTINCT CASE WHEN t.pnl < 0 THEN t.id END) as losses
         FROM trades t
         JOIN trade_confirmations tc ON t.id = tc.trade_id
-        WHERE t.user_id = ? AND t.status = 'closed' AND t.pnl IS NOT NULL AND t.is_deleted = 0
+        WHERE {where_clause}
         GROUP BY tc.confirmation
         ORDER BY total_pnl DESC
-    ''', (user_id,))
+    ''', params)
 
     confirmations = cursor.fetchall()
     conn.close()
@@ -1697,23 +1810,49 @@ def get_analytics_by_confirmation():
 def get_analytics_by_entry():
     """Get performance analytics aggregated by entry type"""
     user_id = get_current_user_id()
+
+    # Get filter parameters
+    asset = request.args.get('asset', 'all')
+    weekly_bias = request.args.get('weekly_bias', 'all')
+    daily_bias = request.args.get('daily_bias', 'all')
+    side = request.args.get('side', 'all')
+
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute('''
+    # Build dynamic WHERE clause
+    where_conditions = ['t.user_id = ?', 't.status = ?', 't.pnl IS NOT NULL', 't.is_deleted = 0']
+    params = [user_id, 'closed']
+
+    if asset != 'all':
+        where_conditions.append('t.asset = ?')
+        params.append(asset)
+    if weekly_bias != 'all':
+        where_conditions.append('t.weekly_bias = ?')
+        params.append(weekly_bias)
+    if daily_bias != 'all':
+        where_conditions.append('t.daily_bias = ?')
+        params.append(daily_bias)
+    if side != 'all':
+        where_conditions.append('t.side = ?')
+        params.append(side)
+
+    where_clause = ' AND '.join(where_conditions)
+
+    cursor.execute(f'''
         SELECT
             te.entry,
             COUNT(DISTINCT t.id) as trade_count,
             SUM(t.pnl) as total_pnl,
             AVG(t.pnl) as avg_pnl,
-            SUM(CASE WHEN t.pnl > 0 THEN 1 ELSE 0 END) as wins,
-            SUM(CASE WHEN t.pnl < 0 THEN 1 ELSE 0 END) as losses
+            COUNT(DISTINCT CASE WHEN t.pnl > 0 THEN t.id END) as wins,
+            COUNT(DISTINCT CASE WHEN t.pnl < 0 THEN t.id END) as losses
         FROM trades t
         JOIN trade_entries te ON t.id = te.trade_id
-        WHERE t.user_id = ? AND t.status = 'closed' AND t.pnl IS NOT NULL AND t.is_deleted = 0
+        WHERE {where_clause}
         GROUP BY te.entry
         ORDER BY total_pnl DESC
-    ''', (user_id,))
+    ''', params)
 
     entries = cursor.fetchall()
     conn.close()
@@ -1739,23 +1878,49 @@ def get_analytics_by_entry():
 def get_analytics_by_key_level():
     """Get performance analytics aggregated by key level"""
     user_id = get_current_user_id()
+
+    # Get filter parameters
+    asset = request.args.get('asset', 'all')
+    weekly_bias = request.args.get('weekly_bias', 'all')
+    daily_bias = request.args.get('daily_bias', 'all')
+    side = request.args.get('side', 'all')
+
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute('''
+    # Build dynamic WHERE clause
+    where_conditions = ['t.user_id = ?', 't.status = ?', 't.pnl IS NOT NULL', 't.is_deleted = 0']
+    params = [user_id, 'closed']
+
+    if asset != 'all':
+        where_conditions.append('t.asset = ?')
+        params.append(asset)
+    if weekly_bias != 'all':
+        where_conditions.append('t.weekly_bias = ?')
+        params.append(weekly_bias)
+    if daily_bias != 'all':
+        where_conditions.append('t.daily_bias = ?')
+        params.append(daily_bias)
+    if side != 'all':
+        where_conditions.append('t.side = ?')
+        params.append(side)
+
+    where_clause = ' AND '.join(where_conditions)
+
+    cursor.execute(f'''
         SELECT
             tkl.level,
             COUNT(DISTINCT t.id) as trade_count,
             SUM(t.pnl) as total_pnl,
             AVG(t.pnl) as avg_pnl,
-            SUM(CASE WHEN t.pnl > 0 THEN 1 ELSE 0 END) as wins,
-            SUM(CASE WHEN t.pnl < 0 THEN 1 ELSE 0 END) as losses
+            COUNT(DISTINCT CASE WHEN t.pnl > 0 THEN t.id END) as wins,
+            COUNT(DISTINCT CASE WHEN t.pnl < 0 THEN t.id END) as losses
         FROM trades t
         JOIN trade_key_levels tkl ON t.id = tkl.trade_id
-        WHERE t.user_id = ? AND t.status = 'closed' AND t.pnl IS NOT NULL AND t.is_deleted = 0
+        WHERE {where_clause}
         GROUP BY tkl.level
         ORDER BY total_pnl DESC
-    ''', (user_id,))
+    ''', params)
 
     key_levels = cursor.fetchall()
     conn.close()
@@ -1869,6 +2034,29 @@ def upload_screenshot():
     return jsonify({'success': False, 'error': 'Invalid file type'}), 400
 
 
+@app.route('/api/trades/<int:trade_id>/screenshots/url', methods=['POST'])
+def add_screenshot_url(trade_id):
+    """Add a screenshot URL for a trade"""
+    data = request.json
+    url = data.get('url')
+
+    if not url:
+        return jsonify({'success': False, 'error': 'URL required'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        INSERT INTO trade_screenshots (trade_id, screenshot_url)
+        VALUES (?, ?)
+    ''', (trade_id, url))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({'success': True})
+
+
 @app.route('/screenshots/<filename>')
 def serve_screenshot(filename):
     """Serve uploaded screenshots"""
@@ -1883,4 +2071,4 @@ if __name__ == '__main__':
     print(f"Server: http://localhost:5000")
     print("=" * 60)
 
-    app.run(debug=True, port=5000, host='0.0.0.0')
+    app.run(debug=False, port=5000, host='0.0.0.0')
