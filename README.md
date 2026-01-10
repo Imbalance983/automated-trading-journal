@@ -27,6 +27,7 @@ A comprehensive trading journal application designed for cryptocurrency traders 
 - Risk/reward ratio analysis
 - Drawdown tracking
 - Time-based performance heatmaps
+- Performance breakdown by model, confirmation, entry type, and key level
 
 #### 🎯 **Position Size Calculator**
 - Real-time position sizing based on risk parameters
@@ -163,8 +164,18 @@ automated-trading-journal/
 #### `trades` Table
 - Comprehensive trade data
 - Entry/exit prices, P&L, timestamps
-- Strategy metadata (bias, model, confirmations)
-- Screenshot attachments
+- Strategy metadata (bias, weekly/daily bias)
+- Soft delete support for data safety
+
+#### `trade_models`, `trade_confirmations`, `trade_entries`, `trade_key_levels` Tables
+- One-to-many relationships for trade analysis
+- Multiple tags per trade for detailed categorization
+- Cascade delete support
+
+#### `trade_screenshots` Table
+- Multiple screenshots per trade
+- Gallery view support
+- Image attachment tracking
 
 #### `api_credentials` Table
 - Encrypted Bybit API credentials
@@ -274,6 +285,10 @@ When creating your Bybit API key, enable:
 - `GET /api/calendar_data` - Daily P&L data
 - `GET /api/risk_metrics` - Risk analysis
 - `GET /api/time_analytics` - Performance by time
+- `GET /api/analytics/by_model` - Performance by trading model
+- `GET /api/analytics/by_confirmation` - Performance by confirmation type
+- `GET /api/analytics/by_entry` - Performance by entry type
+- `GET /api/analytics/by_key_level` - Performance by key level
 
 ### User Management
 - `GET /api/users` - List all users
@@ -377,10 +392,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📊 Project Statistics
 
-- **Lines of Code:** ~3,500+ (Python + JavaScript + HTML/CSS)
-- **Database Tables:** 6
-- **API Endpoints:** 25+
-- **Features:** 15+ major features
+- **Lines of Code:** ~4,500+ (Python + JavaScript + HTML/CSS)
+- **Database Tables:** 11
+- **API Endpoints:** 30+
+- **Features:** 20+ major features
 - **Status:** Production Ready ✅
 
 ## 🔮 Future Enhancements

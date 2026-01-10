@@ -277,6 +277,107 @@ def calculate_risk_reward_ratio(entry_price, stop_loss, take_profit, side):
     return round(rr_ratio, 2)
 
 
+# ================== TRADE DETAILS HELPER FUNCTIONS ==================
+def get_trade_details(trade_id):
+    """Get all related details for a trade (key levels, confirmations, entries, models, screenshots)"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    details = {
+        'key_levels': [],
+        'confirmations': [],
+        'entries': [],
+        'models': [],
+        'screenshots': []
+    }
+
+    # Get key levels
+    cursor.execute('SELECT level FROM trade_key_levels WHERE trade_id = ? ORDER BY created_at', (trade_id,))
+    details['key_levels'] = [row['level'] for row in cursor.fetchall()]
+
+    # Get confirmations
+    cursor.execute('SELECT confirmation FROM trade_confirmations WHERE trade_id = ? ORDER BY created_at', (trade_id,))
+    details['confirmations'] = [row['confirmation'] for row in cursor.fetchall()]
+
+    # Get entries
+    cursor.execute('SELECT entry FROM trade_entries WHERE trade_id = ? ORDER BY created_at', (trade_id,))
+    details['entries'] = [row['entry'] for row in cursor.fetchall()]
+
+    # Get models
+    cursor.execute('SELECT model FROM trade_models WHERE trade_id = ? ORDER BY created_at', (trade_id,))
+    details['models'] = [row['model'] for row in cursor.fetchall()]
+
+    # Get screenshots
+    cursor.execute('SELECT screenshot_url FROM trade_screenshots WHERE trade_id = ? ORDER BY created_at', (trade_id,))
+    details['screenshots'] = [row['screenshot_url'] for row in cursor.fetchall()]
+
+    conn.close()
+    return details
+
+
+def save_trade_details(trade_id, key_levels=None, confirmations=None, entries=None, models=None, screenshots=None):
+    """Save trade details (replaces existing data)"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Clear existing data
+        cursor.execute('DELETE FROM trade_key_levels WHERE trade_id = ?', (trade_id,))
+        cursor.execute('DELETE FROM trade_confirmations WHERE trade_id = ?', (trade_id,))
+        cursor.execute('DELETE FROM trade_entries WHERE trade_id = ?', (trade_id,))
+        cursor.execute('DELETE FROM trade_models WHERE trade_id = ?', (trade_id,))
+        cursor.execute('DELETE FROM trade_screenshots WHERE trade_id = ?', (trade_id,))
+
+        # Insert new data
+        if key_levels:
+            for level in key_levels:
+                if level and level.strip():
+                    cursor.execute(
+                        'INSERT INTO trade_key_levels (trade_id, level) VALUES (?, ?)',
+                        (trade_id, level.strip())
+                    )
+
+        if confirmations:
+            for confirmation in confirmations:
+                if confirmation and confirmation.strip():
+                    cursor.execute(
+                        'INSERT INTO trade_confirmations (trade_id, confirmation) VALUES (?, ?)',
+                        (trade_id, confirmation.strip())
+                    )
+
+        if entries:
+            for entry in entries:
+                if entry and entry.strip():
+                    cursor.execute(
+                        'INSERT INTO trade_entries (trade_id, entry) VALUES (?, ?)',
+                        (trade_id, entry.strip())
+                    )
+
+        if models:
+            for model in models:
+                if model and model.strip():
+                    cursor.execute(
+                        'INSERT INTO trade_models (trade_id, model) VALUES (?, ?)',
+                        (trade_id, model.strip())
+                    )
+
+        if screenshots:
+            for screenshot in screenshots:
+                if screenshot and screenshot.strip():
+                    cursor.execute(
+                        'INSERT INTO trade_screenshots (trade_id, screenshot_url) VALUES (?, ?)',
+                        (trade_id, screenshot.strip())
+                    )
+
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        raise e
+
+
 # ================== USER MANAGEMENT ==================
 @app.route('/api/users', methods=['GET'])
 def get_users():
@@ -771,7 +872,8 @@ def sync_bybit_trades():
                     f"{item.get('symbol')}_{item.get('side')}_{item.get('createdTime')}"
                 )
 
-                # Check if already exists for this user
+                # Check if already exists for this user (including deleted trades to prevent re-import)
+                # IMPORTANT: Do NOT check is_deleted = 0 here - we want to prevent re-importing deleted trades
                 cursor.execute('SELECT 1 FROM trades WHERE user_id = ? AND external_id = ? LIMIT 1', (user_id, external_id))
                 if cursor.fetchone():
                     log(f"  Skipping duplicate: {external_id}")
@@ -828,11 +930,11 @@ def sync_bybit_trades():
                         user_id, asset, side, entry_price, exit_price, quantity,
                         entry_time, exit_time, pnl, pnl_percentage, weekly_bias, daily_bias,
                         notes, status, external_id, created_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
                     user_id, asset, side, entry_price, exit_price, qty,
                     entry_time, exit_time, pnl, pnl_percentage, 'neutral', 'neutral',
-                    f'Imported from Bybit ({network})', 'closed', external_id, created_at
+                    '', 'closed', external_id, created_at
                 ))
 
                 inserted += 1
@@ -1098,7 +1200,7 @@ def get_calendar_data():
             COUNT(*) as trade_count,
             SUM(CASE WHEN pnl > 0 THEN 1 ELSE 0 END) as winning_trades
         FROM trades
-        WHERE user_id = ? AND status = 'closed' AND pnl IS NOT NULL
+        WHERE user_id = ? AND status = 'closed' AND pnl IS NOT NULL AND is_deleted = 0
         GROUP BY DATE(entry_time)
         ORDER BY trade_date
     ''', (user_id,))
@@ -1138,7 +1240,7 @@ def get_trades_by_date():
 
     cursor.execute('''
         SELECT * FROM trades
-        WHERE user_id = ? AND DATE(entry_time) = ? AND status = 'closed'
+        WHERE user_id = ? AND DATE(entry_time) = ? AND status = 'closed' AND is_deleted = 0
         ORDER BY entry_time DESC
     ''', (user_id, date_str))
 
@@ -1176,7 +1278,7 @@ def get_trades():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    query = "SELECT * FROM trades WHERE user_id = ? AND status = ?"
+    query = "SELECT * FROM trades WHERE user_id = ? AND status = ? AND is_deleted = 0"
     params = [user_id, status]
 
     if start_date and end_date:
@@ -1247,31 +1349,56 @@ def manage_trade(trade_id):
         cursor.execute('SELECT * FROM trades WHERE id = ?', (trade_id,))
         trade = cursor.fetchone()
         conn.close()
-        return jsonify(dict(trade)) if trade else ('', 404)
+
+        if not trade:
+            return ('', 404)
+
+        # Convert to dict and add related details
+        trade_dict = dict(trade)
+        trade_dict.update(get_trade_details(trade_id))
+
+        return jsonify(trade_dict)
 
     elif request.method == 'PUT':
         data = request.json
+
+        # Update basic trade info (keeping core fields only)
         cursor.execute('''
             UPDATE trades SET
                 asset = ?, side = ?, entry_price = ?, exit_price = ?, quantity = ?,
-                entry_time = ?, exit_time = ?, pnl = ?, key_level = ?, key_level_type = ?,
-                confirmation = ?, model = ?, weekly_bias = ?, daily_bias = ?, 
-                notes = ?, screenshot_url = ?, status = ?
+                entry_time = ?, exit_time = ?, pnl = ?,
+                weekly_bias = ?, daily_bias = ?,
+                notes = ?, status = ?,
+                stop_loss = ?, take_profit = ?, risk_reward_ratio = ?, position_size_pct = ?
             WHERE id = ?
         ''', (
             data['asset'], data['side'], data['entry_price'], data.get('exit_price'),
             data['quantity'], data['entry_time'], data.get('exit_time'), data.get('pnl'),
-            data.get('key_level'), data.get('key_level_type'), data.get('confirmation'),
-            data.get('model'), data.get('weekly_bias', 'neutral'), 
-            data.get('daily_bias', 'neutral'), data.get('notes'), 
-            data.get('screenshot_url'), data.get('status', 'closed'), trade_id
+            data.get('weekly_bias', 'neutral'),
+            data.get('daily_bias', 'neutral'), data.get('notes', ''),
+            data.get('status', 'closed'),
+            data.get('stop_loss'), data.get('take_profit'),
+            data.get('risk_reward_ratio'), data.get('position_size_pct'),
+            trade_id
         ))
+
+        # Update related details (arrays)
+        save_trade_details(
+            trade_id,
+            key_levels=data.get('key_levels', []),
+            confirmations=data.get('confirmations', []),
+            entries=data.get('entries', []),
+            models=data.get('models', []),
+            screenshots=data.get('screenshots', [])
+        )
+
         conn.commit()
         conn.close()
         return jsonify({'success': True})
 
     elif request.method == 'DELETE':
-        cursor.execute('DELETE FROM trades WHERE id = ?', (trade_id,))
+        # Soft delete - set is_deleted = 1 instead of actual deletion
+        cursor.execute('UPDATE trades SET is_deleted = 1 WHERE id = ?', (trade_id,))
         conn.commit()
         conn.close()
         return jsonify({'success': True})
@@ -1299,6 +1426,30 @@ def set_entry_type(trade_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/trades/<int:trade_id>/details', methods=['GET', 'POST'])
+def manage_trade_details(trade_id):
+    """Get or update trade details (key levels, confirmations, entries, models, screenshots)"""
+    if request.method == 'GET':
+        details = get_trade_details(trade_id)
+        return jsonify(details)
+
+    elif request.method == 'POST':
+        data = request.json
+
+        try:
+            save_trade_details(
+                trade_id,
+                key_levels=data.get('key_levels', []),
+                confirmations=data.get('confirmations', []),
+                entries=data.get('entries', []),
+                models=data.get('models', []),
+                screenshots=data.get('screenshots', [])
+            )
+            return jsonify({'success': True})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/trades', methods=['POST'])
 def create_trade():
     """Create a new trade"""
@@ -1307,6 +1458,7 @@ def create_trade():
 
     # Calculate P&L if trade is closed
     pnl = None
+    pnl_percentage = None
     status = data.get('status', 'closed')
 
     if status == 'closed' and data.get('exit_price'):
@@ -1314,6 +1466,11 @@ def create_trade():
             pnl = (float(data['exit_price']) - float(data['entry_price'])) * float(data['quantity'])
         else:
             pnl = (float(data['entry_price']) - float(data['exit_price'])) * float(data['quantity'])
+
+        # Calculate PnL percentage
+        entry_value = float(data['entry_price']) * float(data['quantity'])
+        if entry_value > 0:
+            pnl_percentage = (pnl / entry_value) * 100
 
     # Calculate R:R ratio
     rr_ratio = calculate_risk_reward_ratio(
@@ -1326,26 +1483,34 @@ def create_trade():
     conn = get_db_connection()
     cursor = conn.cursor()
 
+    # Insert basic trade info (no deprecated fields)
     cursor.execute('''
         INSERT INTO trades (user_id, asset, side, entry_price, exit_price, stop_loss, take_profit,
-                          quantity, entry_time, exit_time, pnl, risk_reward_ratio, position_size_pct,
-                          key_level, key_level_type, confirmation, entry, model,
-                          weekly_bias, daily_bias, notes, screenshot_url, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                          quantity, entry_time, exit_time, pnl, pnl_percentage, risk_reward_ratio,
+                          position_size_pct, weekly_bias, daily_bias, notes, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         user_id, data['asset'], data['side'], data['entry_price'], data.get('exit_price'),
         data.get('stop_loss'), data.get('take_profit'),
-        data['quantity'], data['entry_time'], data.get('exit_time'), pnl, rr_ratio,
-        data.get('position_size_pct'),
-        data.get('key_level'), data.get('key_level_type'), data.get('confirmation'),
-        data.get('entry'), data.get('model'), data.get('weekly_bias', 'neutral'),
-        data.get('daily_bias', 'neutral'), data.get('notes'),
-        data.get('screenshot_url'), status
+        data['quantity'], data['entry_time'], data.get('exit_time'), pnl, pnl_percentage,
+        rr_ratio, data.get('position_size_pct'),
+        data.get('weekly_bias', 'neutral'), data.get('daily_bias', 'neutral'),
+        data.get('notes', ''), status
     ))
 
     trade_id = cursor.lastrowid
     conn.commit()
     conn.close()
+
+    # Save related details (arrays)
+    save_trade_details(
+        trade_id,
+        key_levels=data.get('key_levels', []),
+        confirmations=data.get('confirmations', []),
+        entries=data.get('entries', []),
+        models=data.get('models', []),
+        screenshots=data.get('screenshots', [])
+    )
 
     return jsonify({'success': True, 'id': trade_id})
 
@@ -1360,7 +1525,7 @@ def get_risk_metrics():
     cursor.execute('''
         SELECT pnl, entry_time, risk_reward_ratio
         FROM trades
-        WHERE user_id = ? AND status = 'closed' AND pnl IS NOT NULL
+        WHERE user_id = ? AND status = 'closed' AND pnl IS NOT NULL AND is_deleted = 0
         ORDER BY entry_time ASC
     ''', (user_id,))
 
@@ -1444,6 +1609,174 @@ def get_risk_metrics():
     })
 
 
+@app.route('/api/analytics/by_model', methods=['GET'])
+def get_analytics_by_model():
+    """Get performance analytics aggregated by trading model"""
+    user_id = get_current_user_id()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT
+            tm.model,
+            COUNT(DISTINCT t.id) as trade_count,
+            SUM(t.pnl) as total_pnl,
+            AVG(t.pnl) as avg_pnl,
+            SUM(CASE WHEN t.pnl > 0 THEN 1 ELSE 0 END) as wins,
+            SUM(CASE WHEN t.pnl < 0 THEN 1 ELSE 0 END) as losses
+        FROM trades t
+        JOIN trade_models tm ON t.id = tm.trade_id
+        WHERE t.user_id = ? AND t.status = 'closed' AND t.pnl IS NOT NULL AND t.is_deleted = 0
+        GROUP BY tm.model
+        ORDER BY total_pnl DESC
+    ''', (user_id,))
+
+    models = cursor.fetchall()
+    conn.close()
+
+    results = []
+    for row in models:
+        trade_count = row['trade_count']
+        win_rate = (row['wins'] / trade_count * 100) if trade_count > 0 else 0
+        results.append({
+            'model': row['model'],
+            'trade_count': trade_count,
+            'total_pnl': round(row['total_pnl'], 2),
+            'avg_pnl': round(row['avg_pnl'], 2),
+            'wins': row['wins'],
+            'losses': row['losses'],
+            'win_rate': round(win_rate, 1)
+        })
+
+    return jsonify({'models': results})
+
+
+@app.route('/api/analytics/by_confirmation', methods=['GET'])
+def get_analytics_by_confirmation():
+    """Get performance analytics aggregated by confirmation type"""
+    user_id = get_current_user_id()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT
+            tc.confirmation,
+            COUNT(DISTINCT t.id) as trade_count,
+            SUM(t.pnl) as total_pnl,
+            AVG(t.pnl) as avg_pnl,
+            SUM(CASE WHEN t.pnl > 0 THEN 1 ELSE 0 END) as wins,
+            SUM(CASE WHEN t.pnl < 0 THEN 1 ELSE 0 END) as losses
+        FROM trades t
+        JOIN trade_confirmations tc ON t.id = tc.trade_id
+        WHERE t.user_id = ? AND t.status = 'closed' AND t.pnl IS NOT NULL AND t.is_deleted = 0
+        GROUP BY tc.confirmation
+        ORDER BY total_pnl DESC
+    ''', (user_id,))
+
+    confirmations = cursor.fetchall()
+    conn.close()
+
+    results = []
+    for row in confirmations:
+        trade_count = row['trade_count']
+        win_rate = (row['wins'] / trade_count * 100) if trade_count > 0 else 0
+        results.append({
+            'confirmation': row['confirmation'],
+            'trade_count': trade_count,
+            'total_pnl': round(row['total_pnl'], 2),
+            'avg_pnl': round(row['avg_pnl'], 2),
+            'wins': row['wins'],
+            'losses': row['losses'],
+            'win_rate': round(win_rate, 1)
+        })
+
+    return jsonify({'confirmations': results})
+
+
+@app.route('/api/analytics/by_entry', methods=['GET'])
+def get_analytics_by_entry():
+    """Get performance analytics aggregated by entry type"""
+    user_id = get_current_user_id()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT
+            te.entry,
+            COUNT(DISTINCT t.id) as trade_count,
+            SUM(t.pnl) as total_pnl,
+            AVG(t.pnl) as avg_pnl,
+            SUM(CASE WHEN t.pnl > 0 THEN 1 ELSE 0 END) as wins,
+            SUM(CASE WHEN t.pnl < 0 THEN 1 ELSE 0 END) as losses
+        FROM trades t
+        JOIN trade_entries te ON t.id = te.trade_id
+        WHERE t.user_id = ? AND t.status = 'closed' AND t.pnl IS NOT NULL AND t.is_deleted = 0
+        GROUP BY te.entry
+        ORDER BY total_pnl DESC
+    ''', (user_id,))
+
+    entries = cursor.fetchall()
+    conn.close()
+
+    results = []
+    for row in entries:
+        trade_count = row['trade_count']
+        win_rate = (row['wins'] / trade_count * 100) if trade_count > 0 else 0
+        results.append({
+            'entry': row['entry'],
+            'trade_count': trade_count,
+            'total_pnl': round(row['total_pnl'], 2),
+            'avg_pnl': round(row['avg_pnl'], 2),
+            'wins': row['wins'],
+            'losses': row['losses'],
+            'win_rate': round(win_rate, 1)
+        })
+
+    return jsonify({'entries': results})
+
+
+@app.route('/api/analytics/by_key_level', methods=['GET'])
+def get_analytics_by_key_level():
+    """Get performance analytics aggregated by key level"""
+    user_id = get_current_user_id()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT
+            tkl.level,
+            COUNT(DISTINCT t.id) as trade_count,
+            SUM(t.pnl) as total_pnl,
+            AVG(t.pnl) as avg_pnl,
+            SUM(CASE WHEN t.pnl > 0 THEN 1 ELSE 0 END) as wins,
+            SUM(CASE WHEN t.pnl < 0 THEN 1 ELSE 0 END) as losses
+        FROM trades t
+        JOIN trade_key_levels tkl ON t.id = tkl.trade_id
+        WHERE t.user_id = ? AND t.status = 'closed' AND t.pnl IS NOT NULL AND t.is_deleted = 0
+        GROUP BY tkl.level
+        ORDER BY total_pnl DESC
+    ''', (user_id,))
+
+    key_levels = cursor.fetchall()
+    conn.close()
+
+    results = []
+    for row in key_levels:
+        trade_count = row['trade_count']
+        win_rate = (row['wins'] / trade_count * 100) if trade_count > 0 else 0
+        results.append({
+            'level': row['level'],
+            'trade_count': trade_count,
+            'total_pnl': round(row['total_pnl'], 2),
+            'avg_pnl': round(row['avg_pnl'], 2),
+            'wins': row['wins'],
+            'losses': row['losses'],
+            'win_rate': round(win_rate, 1)
+        })
+
+    return jsonify({'key_levels': results})
+
+
 @app.route('/api/time_analytics', methods=['GET'])
 def get_time_analytics():
     """Get performance by hour and day of week"""
@@ -1454,7 +1787,7 @@ def get_time_analytics():
     cursor.execute('''
         SELECT entry_time, pnl
         FROM trades
-        WHERE user_id = ? AND status = 'closed' AND pnl IS NOT NULL
+        WHERE user_id = ? AND status = 'closed' AND pnl IS NOT NULL AND is_deleted = 0
     ''', (user_id,))
 
     trades = cursor.fetchall()
