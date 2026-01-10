@@ -1,0 +1,3056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImbLedger</title>
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #000000;
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #111111;
+            border: 1px solid #333333;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%), #0b0b0b;
+            color: white;
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            text-align: left;
+        }
+
+        .header h1 {
+            font-size: 1.6em;
+            margin: 0 0 4px 0;
+        }
+
+        .header p {
+            font-size: 0.85em;
+            color: #9ca3af;
+            margin: 0;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .user-switcher {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .user-label {
+            font-size: 0.75em;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .user-select {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 0.9em;
+            cursor: pointer;
+            outline: none;
+            padding: 2px;
+        }
+
+        .user-select option {
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        .btn-add-user {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #999;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.2s;
+        }
+
+        .btn-add-user:hover {
+            border-color: #00ff88;
+            color: #00ff88;
+        }
+
+        .period-filter {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 20px;
+            background: #0b0b0b;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .period-tab {
+            padding: 4px 10px;
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 4px;
+            background: rgba(255,255,255,0.03);
+            color: #e5e7eb;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.75em;
+            transition: all 0.3s;
+            user-select: none;
+        }
+
+        .period-tab:hover {
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .period-tab.active {
+            background: rgba(255,255,255,0.06);
+            color: #ffffff;
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .metrics-dashboard {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+            padding: 25px;
+            background: #0b0b0b;
+            border-bottom: 1px solid #333333;
+        }
+
+        .metric-card {
+            background: #111111;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .metric-card-small {
+            padding: 10px 12px;
+        }
+
+        .metric-card-small .metric-label {
+            font-size: 0.8em;
+        }
+
+        .metric-card-small .metric-value {
+            font-size: 1.6em;
+        }
+
+        .metric-card-double {
+            grid-column: span 2;
+        }
+
+        .chart-container {
+            position: absolute;
+            width: 130px;
+            height: 70px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+        }
+
+        .metric-label {
+            font-size: 0.8em;
+            color: #bbbbbb;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .metric-value {
+            font-size: 1.6em;
+            font-weight: bold;
+            color: #ffffff;
+            position: relative;
+            z-index: 3;
+        }
+
+        .metric-value.positive {
+            color: #00ff88;
+        }
+
+        .metric-value.negative {
+            color: #ff3366;
+        }
+
+        /* Risk Metrics Section */
+        .risk-metrics-section {
+            padding: 25px;
+            background: #0b0b0b;
+            border-bottom: 1px solid #333333;
+        }
+
+        .section-header {
+            margin-bottom: 15px;
+        }
+
+        .section-header h3 {
+            font-size: 1.2em;
+            color: #ffffff;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .risk-metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .risk-card {
+            background: #111111;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .risk-label {
+            font-size: 0.75em;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .risk-value {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .risk-sub {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        /* Time Analytics Section */
+        .pnl-and-time-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .pnl-chart-left {
+            flex: 2;
+            min-width: 0;
+        }
+
+        .time-analytics-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .heatmap-container {
+            width: 100%;
+        }
+
+        .heatmap-container h4 {
+            font-size: 0.75em;
+            color: #666;
+            margin: 0 0 8px 0;
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .heatmap {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .heatmap-row {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .heatmap-label {
+            width: 40px;
+            font-size: 0.65em;
+            color: #666;
+            text-align: right;
+            padding-right: 6px;
+        }
+
+        .heatmap-cell {
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+            background: rgba(255,255,255,0.03);
+            cursor: pointer;
+            transition: all 0.15s;
+            position: relative;
+        }
+
+        .heatmap-cell:hover {
+            transform: scale(1.3);
+            z-index: 10;
+        }
+
+        .heatmap-cell.empty {
+            background: rgba(255,255,255,0.03);
+        }
+
+        .heatmap-cell.profit-low {
+            background: rgba(0, 255, 136, 0.2);
+        }
+
+        .heatmap-cell.profit-med {
+            background: rgba(0, 255, 136, 0.5);
+        }
+
+        .heatmap-cell.profit-high {
+            background: rgba(0, 255, 136, 0.8);
+        }
+
+        .heatmap-cell.loss-low {
+            background: rgba(255, 51, 102, 0.2);
+        }
+
+        .heatmap-cell.loss-med {
+            background: rgba(255, 51, 102, 0.5);
+        }
+
+        .heatmap-cell.loss-high {
+            background: rgba(255, 51, 102, 0.8);
+        }
+
+        .heatmap-cell[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.95);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7em;
+            white-space: nowrap;
+            margin-bottom: 4px;
+            z-index: 100;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .api-section {
+            padding: 12px 20px;
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .api-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .api-status {
+            font-size: 0.75em;
+            padding: 4px 10px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .api-status.connected {
+            color: #00ff88;
+            border-color: rgba(0,255,136,0.3);
+            background: rgba(0,255,136,0.05);
+        }
+
+        .api-input {
+            flex: 1;
+            min-width: 160px;
+            padding: 6px 12px;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 6px;
+            font-size: 0.85em;
+            background: rgba(255,255,255,0.02);
+            color: #ffffff;
+        }
+
+        .api-input:focus {
+            outline: none;
+            border-color: rgba(0,255,136,0.3);
+        }
+
+        .api-input::placeholder {
+            color: #666;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: rgba(255,255,255,0.04);
+            color: #ffffff;
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+
+        .btn-primary:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .btn-danger {
+            background: rgba(220, 38, 38, 0.1);
+            color: #ff4444;
+            border: 1px solid rgba(220, 38, 38, 0.3);
+        }
+
+        .btn-danger:hover {
+            background: rgba(220, 38, 38, 0.2);
+            border-color: rgba(220, 38, 38, 0.5);
+        }
+
+        .btn-success {
+            background: rgba(255,255,255,0.04);
+            color: #ffffff;
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+
+        .btn-success:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            padding: 25px;
+        }
+
+        .calendar-section h2 { color: #ffffff; }
+
+        .calendar-section {
+            background: #111111;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        #calendar {
+            margin-top: 20px;
+        }
+
+        .fc-day-profit {
+            background-color: rgba(0, 255, 136, 0.12) !important;
+            border-radius: 10px;
+        }
+
+        .fc-day-loss {
+            background-color: rgba(255, 51, 102, 0.12) !important;
+            border-radius: 10px;
+        }
+
+        /* Subtle current day highlight */
+        .fc .fc-day-today {
+            background-color: rgba(255, 255, 255, 0.03) !important;
+        }
+
+        .fc .fc-scrollgrid,
+        .fc .fc-scrollgrid-section > td,
+        .fc .fc-daygrid-body,
+        .fc .fc-toolbar .fc-button,
+        .fc .fc-toolbar .fc-button:focus,
+        .fc .fc-toolbar .fc-button:active,
+        .fc .fc-toolbar .fc-button:focus-visible {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            outline: none !important;
+            color: #ffffff !important;
+        }
+
+        .fc .fc-col-header-cell {
+            background: #111111 !important;
+            border: none !important;
+        }
+
+        .fc .fc-col-header-cell-cushion {
+            color: #ffffff !important;
+        }
+
+        .fc .fc-scrollgrid-section-body > td,
+        .fc .fc-scrollgrid-section-body table,
+        .fc .fc-scrollgrid-sync-table {
+            border: none !important;
+        }
+
+        .fc .fc-daygrid-day-frame {
+            border-color: transparent !important;
+        }
+
+        .fc td, .fc th {
+            border-color: transparent !important;
+            border-right: none !important;
+            border-left: none !important;
+        }
+
+        .fc .fc-scrollgrid {
+            border: none !important;
+        }
+
+        .fc-theme-standard td:last-child,
+        .fc-theme-standard th:last-child {
+            border-right: none !important;
+        }
+
+        .fc .fc-col-header {
+            background: #111111 !important;
+        }
+
+        .fc-scrollgrid-section-header > * {
+            border: none !important;
+        }
+
+        .fc .fc-scrollgrid-section-header td {
+            border: none !important;
+        }
+
+        .fc-daygrid-day {
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .day-stats {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -45%);
+            text-align: center;
+            font-size: 0.78em;
+            color: #eaeaea;
+            line-height: 1.15;
+            pointer-events: none;
+            width: calc(100% - 14px);
+        }
+
+        .moon-phase {
+            position: absolute;
+            top: 3px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8em;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .day-pnl.positive {
+            color: #8ff5c6;
+        }
+
+        .day-pnl.negative {
+            color: #ff9db2;
+        }
+
+        .trades-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .trades-section {
+            background: #111111;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .trades-section.open-trades {
+            min-height: 350px;
+        }
+
+        .trades-section.closed-trades {
+            margin-top: 20px;
+        }
+
+        .trades-section h3 {
+            color: #ffffff;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .trades-list {
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: #333 transparent;
+        }
+
+        .trades-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .trades-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .trades-list::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+
+        .trades-list::-webkit-scrollbar-thumb:hover {
+            background: #444;
+        }
+
+        .trades-list.open-list {
+            max-height: 280px;
+        }
+
+        .trade-card {
+            background: #111111;
+            padding: 12px 14px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95em;
+        }
+
+        .trade-card:hover {
+            transform: translateX(5px);
+            background: #151515;
+        }
+
+        .trade-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .trade-actions {
+            display: flex;
+            gap: 4px;
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            align-items: center;
+        }
+
+        .btn-entry-type {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #aaa;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-entry-type:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .entry-type-badge {
+            background: rgba(0,123,255,0.2);
+            color: #007bff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            margin-left: auto;
+        }
+
+        .trade-asset {
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+
+        .trade-pnl {
+            font-weight: bold;
+            font-size: 0.92em;
+        }
+
+        .trade-pnl.positive {
+            color: #00ff88;
+        }
+
+        .trade-pnl.negative {
+            color: #ff3366;
+        }
+
+        .trade-details {
+            font-size: 0.78em;
+            color: #bbbbbb;
+            line-height: 1.4;
+        }
+
+        .bias-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            margin-left: 5px;
+        }
+
+        .bias-badge.bullish {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        .bias-badge.bearish {
+            background: rgba(255, 51, 102, 0.2);
+            color: #ff3366;
+        }
+
+        .bias-badge.neutral {
+            background: rgba(255, 255, 255, 0.1);
+            color: #bbbbbb;
+        }
+
+        .stats-section {
+            padding: 25px;
+        }
+
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            padding: 15px;
+            background: #0b0b0b;
+            border-radius: 8px;
+        }
+
+        .stats-header h2 { color: #ffffff; }
+
+        .stats-toggle {
+            font-size: 1.5em;
+            transition: transform 0.3s;
+        }
+
+        .stats-toggle.open {
+            transform: rotate(180deg);
+        }
+
+        .stats-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .stats-content.open {
+            max-height: 5000px;
+        }
+
+        .stats-filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-label {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #bbbbbb;
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 8px;
+            background: #0b0b0b;
+            color: #ffffff;
+            color-scheme: dark;
+            cursor: pointer;
+        }
+
+        .filter-select option {
+            background: #0b0b0b;
+            color: #ffffff;
+            padding: 8px;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: rgba(139, 92, 246, 0.45);
+            background: #0b0b0b;
+        }
+
+        .stat-box {
+            background: #0b0b0b;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border-left: 4px solid rgba(255,255,255,0.10);
+        }
+
+        .stat-box.stat-keylevels { border-left-color: rgba(0, 255, 136, 0.85); }
+        .stat-box.stat-confirmations { border-left-color: rgba(59, 130, 246, 0.85); }
+        .stat-box.stat-models { border-left-color: rgba(255, 51, 102, 0.85); }
+
+        .stat-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 15px;
+        }
+
+        .stat-list {
+            font-size: 0.95em;
+            line-height: 1.8;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-name {
+            font-weight: 500;
+            flex: 1;
+            color: #ffffff;
+        }
+
+        .stat-metrics {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .stat-count {
+            background: #1a1a1a;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+        }
+
+        .stat-wr {
+            font-size: 0.9em;
+            font-weight: 600;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        .stat-wr.good {
+            color: #00ff88;
+        }
+
+        .stat-wr.average {
+            color: #bbbbbb;
+        }
+
+        .stat-wr.poor {
+            color: #ff3366;
+        }
+
+        .stat-bias-indicator {
+            font-size: 0.75em;
+            padding: 2px 6px;
+            border-radius: 8px;
+            margin-left: 8px;
+        }
+
+        .stat-bias-indicator.with {
+            background: rgba(0, 255, 136, 0.15);
+            color: #00ff88;
+        }
+
+        .stat-bias-indicator.against {
+            background: rgba(255, 51, 102, 0.15);
+            color: #ff3366;
+        }
+
+        .pnl-chart-section {
+            padding: 25px;
+            background: #0b0b0b;
+            border-bottom: 1px solid #333333;
+        }
+
+        .pnl-chart-container {
+            background: #111111;
+            border-radius: 12px;
+            padding: 20px;
+            height: 280px;
+        }
+
+        .pnl-chart-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 12px;
+        }
+
+        #customRange {
+            display: none;
+            justify-content: flex-start;
+            gap: 10px;
+            padding: 10px 0 0 0;
+            flex-wrap: wrap;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: #111111;
+            border: 1px solid #333333;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 1.8em;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: #ff3366;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #bbbbbb;
+            margin-bottom: 8px;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            background: #0b0b0b;
+            color: #ffffff;
+            font-size: 0.95em;
+        }
+
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-select {
+            cursor: pointer;
+            color-scheme: dark;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: rgba(139, 92, 246, 0.45);
+        }
+
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 8px;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            background: #0b0b0b;
+            min-height: 42px;
+            margin-bottom: 8px;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 4px;
+            font-size: 0.85em;
+            color: #ffffff;
+        }
+
+        .tag-remove {
+            cursor: pointer;
+            color: #ff3366;
+            font-weight: bold;
+            font-size: 1.1em;
+            line-height: 1;
+            padding: 0 2px;
+            transition: color 0.2s;
+        }
+
+        .tag-remove:hover {
+            color: #ff5588;
+        }
+
+        .screenshot-item {
+            position: relative;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+
+        .screenshot-item img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .screenshot-remove {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(255, 51, 102, 0.9);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 1em;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .screenshot-remove:hover {
+            background: rgba(255, 51, 102, 1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-dashboard {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1>ImbLedger</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-switcher">
+                    <span class="user-label">User</span>
+                    <select class="user-select" id="userSelect" onchange="switchUser()">
+                        <option value="1">Default</option>
+                    </select>
+                </div>
+                <button class="btn-add-user" onclick="showAddUserDialog()">+ New User</button>
+            </div>
+        </div>
+
+        <div class="api-section">
+            <div class="api-container">
+                <div class="api-status" id="apiStatus">Loading...</div>
+                <input type="text" class="api-input" id="apiKey" placeholder="API Key" style="max-width: 200px; display: none;">
+                <input type="password" class="api-input" id="apiSecret" placeholder="API Secret" style="max-width: 200px; display: none;">
+                <button class="btn btn-primary" onclick="saveApiCredentials()" style="padding: 6px 16px; font-size: 0.85em; display: none;">Save</button>
+                <button class="btn btn-success" onclick="syncBybitTrades()" style="padding: 6px 16px; font-size: 0.85em; display: none;">Sync</button>
+            </div>
+        </div>
+
+        <div class="metrics-dashboard" id="metricsDashboard">
+            <!-- ROW 1: Account Overview - General Performance -->
+            <div class="metric-card">
+                <div class="metric-label">Balance</div>
+                <div class="metric-value" id="accountBalance">$0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Total P&L</div>
+                <div class="metric-value" id="totalPnl">$0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Total Trades</div>
+                <div class="metric-value" id="totalTrades">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Win Rate</div>
+                <div class="metric-value" id="winRateValue">0%</div>
+                <div class="chart-container">
+                    <canvas id="winRateChart"></canvas>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Profit Factor</div>
+                <div class="metric-value" id="profitFactor">0.00</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Expectancy</div>
+                <div class="metric-value" id="expectancy">$0</div>
+            </div>
+
+            <!-- ROW 2: Win/Loss Analysis -->
+            <div class="metric-card metric-card-small">
+                <div class="metric-label">Avg Win</div>
+                <div class="metric-value positive" id="avgWin">$0</div>
+            </div>
+            <div class="metric-card metric-card-small">
+                <div class="metric-label">Avg Loss</div>
+                <div class="metric-value negative" id="avgLoss">$0</div>
+            </div>
+            <div class="metric-card metric-card-small">
+                <div class="metric-label">Largest Win</div>
+                <div class="metric-value positive" id="largestWin">$0</div>
+            </div>
+            <div class="metric-card metric-card-small">
+                <div class="metric-label">Largest Loss</div>
+                <div class="metric-value negative" id="largestLoss">$0</div>
+            </div>
+            <div class="metric-card metric-card-small">
+                <div class="metric-label">Avg R:R Ratio</div>
+                <div class="metric-value" id="avgRRRatio">0:1</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Avg Hold Period</div>
+                <div class="metric-value" id="avgHoldPeriod">-</div>
+            </div>
+
+            <!-- ROW 3: Risk & Strategy Performance -->
+            <div class="metric-card">
+                <div class="metric-label">Max Drawdown</div>
+                <div class="metric-value" id="maxDrawdown">$0</div>
+                <div class="metric-sub" id="maxDrawdownPct">0%</div>
+            </div>
+            <div class="metric-card metric-card-small">
+                <div class="metric-label">Win Streak</div>
+                <div class="metric-value" id="maxWinStreak">0</div>
+            </div>
+            <div class="metric-card metric-card-small">
+                <div class="metric-label">Loss Streak</div>
+                <div class="metric-value" id="maxLossStreak">0</div>
+            </div>
+            
+            <!-- Position Size Calculator -->
+            <div class="metric-card metric-card-double position-calculator">
+                <div class="metric-label">Position Calculator</div>
+                <div style="display: flex; gap: 12px; margin-bottom: 12px; width: 100%; justify-content: center;">
+                    <input type="number" id="riskAmount" placeholder="Risk Amount" style="width: 120px; padding: 8px; background: #1a1a1a; border: 1px solid #333; color: white; font-size: 14px; border-radius: 4px;">
+                    <select id="riskType" style="width: 80px; padding: 8px; background: #1a1a1a; border: 1px solid #333; color: white; font-size: 14px; border-radius: 4px;">
+                        <option value="usdt">USDT</option>
+                        <option value="percent">%</option>
+                    </select>
+                    <input type="number" id="stopLoss" placeholder="Stop Loss %" step="0.01" style="width: 120px; padding: 8px; background: #1a1a1a; border: 1px solid #333; color: white; font-size: 14px; border-radius: 4px;">
+                </div>
+                <div class="metric-value" id="positionSize" style="font-size: 20px; color: #10b981; margin-top: 8px;">$0</div>
+                <div class="metric-sub" style="font-size: 11px; color: #666;">Position Size (USDT)</div>
+            </div>
+        </div>
+
+        <div class="pnl-chart-section">
+            <div class="pnl-and-time-container">
+                <div class="pnl-chart-left">
+                    <div class="period-filter">
+                        <div class="period-tab active" data-period="all" onclick="changePeriod('all')">All Time</div>
+                        <div class="period-tab" data-period="month" onclick="changePeriod('month')">This Month</div>
+                        <div class="period-tab" data-period="week" onclick="changePeriod('week')">This Week</div>
+                        <div class="period-tab" data-period="today" onclick="changePeriod('today')">Today</div>
+                        <div class="period-tab" data-period="custom" onclick="changePeriod('custom')">Custom</div>
+                    </div>
+                    <div id="customRange">
+                        <input type="date" id="customStart" class="api-input" style="max-width: 170px;" />
+                        <input type="date" id="customEnd" class="api-input" style="max-width: 170px;" />
+                        <button class="btn btn-primary" style="padding: 8px 14px;" onclick="applyCustomRange()">Apply</button>
+                    </div>
+                    <div class="pnl-chart-container">
+                        <canvas id="pnlChart" style="height: 240px;"></canvas>
+                    </div>
+                </div>
+                <div class="time-analytics-right">
+                    <div class="heatmap-container">
+                        <h4>Performance by Day of Week</h4>
+                        <div class="heatmap" id="dayHeatmap"></div>
+                    </div>
+                    <div class="heatmap-container">
+                        <h4>Performance by Hour (UTC)</h4>
+                        <div class="heatmap" id="hourHeatmap"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="calendar-section">
+                <div id="calendar"></div>
+            </div>
+
+            <div class="trades-container">
+                <div class="trades-section open-trades">
+                    <div class="trades-list open-list" id="openTradesList"></div>
+                </div>
+
+                <div class="trades-section closed-trades">
+                    <div class="trades-list" id="closedTradesList"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <div class="stats-header" onclick="toggleStats()">
+                <h2>Performance Statistics</h2>
+                <span class="stats-toggle open" id="statsToggle">▼</span>
+            </div>
+            <div class="stats-content open" id="statsContent">
+                <div class="stats-filters">
+                    <div class="filter-group">
+                        <span class="filter-label">Asset</span>
+                        <select class="filter-select" id="assetFilter" onchange="updateStatsFilter()">
+                            <option value="all">All Assets</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <span class="filter-label">Bias W</span>
+                        <select class="filter-select" id="weeklyBiasFilter" onchange="updateStatsFilter()">
+                            <option value="all">All</option>
+                            <option value="bullish">Bullish</option>
+                            <option value="bearish">Bearish</option>
+                            <option value="neutral">Neutral</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <span class="filter-label">Bias D</span>
+                        <select class="filter-select" id="dailyBiasFilter" onchange="updateStatsFilter()">
+                            <option value="all">All</option>
+                            <option value="bullish">Bullish</option>
+                            <option value="bearish">Bearish</option>
+                            <option value="neutral">Neutral</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <span class="filter-label">Side</span>
+                        <select class="filter-select" id="sideFilter" onchange="updateStatsFilter()">
+                            <option value="all">All</option>
+                            <option value="long">Long</option>
+                            <option value="short">Short</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="stat-box stat-keylevels">
+                    <div class="stat-title">Key Levels Performance</div>
+                    <div class="stat-list" id="keyLevelsStats"></div>
+                </div>
+
+                <div class="stat-box stat-confirmations">
+                    <div class="stat-title">Confirmations Performance</div>
+                    <div class="stat-list" id="confirmationsStats"></div>
+                </div>
+
+                <div class="stat-box stat-entry">
+                    <div class="stat-title">Entry Performance</div>
+                    <div class="stat-list" id="entryStats"></div>
+                </div>
+
+                <div class="stat-box stat-models">
+                    <div class="stat-title">Models Performance</div>
+                    <div class="stat-list" id="modelsStats"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Trade Modal -->
+    <div class="modal-overlay" id="editTradeModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Trade</h3>
+                <button class="modal-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <form id="editTradeForm" onsubmit="saveTradeEdit(event)">
+                <input type="hidden" id="editTradeId">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Asset</label>
+                        <input type="text" class="form-input" id="editAsset" required readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Side</label>
+                        <select class="form-select" id="editSide" required disabled>
+                            <option value="long">Long</option>
+                            <option value="short">Short</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Weekly Bias</label>
+                        <select class="form-select" id="editWeeklyBias" required>
+                            <option value="bullish">Bullish</option>
+                            <option value="bearish">Bearish</option>
+                            <option value="neutral">Neutral</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Daily Bias</label>
+                        <select class="form-select" id="editDailyBias" required>
+                            <option value="bullish">Bullish</option>
+                            <option value="bearish">Bearish</option>
+                            <option value="neutral">Neutral</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Key Levels</label>
+                    <div class="tags-container" id="keyLevelsContainer"></div>
+                    <input type="text" class="form-input" id="editKeyLevelInput" placeholder="Type and press Enter to add...">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Confirmations</label>
+                    <div class="tags-container" id="confirmationsContainer"></div>
+                    <input type="text" class="form-input" id="editConfirmationInput" placeholder="Type and press Enter to add...">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Entries</label>
+                    <div class="tags-container" id="entriesContainer"></div>
+                    <input type="text" class="form-input" id="editEntryInput" placeholder="Type and press Enter to add...">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Models</label>
+                    <div class="tags-container" id="modelsContainer"></div>
+                    <input type="text" class="form-input" id="editModelInput" placeholder="Type and press Enter to add...">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Screenshots</label>
+                    <input type="file" id="editScreenshotFile" accept="image/*" style="display: none;" onchange="handleScreenshotUpload(event)">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('editScreenshotFile').click()" style="width: 100%; padding: 8px; font-size: 0.9em; margin-bottom: 8px;">
+                        Upload Screenshot
+                    </button>
+                    <input
+                        type="text"
+                        id="screenshotUrlInput"
+                        placeholder="Paste image URL (TradingView, Imgur, etc)"
+                        style="width: 100%; padding: 8px; font-size: 0.9em; margin-bottom: 8px; border: 1px solid #444; background: #2a2a2a; color: #fff; border-radius: 4px;"
+                    />
+                    <button type="button" class="btn btn-secondary" onclick="addScreenshotUrl()" style="width: 100%; padding: 8px; font-size: 0.9em; margin-bottom: 8px;">
+                        Add Screenshot URL
+                    </button>
+                    <div id="screenshotGallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; margin-top: 8px;">
+                        <!-- Screenshots will be inserted here -->
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-textarea" id="editNotes" placeholder="Add your trade notes..."></textarea>
+                </div>
+
+                <div class="modal-actions" style="justify-content: space-between;">
+                    <button type="button" class="btn btn-danger" onclick="deleteTrade()">Delete Trade</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let calendar;
+        let currentPeriod = 'all';
+        let customStartDate = '';
+        let customEndDate = '';
+        let statsOpen = true; // 🔥 FIX: Start with stats section OPEN so performance data is visible
+        let calendarDates = {};
+        let allTrades = [];
+        let pnlChart = null;
+        let statsFilter = {
+            weeklyBias: 'all',
+            dailyBias: 'all',
+            asset: 'all',
+            side: 'all'
+        };
+
+        // Moon phases (Full Moon 🌕 and New Moon 🌑) - Dublin Time (UTC+0/+1)
+        const moonPhases = {
+            // 2025
+            '2025-01-03': 'full',
+            '2025-01-18': 'new',
+            '2025-02-01': 'full',
+            '2025-02-17': 'new',
+            '2025-03-03': 'full',
+            '2025-03-18': 'new',
+            '2025-04-01': 'full',
+            '2025-04-16': 'new',
+            '2025-05-01': 'full',
+            '2025-05-16': 'new',
+            '2025-05-30': 'full',
+            '2025-06-14': 'new',
+            '2025-06-29': 'full',
+            '2025-07-14': 'new',
+            '2025-07-28': 'full',
+            '2025-08-12': 'new',
+            '2025-08-27': 'full',
+            '2025-09-11': 'new',
+            '2025-09-25': 'full',
+            '2025-10-10': 'new',
+            '2025-10-25': 'full',
+            '2025-11-09': 'new',
+            '2025-11-23': 'full',
+            '2025-12-08': 'new',
+            '2025-12-23': 'full',
+            // 2026
+            '2026-01-03': 'full',
+            '2026-01-18': 'new',
+            '2026-02-01': 'full',
+            '2026-02-17': 'new',
+            '2026-03-03': 'full',
+            '2026-03-18': 'new',
+            '2026-04-01': 'full',
+            '2026-04-16': 'new',
+            '2026-05-01': 'full',
+            '2026-05-16': 'new',
+            '2026-05-30': 'full',
+            '2026-06-14': 'new',
+            '2026-06-29': 'full',
+            '2026-07-14': 'new',
+            '2026-07-28': 'full',
+            '2026-08-12': 'new',
+            '2026-08-27': 'full',
+            '2026-09-11': 'new',
+            '2026-09-25': 'full',
+            '2026-10-10': 'new',
+            '2026-10-25': 'full',
+            '2026-11-09': 'new',
+            '2026-11-23': 'full',
+            '2026-12-08': 'new',
+            '2026-12-23': 'full'
+        };
+
+        function clearLoading() {
+            console.log('[UI] Clearing loading state');
+            const statusEl = document.getElementById('apiStatus');
+            if (statusEl) {
+                // Clear "Loading..." text
+                if (statusEl.textContent === 'Loading...') {
+                    statusEl.textContent = '';
+                }
+                // Remove any loading class if present
+                statusEl.classList.remove('loading');
+            }
+        }
+
+        function renderConnected(data) {
+            console.log('[UI] renderConnected called with:', data);
+
+            // CRITICAL: Always clear loading state first
+            clearLoading();
+
+            // Hide API inputs when connected
+            const apiKey = document.getElementById('apiKey');
+            const apiSecret = document.getElementById('apiSecret');
+            const saveBtn = document.querySelector('button[onclick="saveApiCredentials()"]');
+            const syncBtn = document.querySelector('button[onclick="syncBybitTrades()"]');
+            const statusEl = document.getElementById('apiStatus');
+
+            if (apiKey) apiKey.style.display = 'none';
+            if (apiSecret) apiSecret.style.display = 'none';
+            if (saveBtn) saveBtn.style.display = 'none';
+
+            // Show sync button only when connected
+            if (syncBtn) syncBtn.style.display = 'block';
+
+            if (statusEl) {
+                statusEl.textContent = `Connected to Bybit (**${data.api_key_last4})`;
+                statusEl.classList.add('connected');
+            }
+
+            // Load all the data
+            syncAllBybitData();
+            loadUsers();
+            initCalendar();
+            loadTrades();
+            loadOpenTrades();
+            loadRiskMetrics();
+            loadTimeAnalytics();
+            loadPerformanceStats();
+        }
+
+        function renderDisconnected() {
+            console.log('[UI] renderDisconnected called');
+
+            // CRITICAL: Always clear loading state first
+            clearLoading();
+
+            // Show API inputs when not connected
+            const apiKey = document.getElementById('apiKey');
+            const apiSecret = document.getElementById('apiSecret');
+            const saveBtn = document.querySelector('button[onclick="saveApiCredentials()"]');
+            const syncBtn = document.querySelector('button[onclick="syncBybitTrades()"]');
+            const statusEl = document.getElementById('apiStatus');
+
+            if (apiKey) apiKey.style.display = 'block';
+            if (apiSecret) apiSecret.style.display = 'block';
+            if (saveBtn) saveBtn.style.display = 'block';
+
+            // Hide sync button when not connected
+            if (syncBtn) syncBtn.style.display = 'none';
+
+            if (statusEl) {
+                statusEl.textContent = 'Not Connected';
+                statusEl.classList.remove('connected');
+            }
+
+            // Still load basic data
+            loadUsers();
+            initCalendar();
+            loadTrades();
+            loadOpenTrades();
+            loadRiskMetrics();
+            loadTimeAnalytics();
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('[UI] Page loaded');
+
+            // Fail-safe timeout: ensure UI never hangs forever
+            let loadingComplete = false;
+            setTimeout(() => {
+                if (!loadingComplete) {
+                    console.warn('[UI] Loading timeout fallback - forcing disconnected state');
+                    clearLoading();
+                    renderDisconnected();
+                }
+            }, 5000);
+
+            try {
+                console.log('[UI] Fetching credentials...');
+                const res = await fetch('/api/get_bybit_credentials');
+                console.log('[UI] Response status:', res.status);
+
+                const data = await res.json();
+                console.log('[UI] Response data:', data);
+
+                if (data.connected) {
+                    clearLoading();
+                    console.log('[UI] Rendering CONNECTED');
+                    renderConnected(data);
+                    loadingComplete = true;
+                } else {
+                    clearLoading();
+                    console.log('[UI] Rendering DISCONNECTED');
+                    renderDisconnected();
+                    loadingComplete = true;
+                }
+            } catch (err) {
+                console.error('[UI] Fatal error:', err);
+                clearLoading();
+                renderDisconnected();
+                loadingComplete = true;
+            }
+        });
+
+        // ================== USER MANAGEMENT ==================
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/users');
+                const data = await response.json();
+
+                const userSelect = document.getElementById('userSelect');
+                userSelect.innerHTML = '';
+
+                data.users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = user.username;
+                    if (user.id === data.current_user_id) {
+                        option.selected = true;
+                    }
+                    userSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+
+        async function switchUser() {
+            const userId = document.getElementById('userSelect').value;
+
+            try {
+                const response = await fetch(`/api/switch_user/${userId}`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    // Reload all data for new user
+                    location.reload();
+                } else {
+                    alert('Error switching user: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error switching user:', error);
+                alert('Error switching user');
+            }
+        }
+
+        function showAddUserDialog() {
+            const username = prompt('Enter username for new user:');
+            if (!username || username.trim() === '') return;
+
+            createUser(username.trim());
+        }
+
+        async function createUser(username) {
+            try {
+                const response = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    // Reload to switch to new user
+                    location.reload();
+                } else {
+                    alert('Error creating user: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error creating user:', error);
+                alert('Error creating user');
+            }
+        }
+
+        function initCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                initialDate: new Date(), // Always start with current month
+                height: 'auto',
+                firstDay: 1,
+                headerToolbar: {
+                    left: 'prev,next',
+                    center: 'title',
+                    right: ''
+                },
+                dayCellDidMount: function(info) {
+                    const dateStr = info.date.toISOString().split('T')[0];
+
+                    // Add moon phase indicator
+                    if (moonPhases[dateStr]) {
+                        const moonDiv = document.createElement('div');
+                        moonDiv.className = 'moon-phase';
+                        moonDiv.textContent = moonPhases[dateStr] === 'full' ? '🌕' : '🌑';
+                        moonDiv.title = moonPhases[dateStr] === 'full' ? 'Full Moon' : 'New Moon';
+                        info.el.appendChild(moonDiv);
+                    }
+
+                    if (calendarDates[dateStr]) {
+                        const dayData = calendarDates[dateStr];
+
+                        // Removed background color coding - P&L color is enough
+
+                        const statsDiv = document.createElement('div');
+                        statsDiv.className = 'day-stats';
+                        statsDiv.innerHTML = `
+                            <div class="day-trades">${dayData.count} trade${dayData.count > 1 ? 's' : ''}</div>
+                            <div class="day-pnl ${dayData.pnl >= 0 ? 'positive' : 'negative'}">${dayData.pnl >= 0 ? '+' : ''}${dayData.pnl.toFixed(0)}</div>
+                            <div class="day-wr">${dayData.winRate.toFixed(0)}% WR</div>
+                        `;
+                        info.el.appendChild(statsDiv);
+                    }
+                },
+                dateClick: function(info) {
+                    showDayTrades(info.dateStr);
+                }
+            });
+            calendar.render();
+            loadCalendarData();
+        }
+
+        async function loadCalendarData() {
+            try {
+                const response = await fetch('/api/calendar_data');
+                const events = await response.json();
+
+                calendarDates = {};
+                events.forEach(event => {
+                    calendarDates[event.start] = {
+                        pnl: event.extendedProps.pnl,
+                        count: event.extendedProps.trade_count,
+                        winRate: event.extendedProps.win_rate
+                    };
+                });
+
+                // Re-render all day cells with updated data
+                if (calendar) {
+                    const allDayCells = document.querySelectorAll('.fc-daygrid-day');
+                    allDayCells.forEach(dayCell => {
+                        const dateStr = dayCell.getAttribute('data-date');
+                        if (dateStr && calendarDates[dateStr]) {
+                            // Remove old stats if exists
+                            const oldStats = dayCell.querySelector('.day-stats');
+                            if (oldStats) oldStats.remove();
+
+                            // Add new stats
+                            const dayData = calendarDates[dateStr];
+                            const statsDiv = document.createElement('div');
+                            statsDiv.className = 'day-stats';
+                            statsDiv.innerHTML = `
+                                <div class="day-trades">${dayData.count} trade${dayData.count > 1 ? 's' : ''}</div>
+                                <div class="day-pnl ${dayData.pnl >= 0 ? 'positive' : 'negative'}">${dayData.pnl >= 0 ? '+' : ''}${dayData.pnl.toFixed(0)}</div>
+                                <div class="day-wr">${dayData.winRate.toFixed(0)}% WR</div>
+                            `;
+                            dayCell.querySelector('.fc-daygrid-day-frame').appendChild(statsDiv);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading calendar:', error);
+                alert('Error loading calendar data');
+            }
+        }
+
+        function toggleStats() {
+            statsOpen = !statsOpen;
+            const content = document.getElementById('statsContent');
+            const toggle = document.getElementById('statsToggle');
+            
+            if (statsOpen) {
+                content.classList.add('open');
+                toggle.classList.add('open');
+            } else {
+                content.classList.remove('open');
+                toggle.classList.remove('open');
+            }
+        }
+
+        function changePeriod(period) {
+            currentPeriod = period;
+
+            const customRange = document.getElementById('customRange');
+            if (customRange) {
+                customRange.style.display = period === 'custom' ? 'flex' : 'none';
+            }
+            
+            document.querySelectorAll('.period-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[data-period="${period}"]`).classList.add('active');
+
+            if (period !== 'custom') {
+                customStartDate = '';
+                customEndDate = '';
+                loadTrades();
+            }
+        }
+
+        function applyCustomRange() {
+            const start = document.getElementById('customStart')?.value || '';
+            const end = document.getElementById('customEnd')?.value || '';
+
+            if (!start || !end) {
+                alert('Please select both dates');
+                return;
+            }
+
+            customStartDate = start;
+            customEndDate = end;
+            loadTrades();
+        }
+
+        async function loadTrades() {
+            try {
+                let url = `/api/trades?period=${currentPeriod}&status=closed`;
+                if (currentPeriod === 'custom' && customStartDate && customEndDate) {
+                    url += `&start_date=${customStartDate}&end_date=${customEndDate}`;
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                allTrades = data.trades;
+                
+                updateMetrics(data.statistics);
+                displayClosedTrades(data.trades.slice(0, 10));
+                populateAssetFilter(data.trades);
+                updateStatsFilter();
+                updatePnlChart(data.trades);
+                
+                // Load performance stats from backend
+                loadPerformanceStats();
+                
+            } catch (error) {
+                console.error('Error loading trades:', error);
+                alert('Error loading trades');
+            }
+        }
+
+        async function loadOpenTrades() {
+            try {
+                const response = await fetch('/api/trades?status=open');
+                const data = await response.json();
+                displayOpenTrades(data.trades);
+            } catch (error) {
+                console.error('Error loading open trades:', error);
+            }
+        }
+
+        function populateAssetFilter(trades) {
+            const assets = [...new Set(trades.map(t => t.asset))].sort();
+            const assetFilter = document.getElementById('assetFilter');
+            const currentValue = assetFilter.value;
+            
+            assetFilter.innerHTML = '<option value="all">All Assets</option>' + 
+                assets.map(asset => `<option value="${asset}">${asset}</option>`).join('');
+            
+            if (assets.includes(currentValue)) {
+                assetFilter.value = currentValue;
+            }
+        }
+
+        function updateMetrics(stats) {
+            document.getElementById('totalPnl').textContent = '$' + stats.total_pnl.toFixed(2);
+            document.getElementById('totalPnl').className = 'metric-value ' + (stats.total_pnl >= 0 ? 'positive' : 'negative');
+
+            document.getElementById('totalTrades').textContent = stats.total_trades;
+
+            // Fetch and display account balance
+            fetchAccountBalance();
+
+            document.getElementById('avgWin').textContent = '$' + stats.avg_win.toFixed(2);
+            document.getElementById('avgLoss').textContent = '$' + stats.avg_loss.toFixed(2);
+            document.getElementById('profitFactor').textContent = stats.profit_factor.toFixed(2);
+
+            // Update best performers (will be calculated from allTrades)
+            updateBestPerformers();
+
+            updateWinRateChart(stats.win_rate);
+        }
+
+        function updateBestPerformers() {
+            if (!allTrades || allTrades.length === 0) {
+                document.getElementById('avgHoldPeriod').textContent = '-';
+                return;
+            }
+
+            // Calculate average hold period
+            let totalHoldTime = 0;
+            let validTrades = 0;
+
+            allTrades.forEach(trade => {
+                if (trade.entry_time && trade.exit_time) {
+                    const entryTime = new Date(trade.entry_time);
+                    const exitTime = new Date(trade.exit_time);
+                    const holdTime = exitTime - entryTime;
+                    if (holdTime > 0) {
+                        totalHoldTime += holdTime;
+                        validTrades++;
+                    }
+                }
+            });
+
+            if (validTrades > 0) {
+                const avgHoldTimeMs = totalHoldTime / validTrades;
+                const hours = avgHoldTimeMs / (1000 * 60 * 60);
+
+                let displayText;
+                if (hours < 1) {
+                    const minutes = Math.round(hours * 60);
+                    displayText = `${minutes}m`;
+                } else if (hours < 24) {
+                    displayText = `${hours.toFixed(1)}h`;
+                } else {
+                    const days = hours / 24;
+                    displayText = `${days.toFixed(1)}d`;
+                }
+
+                document.getElementById('avgHoldPeriod').textContent = displayText;
+            } else {
+                document.getElementById('avgHoldPeriod').textContent = '-';
+            }
+        }
+
+        async function fetchAccountBalance() {
+            try {
+                const response = await fetch('/api/bybit/balance');
+                const data = await response.json();
+
+                const balanceEl = document.getElementById('accountBalance');
+
+                if (data.success && data.balance !== undefined) {
+                    balanceEl.textContent = '$' + data.balance.toFixed(2);
+                    balanceEl.style.color = '';
+                    balanceEl.classList.remove('disconnected');
+                } else {
+                    balanceEl.textContent = '$0';
+                    balanceEl.style.color = '#999';
+                    balanceEl.classList.add('disconnected');
+                }
+            } catch (error) {
+                console.error('Error fetching balance:', error);
+                const balanceEl = document.getElementById('accountBalance');
+                if (balanceEl) {
+                    balanceEl.textContent = '$0';
+                    balanceEl.style.color = '#999';
+                    balanceEl.classList.add('disconnected');
+                }
+            }
+        }
+
+        async function loadRiskMetrics() {
+            try {
+                const response = await fetch('/api/risk_metrics');
+                const data = await response.json();
+
+                document.getElementById('maxDrawdown').textContent = '$' + Math.abs(data.max_drawdown).toFixed(2);
+                document.getElementById('maxDrawdownPct').textContent = data.max_drawdown_pct.toFixed(1) + '%';
+
+                const expectancyEl = document.getElementById('expectancy');
+                expectancyEl.textContent = '$' + data.expectancy.toFixed(2);
+                expectancyEl.className = 'risk-value ' + (data.expectancy >= 0 ? 'positive' : 'negative');
+
+                document.getElementById('avgRRRatio').textContent = data.avg_rr_ratio.toFixed(2) + ':1';
+                document.getElementById('maxWinStreak').textContent = data.consecutive_wins;
+                document.getElementById('maxLossStreak').textContent = data.consecutive_losses;
+                document.getElementById('largestWin').textContent = '$' + data.largest_win.toFixed(2);
+                document.getElementById('largestLoss').textContent = '$' + Math.abs(data.largest_loss).toFixed(2);
+            } catch (error) {
+                console.error('Error loading risk metrics:', error);
+            }
+        }
+
+        // ================== TIME ANALYTICS ==================
+        async function loadTimeAnalytics() {
+            try {
+                const response = await fetch('/api/time_analytics');
+                const data = await response.json();
+
+                renderHourHeatmap(data.by_hour);
+                renderDayHeatmap(data.by_day);
+            } catch (error) {
+                console.error('Error loading time analytics:', error);
+            }
+        }
+
+        function renderHourHeatmap(hourStats) {
+            const container = document.getElementById('hourHeatmap');
+            container.innerHTML = '';
+
+            // Calculate max absolute P&L for intensity scaling
+            let maxPnl = 0;
+            Object.values(hourStats).forEach(stats => {
+                if (Math.abs(stats.total_pnl) > maxPnl) maxPnl = Math.abs(stats.total_pnl);
+            });
+
+            // Create all 24 hours
+            for (let hour = 0; hour < 24; hour++) {
+                const stats = hourStats[hour.toString()] || { count: 0, total_pnl: 0, win_rate: 0 };
+
+                const cell = document.createElement('div');
+                cell.className = 'heatmap-cell';
+
+                if (stats.count === 0) {
+                    cell.classList.add('empty');
+                    cell.title = `${hour.toString().padStart(2, '0')}:00 - No trades`;
+                } else {
+                    const intensity = maxPnl > 0 ? Math.abs(stats.total_pnl) / maxPnl : 0;
+
+                    if (stats.total_pnl > 0) {
+                        if (intensity < 0.33) cell.classList.add('profit-low');
+                        else if (intensity < 0.66) cell.classList.add('profit-med');
+                        else cell.classList.add('profit-high');
+                    } else if (stats.total_pnl < 0) {
+                        if (intensity < 0.33) cell.classList.add('loss-low');
+                        else if (intensity < 0.66) cell.classList.add('loss-med');
+                        else cell.classList.add('loss-high');
+                    } else {
+                        cell.classList.add('empty');
+                    }
+
+                    cell.title = `${hour.toString().padStart(2, '0')}:00 - ${stats.count} trades | $${stats.total_pnl.toFixed(2)} | ${stats.win_rate}% WR`;
+                }
+
+                container.appendChild(cell);
+            }
+        }
+
+        function renderDayHeatmap(dayStats) {
+            const container = document.getElementById('dayHeatmap');
+            container.innerHTML = '';
+
+            const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+            // Calculate max absolute P&L for intensity scaling
+            let maxPnl = 0;
+            Object.values(dayStats).forEach(stats => {
+                if (Math.abs(stats.total_pnl) > maxPnl) maxPnl = Math.abs(stats.total_pnl);
+            });
+
+            for (let i = 0; i < 7; i++) {
+                const stats = dayStats[i.toString()] || { count: 0, total_pnl: 0, win_rate: 0 };
+
+                const cell = document.createElement('div');
+                cell.className = 'heatmap-cell';
+
+                if (stats.count === 0) {
+                    cell.classList.add('empty');
+                    cell.title = `${dayNames[i]} - No trades`;
+                } else {
+                    const intensity = maxPnl > 0 ? Math.abs(stats.total_pnl) / maxPnl : 0;
+
+                    if (stats.total_pnl > 0) {
+                        if (intensity < 0.33) cell.classList.add('profit-low');
+                        else if (intensity < 0.66) cell.classList.add('profit-med');
+                        else cell.classList.add('profit-high');
+                    } else if (stats.total_pnl < 0) {
+                        if (intensity < 0.33) cell.classList.add('loss-low');
+                        else if (intensity < 0.66) cell.classList.add('loss-med');
+                        else cell.classList.add('loss-high');
+                    } else {
+                        cell.classList.add('empty');
+                    }
+
+                    cell.title = `${dayNames[i]} - ${stats.count} trades | $${stats.total_pnl.toFixed(2)} | ${stats.win_rate}% WR`;
+                }
+
+                container.appendChild(cell);
+            }
+        }
+
+        let winRateChart = null;
+
+        function updateWinRateChart(winRate) {
+            const ctx = document.getElementById('winRateChart').getContext('2d');
+            const winRateValue = document.getElementById('winRateValue');
+            
+            winRateValue.textContent = winRate + '%';
+            
+            let color;
+            if (winRate >= 60) color = '#00ff88';
+            else if (winRate >= 50) color = '#3b82f6';
+            else if (winRate >= 40) color = '#f59e0b';
+            else color = '#ff3366';
+            
+            if (winRateChart) {
+                winRateChart.destroy();
+            }
+            
+            winRateChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [winRate, 100 - winRate],
+                        backgroundColor: [color, 'rgba(255, 255, 255, 0.05)'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '88%',
+                    rotation: -90,
+                    circumference: 180,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    }
+                }
+            });
+        }
+
+        function displayOpenTrades(trades) {
+            const container = document.getElementById('openTradesList');
+            if (trades.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #bbbbbb; padding: 20px;">No open trades</p>';
+                return;
+            }
+
+            container.innerHTML = trades.map(trade => {
+                const currentPnl = trade.side === 'long'
+                    ? (trade.entry_price * trade.quantity * 0.02)
+                    : -(trade.entry_price * trade.quantity * 0.02);
+
+                return `
+                    <div class="trade-card open" onclick="editTrade(${trade.id})">
+                        <div class="trade-header">
+                            <span class="trade-asset" style="display: flex; align-items: center; gap: 8px;">
+                                <img src="${getCryptoLogo(trade.asset)}"
+                                     alt="${trade.asset}"
+                                     style="width: 24px; height: 24px; border-radius: 50%;"
+                                     onerror="this.style.display='none'">
+                                <span>
+                                    ${trade.asset} ${trade.side.toUpperCase()}
+                                    <span class="bias-badge ${trade.weekly_bias}">${trade.weekly_bias[0].toUpperCase()}</span>
+                                    <span class="bias-badge ${trade.daily_bias}">${trade.daily_bias[0].toUpperCase()}</span>
+                                </span>
+                            </span>
+                            <span class="trade-pnl ${currentPnl >= 0 ? 'positive' : 'negative'}">
+                                ${currentPnl >= 0 ? '+' : ''}$${currentPnl.toFixed(2)}
+                            </span>
+                        </div>
+                        <div class="trade-details">
+                            Entry: $${trade.entry_price} • Qty: ${trade.quantity}<br>
+                            ${new Date(trade.entry_time).toLocaleString()}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getCryptoLogo(symbol) {
+            // Extract base symbol (remove USDT, PERP, etc.)
+            const baseSymbol = symbol.replace(/USDT|PERP|USD|-.*$/gi, '').toLowerCase();
+            // Use CoinGecko API for crypto logos (free, no API key needed)
+            return `https://assets.coincap.io/assets/icons/${baseSymbol}@2x.png`;
+        }
+
+        function displayClosedTrades(trades) {
+            const container = document.getElementById('closedTradesList');
+            if (trades.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #bbbbbb; padding: 20px;">No trades for this period</p>';
+                return;
+            }
+
+            container.innerHTML = trades.map(trade => `
+                <div class="trade-card ${(trade.pnl || 0) > 0 ? 'profit' : 'loss'}" onclick="editTrade(${trade.id})" style="cursor: pointer;">
+                    <div class="trade-header">
+                        <span class="trade-asset" style="display: flex; align-items: center; gap: 10px;">
+                            <img src="${getCryptoLogo(trade.asset)}"
+                                 alt="${trade.asset}"
+                                 style="width: 28px; height: 28px; border-radius: 50%;"
+                                 onerror="this.style.display='none'">
+                            <span style="font-weight: 500;">
+                                ${trade.asset}
+                                <span style="color: #999; font-weight: 400; margin-left: 4px;">${trade.side.toUpperCase()}</span>
+                            </span>
+                        </span>
+                        <span class="trade-pnl ${(trade.pnl || 0) >= 0 ? 'positive' : 'negative'}" style="font-weight: 600; font-size: 1.05em;">
+                            ${(trade.pnl || 0) >= 0 ? '+' : ''}$${(trade.pnl || 0).toFixed(2)}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function showDayTrades(dateStr) {
+            try {
+                const response = await fetch(`/api/trades_by_date?date=${dateStr}`);
+                const data = await response.json();
+                
+                if (data.trades.length === 0) {
+                    alert('No trades on this day');
+                    return;
+                }
+
+                displayClosedTrades(data.trades);
+                document.querySelector('.closed-trades').scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                console.error('Error loading day trades:', error);
+                alert('Error loading trades for this day');
+            }
+        }
+
+        async function setEntryType(tradeId, entryType) {
+            try {
+                const response = await fetch(`/api/trades/${tradeId}/entry_type`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ entry_type: entryType })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    await loadTrades();
+                    showNotification(`Entry type set to: ${entryType}`, 'success');
+                } else {
+                    alert('Failed to set entry type: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error setting entry type:', error);
+                alert('Error setting entry type');
+            }
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#00ff88' : '#ff3366'};
+                color: #000;
+                padding: 12px 20px;
+                border-radius: 8px;
+                z-index: 10000;
+                font-weight: 500;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 2000);
+        }
+
+        // Tag Management
+        function addTag(containerId, value) {
+            if (!value || !value.trim()) return;
+
+            const container = document.getElementById(containerId);
+            const tag = document.createElement('div');
+            tag.className = 'tag';
+            tag.innerHTML = `
+                <span>${value.trim()}</span>
+                <span class="tag-remove" onclick="this.parentElement.remove()">&times;</span>
+            `;
+            container.appendChild(tag);
+        }
+
+        function getTagValues(containerId) {
+            const container = document.getElementById(containerId);
+            return Array.from(container.querySelectorAll('.tag span:first-child'))
+                .map(span => span.textContent);
+        }
+
+        function clearTags(containerId) {
+            document.getElementById(containerId).innerHTML = '';
+        }
+
+        function loadTags(containerId, values) {
+            clearTags(containerId);
+            if (values && Array.isArray(values)) {
+                values.forEach(value => addTag(containerId, value));
+            }
+        }
+
+        // Screenshot Management
+        let currentScreenshots = [];
+
+        async function handleScreenshotUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('screenshot', file);
+
+            try {
+                const response = await fetch('/api/upload_screenshot', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    currentScreenshots.push(result.url);
+                    renderScreenshots();
+                    showNotification('Screenshot uploaded successfully', 'success');
+                } else {
+                    alert('Failed to upload screenshot');
+                }
+            } catch (error) {
+                console.error('Error uploading screenshot:', error);
+                alert('Error uploading screenshot');
+            }
+
+            event.target.value = '';
+        }
+
+        async function addScreenshotUrl() {
+            const url = document.getElementById("screenshotUrlInput").value.trim();
+            if (!url) return;
+
+            const tradeId = document.getElementById('editTradeId').value;
+            
+            try {
+                const response = await fetch(`/api/trades/${tradeId}/screenshots/url`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ url })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    currentScreenshots.push(url);
+                    renderScreenshots();
+                    document.getElementById("screenshotUrlInput").value = "";
+                    showNotification('Screenshot URL added successfully', 'success');
+                } else {
+                    alert('Failed to add screenshot URL');
+                }
+            } catch (error) {
+                console.error('Error adding screenshot URL:', error);
+                alert('Error adding screenshot URL');
+            }
+        }
+
+        function removeScreenshotFromList(url) {
+            currentScreenshots = currentScreenshots.filter(s => s !== url);
+            renderScreenshots();
+        }
+
+        function renderScreenshots() {
+            const gallery = document.getElementById('screenshotGallery');
+            if (currentScreenshots.length === 0) {
+                gallery.innerHTML = '';
+                return;
+            }
+
+            gallery.innerHTML = currentScreenshots.map(url => `
+                <div class="screenshot-item">
+                    <img src="${url}" alt="Trade screenshot">
+                    <button type="button" class="screenshot-remove" onclick="removeScreenshotFromList('${url}')">&times;</button>
+                </div>
+            `).join('');
+        }
+
+        async function editTrade(tradeId) {
+            try {
+                const response = await fetch(`/api/trades/${tradeId}`);
+                const trade = await response.json();
+
+                // Set basic fields
+                document.getElementById('editTradeId').value = trade.id;
+                document.getElementById('editAsset').value = trade.asset;
+                document.getElementById('editSide').value = trade.side;
+                document.getElementById('editWeeklyBias').value = trade.weekly_bias || 'neutral';
+                document.getElementById('editDailyBias').value = trade.daily_bias || 'neutral';
+                document.getElementById('editNotes').value = trade.notes || '';
+
+                // Load arrays as tags
+                loadTags('keyLevelsContainer', trade.key_levels || []);
+                loadTags('confirmationsContainer', trade.confirmations || []);
+                loadTags('entriesContainer', trade.entries || []);
+                loadTags('modelsContainer', trade.models || []);
+
+                // Load screenshots
+                currentScreenshots = trade.screenshots || [];
+                renderScreenshots();
+
+                // Setup tag input handlers
+                setupTagInput('editKeyLevelInput', 'keyLevelsContainer');
+                setupTagInput('editConfirmationInput', 'confirmationsContainer');
+                setupTagInput('editEntryInput', 'entriesContainer');
+                setupTagInput('editModelInput', 'modelsContainer');
+
+                document.getElementById('editTradeModal').classList.add('active');
+            } catch (error) {
+                console.error('Error loading trade:', error);
+                alert('Error loading trade details');
+            }
+        }
+
+        function setupTagInput(inputId, containerId) {
+            const input = document.getElementById(inputId);
+            // Remove existing listener
+            input.onkeydown = null;
+            // Add new listener
+            input.onkeydown = function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const value = this.value.trim();
+                    if (value) {
+                        addTag(containerId, value);
+                        this.value = '';
+                    }
+                }
+            };
+        }
+
+        function closeEditModal() {
+            document.getElementById('editTradeModal').classList.remove('active');
+        }
+
+        async function saveTradeEdit(event) {
+            event.preventDefault();
+
+            const tradeId = document.getElementById('editTradeId').value;
+
+            try {
+                const originalResponse = await fetch(`/api/trades/${tradeId}`);
+                const originalTrade = await originalResponse.json();
+
+                // Split saving into 3 separate calls
+                await saveTradeCore(tradeId, originalTrade);
+                await saveTradeDetails(tradeId);
+                // Screenshots are handled separately via upload and URL endpoints
+
+                closeEditModal();
+                loadTrades();
+                loadOpenTrades();
+                loadCalendarData();
+                showNotification('Trade updated successfully!', 'success');
+            } catch (error) {
+                console.error('Error saving trade:', error);
+                alert('Error saving trade changes');
+            }
+        }
+
+        async function saveTradeCore(tradeId, originalTrade) {
+            const coreTradePayload = {
+                ...originalTrade,
+                weekly_bias: document.getElementById('editWeeklyBias').value,
+                daily_bias: document.getElementById('editDailyBias').value,
+                notes: document.getElementById('editNotes').value
+            };
+
+            const response = await fetch(`/api/trades/${tradeId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(coreTradePayload)
+            });
+
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error('Failed to save core trade data');
+            }
+        }
+
+        async function saveTradeDetails(tradeId) {
+            // Gather tag values from containers
+            const key_levels = getTagValues('keyLevelsContainer');
+            const confirmations = getTagValues('confirmationsContainer');
+            const entries = getTagValues('entriesContainer');
+            const models = getTagValues('modelsContainer');
+
+            const statsPayload = {
+                key_levels: key_levels,
+                confirmations: confirmations,
+                entries: entries,
+                models: models
+            };
+
+            const response = await fetch(`/api/trades/${tradeId}/details`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(statsPayload)
+            });
+
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error('Failed to save trade details');
+            }
+        }
+
+        async function deleteTrade() {
+            if (!confirm('Are you sure you want to delete this trade? This action cannot be undone.')) {
+                return;
+            }
+
+            const tradeId = document.getElementById('editTradeId').value;
+
+            try {
+                const response = await fetch(`/api/trades/${tradeId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    closeEditModal();
+                    loadTrades();
+                    loadOpenTrades();
+                    loadCalendarData();
+                    showNotification('Trade deleted successfully!', 'success');
+                } else {
+                    alert('Error deleting trade');
+                }
+            } catch (error) {
+                console.error('Error deleting trade:', error);
+                alert('Error deleting trade');
+            }
+        }
+
+        function updateStatsFilter() {
+            statsFilter.weeklyBias = document.getElementById('weeklyBiasFilter').value;
+            statsFilter.dailyBias = document.getElementById('dailyBiasFilter').value;
+            statsFilter.asset = document.getElementById('assetFilter').value;
+            statsFilter.side = document.getElementById('sideFilter').value;
+
+            // Load performance stats from backend APIs
+            loadPerformanceStats();
+        }
+
+        async function loadPerformanceStats() {
+            console.log("🔥 loadPerformanceStats START");
+            try {
+                console.log("🔥 Fetching from backend APIs...");
+                const [modelsResponse, confirmationsResponse, entriesResponse, keyLevelsResponse] = await Promise.all([
+                    fetch('/api/analytics/by_model'),
+                    fetch('/api/analytics/by_confirmation'),
+                    fetch('/api/analytics/by_entry'),
+                    fetch('/api/analytics/by_key_level')
+                ]);
+
+                console.log("🔥 Raw API responses received");
+
+                const modelsData = await modelsResponse.json();
+                const confirmationsData = await confirmationsResponse.json();
+                const entriesData = await entriesResponse.json();
+                const keyLevelsData = await keyLevelsResponse.json();
+
+                console.log("🔥 RAW MODEL DATA FROM API:", modelsData);
+                console.log("🔥 RAW CONFIRMATION DATA FROM API:", confirmationsData);
+                console.log("🔥 RAW ENTRY DATA FROM API:", entriesData);
+                console.log("🔥 RAW KEY LEVEL DATA FROM API:", keyLevelsData);
+
+                // Apply filters and update UI
+                const filteredModels = applyFiltersToStats(modelsData.models || []);
+                const filteredConfirmations = applyFiltersToStats(confirmationsData.confirmations || []);
+                const filteredEntries = applyFiltersToStats(entriesData.entries || []);
+                const filteredKeyLevels = applyFiltersToStats(keyLevelsData.key_levels || []);
+
+                console.log("🔥 FILTERED DATA:");
+                console.log("  Models:", filteredModels, "Length:", filteredModels.length);
+                console.log("  Confirmations:", filteredConfirmations, "Length:", filteredConfirmations.length);
+                console.log("  Entries:", filteredEntries, "Length:", filteredEntries.length);
+                console.log("  Key levels:", filteredKeyLevels, "Length:", filteredKeyLevels.length);
+
+                // 🔥 STEP 2: Verify render function runs
+                console.log("🎨 About to render stats...");
+
+                const modelsHTML = formatBackendPerformanceStats(filteredModels);
+                const confirmationsHTML = formatBackendPerformanceStats(filteredConfirmations);
+                const entriesHTML = formatBackendPerformanceStats(filteredEntries);
+                const keyLevelsHTML = formatBackendPerformanceStats(filteredKeyLevels);
+
+                console.log("🎨 Generated HTML:");
+                console.log("  Models HTML length:", modelsHTML.length);
+                console.log("  Confirmations HTML length:", confirmationsHTML.length);
+                console.log("  Entries HTML length:", entriesHTML.length);
+                console.log("  Key levels HTML length:", keyLevelsHTML.length);
+
+                // 🔥 STEP 3: DOM ID verification
+                const modelsEl = document.getElementById('modelsStats');
+                const confirmationsEl = document.getElementById('confirmationsStats');
+                const entriesEl = document.getElementById('entryStats');
+                const keyLevelsEl = document.getElementById('keyLevelsStats');
+
+                console.log("🔥 DOM ELEMENTS:");
+                console.log("  modelsStats element:", modelsEl);
+                console.log("  confirmationsStats element:", confirmationsEl);
+                console.log("  entryStats element:", entriesEl);
+                console.log("  keyLevelsStats element:", keyLevelsEl);
+
+                if (!modelsEl) console.error("❌ modelsStats element NOT FOUND");
+                if (!confirmationsEl) console.error("❌ confirmationsStats element NOT FOUND");
+                if (!entriesEl) console.error("❌ entryStats element NOT FOUND");
+                if (!keyLevelsEl) console.error("❌ keyLevelsStats element NOT FOUND");
+
+                // Render to DOM
+                modelsEl.innerHTML = modelsHTML;
+                confirmationsEl.innerHTML = confirmationsHTML;
+                entriesEl.innerHTML = entriesHTML;
+                keyLevelsEl.innerHTML = keyLevelsHTML;
+
+                console.log("🔥 RENDER COMPLETE - checking DOM content:");
+                console.log("  modelsStats.innerHTML:", modelsEl.innerHTML.substring(0, 100));
+                console.log("  confirmationsStats.innerHTML:", confirmationsEl.innerHTML.substring(0, 100));
+                console.log("  entryStats.innerHTML:", entriesEl.innerHTML.substring(0, 100));
+                console.log("  keyLevelsStats.innerHTML:", keyLevelsEl.innerHTML.substring(0, 100));
+
+            } catch (error) {
+                console.error('❌ ERROR in loadPerformanceStats:', error);
+                console.error('❌ Stack trace:', error.stack);
+            }
+        }
+
+        function applyFiltersToStats(stats) {
+            console.log("🔍 applyFiltersToStats called");
+            console.log("  Input stats:", stats);
+            console.log("  Current statsFilter:", statsFilter);
+
+            let filtered = stats;
+
+            if (statsFilter.asset !== 'all') {
+                console.log("  Asset filter active:", statsFilter.asset);
+                // Backend already filters by asset, so this might not be needed
+                // but keeping for consistency
+            }
+
+            if (statsFilter.side !== 'all') {
+                console.log("  Side filter active:", statsFilter.side);
+                // Backend analytics don't filter by side, but we could add this
+            }
+
+            console.log("  Returning filtered stats:", filtered);
+            return filtered;
+        }
+
+        function formatBackendPerformanceStats(stats) {
+            console.log("🎨 formatBackendPerformanceStats CALLED with:", stats);
+
+            if (!stats || stats.length === 0) {
+                console.warn("❌ No data passed to formatBackendPerformanceStats");
+                return '<p style="color: #bbbbbb; text-align: center; padding: 20px;">No data for current filters</p>';
+            }
+
+            console.log("🎨 Formatting", stats.length, "items");
+
+            const html = stats.map(item => {
+                // Sanity check for invalid win rates
+                if (item.win_rate > 100) {
+                    console.warn("Invalid win rate detected", item);
+                }
+
+                const wrClass = item.win_rate >= 60 ? 'good' : item.win_rate >= 50 ? 'average' : 'poor';
+
+                // Handle different field names from different endpoints
+                const label = item.model || item.confirmation || item.entry || item.level || 'Unknown';
+                const displayName = label.replace(/_/g, ' ');
+
+                console.log("🎨 Rendering item:", { label, displayName, trade_count: item.trade_count, win_rate: item.win_rate, total_pnl: item.total_pnl });
+
+                return `
+                    <div class="stat-item">
+                        <span class="stat-name">${displayName}</span>
+                        <div class="stat-metrics">
+                            <span class="stat-count">${item.trade_count}</span>
+                            <span class="stat-wr ${wrClass}">${item.win_rate}%</span>
+                            <span class="stat-pnl">${item.total_pnl >= 0 ? '+' : ''}$${item.total_pnl}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            console.log("🎨 Generated HTML length:", html.length, "First 200 chars:", html.substring(0, 200));
+            return html;
+        }
+
+        function calculateEntryPerformanceStats(trades) {
+            const stats = {};
+
+            trades.forEach(trade => {
+                // Only process trades that have an entry field set
+                const entryType = trade.entry;
+                if (!entryType || entryType.trim() === '') {
+                    return; // Skip trades without entry type
+                }
+
+                const key = entryType;
+
+                if (!stats[key]) {
+                    stats[key] = { total: 0, wins: 0, with_bias: 0, with_wins: 0, against_bias: 0, against_wins: 0 };
+                }
+
+                stats[key].total++;
+                const pnl = parseFloat(trade.pnl) || 0;
+                if (pnl > 0) stats[key].wins++;
+
+                const weekly = (trade.weekly_bias || '').toLowerCase();
+                const daily = (trade.daily_bias || '').toLowerCase();
+                const side = (trade.side || '').toLowerCase();
+
+                const withWeekly = (weekly === 'bullish' && side === 'long') || (weekly === 'bearish' && side === 'short');
+                const againstWeekly = (weekly === 'bullish' && side === 'short') || (weekly === 'bearish' && side === 'long');
+
+                if (withWeekly) {
+                    stats[key].with_bias++;
+                    if (pnl > 0) stats[key].with_wins++;
+                } else if (againstWeekly) {
+                    stats[key].against_bias++;
+                    if (pnl > 0) stats[key].against_wins++;
+                }
+            });
+
+            Object.keys(stats).forEach(key => {
+                const s = stats[key];
+                s.winRate = s.total > 0 ? (s.wins / s.total * 100).toFixed(1) : 0;
+                s.withWinRate = s.with_bias > 0 ? (s.with_wins / s.with_bias * 100).toFixed(1) : null;
+                s.againstWinRate = s.against_bias > 0 ? (s.against_wins / s.against_bias * 100).toFixed(1) : null;
+            });
+
+            return stats;
+        }
+
+        function formatPerformanceStats(stats) {
+            const entries = Object.entries(stats);
+            
+            if (entries.length === 0) {
+                return '<p style="color: #bbbbbb; text-align: center; padding: 20px;">No data for current filters</p>';
+            }
+            
+            entries.sort((a, b) => parseFloat(b[1].winRate) - parseFloat(a[1].winRate));
+            
+            return entries.map(([key, data]) => {
+                const wrClass = data.winRate >= 60 ? 'good' : data.winRate >= 50 ? 'average' : 'poor';
+                const displayName = key.replace(/_/g, ' ');
+                
+                let biasInfo = '';
+                if (data.withWinRate !== null) {
+                    biasInfo += `<span class="stat-bias-indicator with" title="WITH bias">WITH ${data.withWinRate}% (${data.with_bias})</span>`;
+                }
+                if (data.againstWinRate !== null) {
+                    biasInfo += `<span class="stat-bias-indicator against" title="AGAINST bias">VS ${data.againstWinRate}% (${data.against_bias})</span>`;
+                }
+                
+                return `
+                    <div class="stat-item">
+                        <span class="stat-name">${displayName}</span>
+                        <div class="stat-metrics">
+                            <span class="stat-count">${data.total}</span>
+                            <span class="stat-wr ${wrClass}">${data.winRate}%</span>
+                            ${biasInfo}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showApiConnectForm() {
+            // Show API inputs when not connected
+            document.getElementById('apiKey').style.display = 'block';
+            document.getElementById('apiSecret').style.display = 'block';
+            document.querySelector('button[onclick="saveApiCredentials()"]').style.display = 'block';
+            
+            const statusEl = document.getElementById('apiStatus');
+            statusEl.textContent = 'Not Connected';
+            statusEl.classList.remove('connected');
+        }
+
+        function syncAllBybitData() {
+            fetchAccountBalance();
+        }
+
+        async function loadApiCredentials() {
+            try {
+                const response = await fetch('/api/get_bybit_credentials');
+                const data = await response.json();
+                
+                const statusEl = document.getElementById('apiStatus');
+                if (data.connected) {
+                    // Hide API inputs when connected
+                    document.getElementById('apiKey').style.display = 'none';
+                    document.getElementById('apiSecret').style.display = 'none';
+                    document.querySelector('button[onclick="saveApiCredentials()"]').style.display = 'none';
+                    
+                    statusEl.textContent = `Connected to Bybit (**${data.api_key_last4})`;
+                    statusEl.classList.add('connected');
+                    
+                    // Load balance on page load
+                    fetchAccountBalance();
+                } else {
+                    // Show API inputs when not connected
+                    document.getElementById('apiKey').style.display = 'block';
+                    document.getElementById('apiSecret').style.display = 'block';
+                    document.querySelector('button[onclick="saveApiCredentials()"]').style.display = 'block';
+                    
+                    statusEl.textContent = 'Not Connected';
+                    statusEl.classList.remove('connected');
+                }
+            } catch (error) {
+                console.error('Error loading credentials:', error);
+            }
+        }
+
+        async function saveApiCredentials() {
+            const data = {
+                api_key: document.getElementById('apiKey').value,
+                api_secret: document.getElementById('apiSecret').value,
+                network: 'mainnet',
+                remember_me: true
+            };
+
+            try {
+                const response = await fetch('/api/save_bybit_credentials', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    // Switch to connected UI immediately
+                    renderConnected({
+                        connected: true,
+                        api_key_last4: data.api_key.slice(-4)
+                    });
+                } else {
+                    console.error('Error from server:', result.error);
+                    alert('Error saving credentials: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error saving credentials:', error);
+                alert('Error saving credentials: ' + error.message);
+            }
+        }
+
+        async function syncBybitTrades() {
+            if (!confirm('Sync trades from Bybit? This may take a moment.')) return;
+
+            try {
+                const resp = await fetch('/api/sync_bybit_trades', { method: 'POST' });
+                const syncResult = await resp.json();
+
+                alert(syncResult.message);
+                if (syncResult.success && syncResult.trades_synced > 0) {
+                    loadTrades();
+                    loadCalendarData();
+                    loadRiskMetrics();
+                    loadTimeAnalytics();
+                }
+            } catch (error) {
+                console.error('Error syncing trades:', error);
+                alert('Sync error. Check console.');
+            }
+        }
+
+        function updatePnlChart(trades) {
+            const canvas = document.getElementById('pnlChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            const sorted = [...trades].sort((a, b) => new Date(a.entry_time) - new Date(b.entry_time));
+
+            const labels = [];
+            const series = [];
+            let runningTotal = 0;
+
+            sorted.forEach(trade => {
+                runningTotal += trade.pnl || 0;
+                labels.push(new Date(trade.entry_time).toLocaleDateString());
+                series.push(runningTotal);
+            });
+
+            const lineColor = runningTotal >= 0 ? '#00ff88' : '#ff3366';
+
+            if (!pnlChart) {
+                pnlChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [{
+                            data: series,
+                            borderColor: lineColor,
+                            borderWidth: 2,
+                            fill: false,
+                            pointRadius: 0,
+                            tension: 0.35
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                top: 20,
+                                right: 20,
+                                bottom: 10,
+                                left: 10
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => `Cumulative: $${ctx.parsed.y.toFixed(2)}`
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: '#aaa', maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }
+                            },
+                            y: {
+                                grid: { display: false },
+                                ticks: {
+                                    color: '#aaa',
+                                    callback: (val) => `$${Number(val).toFixed(0)}`
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                pnlChart.data.labels = labels;
+                pnlChart.data.datasets[0].data = series;
+                pnlChart.data.datasets[0].borderColor = lineColor;
+                pnlChart.update();
+            }
+        }
+
+        // Position Size Calculator
+        document.getElementById('riskAmount').addEventListener('input', calculatePosition);
+        document.getElementById('riskType').addEventListener('change', calculatePosition);
+        document.getElementById('stopLoss').addEventListener('input', calculatePosition);
+
+        function calculatePosition() {
+            const riskAmount = parseFloat(document.getElementById('riskAmount').value) || 0;
+            const riskType = document.getElementById('riskType').value;
+            const stopLoss = parseFloat(document.getElementById('stopLoss').value) || 0;
+            const fees = 0.00075; // Bybit taker fees (0.075%)
+            
+            if (riskAmount <= 0 || stopLoss <= 0) {
+                document.getElementById('positionSize').textContent = '$0';
+                return;
+            }
+            
+            let actualRisk = riskAmount;
+            
+            // If risk is percentage, get it from balance or use default
+            if (riskType === 'percent') {
+                const balanceText = document.getElementById('accountBalance').textContent;
+                const balance = parseFloat(balanceText.replace(/[$,]/g, '')) || 1000; // Default $1000 if no balance
+                actualRisk = (riskAmount / 100) * balance;
+            }
+            
+            // Core Formula: Position = Risk ÷ (Stop Loss % + Fees %)
+            const totalLossPercent = (stopLoss / 100) + fees;
+            const positionSize = actualRisk / totalLossPercent;
+            
+            document.getElementById('positionSize').textContent = '$' + positionSize.toFixed(0);
+        }
+    </script>
+</body>
+</html>
